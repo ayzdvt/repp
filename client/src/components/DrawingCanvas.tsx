@@ -372,8 +372,56 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
-  // İmleci ilk render'da bir kez ayarla
+  // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
+  
+  // ESC tuşuna basıldığında seçimi iptal et
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Seçili şekli temizle
+        setSelectedShapeId(null);
+        
+        // Üst bileşene bildir
+        if (onSelectObject) {
+          onSelectObject(null);
+        }
+        
+        // Çizgi çizme işlemini de iptal et
+        if (drawingLine) {
+          setDrawingLine(false);
+          lineFirstPointRef.current = null;
+          currentShapeRef.current = null;
+        }
+      }
+    };
+    
+    // Event listener ekle
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [drawingLine, onSelectObject]);
+  
+  // Araç değiştiğinde seçimi iptal et ve imleci güncelle
+  useEffect(() => {
+    // Seçili şekli temizle
+    setSelectedShapeId(null);
+    
+    // Üst bileşene bildir
+    if (onSelectObject) {
+      onSelectObject(null);
+    }
+    
+    // Çizgi çizme işlemini de iptal et
+    if (drawingLine) {
+      setDrawingLine(false);
+      lineFirstPointRef.current = null;
+      currentShapeRef.current = null;
+    }
+    
+    // İmleç stilini güncelle
     if (canvasRef.current) {
       if (activeTool === 'selection') {
         canvasRef.current.style.cursor = 'grab';
@@ -381,7 +429,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, []);
+  }, [activeTool, drawingLine, onSelectObject]);
   
   // Sağ tıklamayı engelle
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

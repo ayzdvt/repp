@@ -21,6 +21,11 @@ export default function DrawingApp() {
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
+    
+    // Araç değiştiğinde seçimi temizle
+    if (selectedObject) {
+      setSelectedObject(null);
+    }
   };
   
   const handleZoomChange = (newZoom: number) => {

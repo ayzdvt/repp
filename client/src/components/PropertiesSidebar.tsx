@@ -218,10 +218,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                   value={lineEndY}
+                  onFocus={(e) => (e.target as HTMLInputElement).select()}
                   onChange={(e) => {
                     setLineEndY(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('endY', parseFloat(input.value), selectedObject.id);
+                      input.blur();
+                    }
+                  }}
+                  onBlur={(e) => {
                     if (onPropertyChange && selectedObject.id) {
-                      onPropertyChange('endY', parseFloat(e.target.value), selectedObject.id);
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('endY', parseFloat(input.value), selectedObject.id);
                     }
                   }}
                 />
@@ -236,10 +247,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                 value={lineThickness} 
                 min="0.1" 
                 step="0.1"
+                onFocus={(e) => (e.target as HTMLInputElement).select()}
                 onChange={(e) => {
                   setLineThickness(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('thickness', parseFloat(input.value), selectedObject.id);
+                    input.blur();
+                  }
+                }}
+                onBlur={(e) => {
                   if (onPropertyChange && selectedObject.id) {
-                    onPropertyChange('thickness', parseFloat(e.target.value), selectedObject.id);
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('thickness', parseFloat(input.value), selectedObject.id);
                   }
                 }}
               />

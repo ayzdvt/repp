@@ -120,6 +120,73 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
 }
 
 // Draw a shape based on its type
+// Yakalama noktalarını göster
+export function drawSnapIndicators(
+  ctx: CanvasRenderingContext2D,
+  shapes: any[],
+  currentMousePos: Point,
+  state: CanvasState,
+  snapTolerance: number
+) {
+  // Şekilden yakalama noktalarını al
+  const snapPoints: Point[] = [];
+  
+  shapes.forEach(shape => {
+    if (shape.type === 'point') {
+      snapPoints.push({ x: shape.x, y: shape.y });
+    } else if (shape.type === 'line') {
+      // Çizgi başlangıç noktası
+      snapPoints.push({ x: shape.startX, y: shape.startY });
+      
+      // Çizgi bitiş noktası
+      snapPoints.push({ x: shape.endX, y: shape.endY });
+      
+      // Çizgi orta noktası
+      snapPoints.push({ 
+        x: (shape.startX + shape.endX) / 2, 
+        y: (shape.startY + shape.endY) / 2 
+      });
+    }
+  });
+  
+  // En yakın yakalama noktasını bul
+  let closestPoint: Point | null = null;
+  let minDistance = snapTolerance;
+  
+  snapPoints.forEach(point => {
+    const distance = Math.sqrt(
+      Math.pow(point.x - currentMousePos.x, 2) + 
+      Math.pow(point.y - currentMousePos.y, 2)
+    );
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = point;
+    }
+  });
+  
+  // En yakın yakalama noktasını vurgula
+  if (closestPoint) {
+    const screenPos = worldToScreen(closestPoint.x, closestPoint.y, state);
+    
+    // Yeşil daire çiz
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, 6, 0, Math.PI * 2);
+    ctx.strokeStyle = '#00C853';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    
+    // İçi beyaz daire
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = '#00C853';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
 export function drawShape(
   ctx: CanvasRenderingContext2D, 
   shape: any, 

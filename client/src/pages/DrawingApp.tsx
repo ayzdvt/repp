@@ -88,8 +88,8 @@ export default function DrawingApp() {
 
       // DrawingCanvas'a yapılan değişikliği çağırarak ileteceğiz
       // Bu, DrawingCanvas'ın içindeki shapesRef'i de günceller
-      const canvasElement = document.getElementById('drawing-canvas') as HTMLElement;
-      if (canvasElement) {
+      const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+      if (canvasContainer) {
         // Özel olay oluştur - canvas.tsx dosyasında dinleyeceğiz
         const updateEvent = new CustomEvent('shapeupdate', { 
           detail: { 
@@ -97,7 +97,9 @@ export default function DrawingApp() {
             shape: updatedObject
           } 
         });
-        canvasElement.dispatchEvent(updateEvent);
+        
+        // Event'i container üzerinden yayınla çünkü containerRef'i dinliyoruz canvas'ta
+        canvasContainer.querySelector('div')?.dispatchEvent(updateEvent);
       }
     }
   };

@@ -505,11 +505,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
   // Özel şekil güncelleme olayını dinleme
+  const updateEventRef = useRef<(e: any) => void>();
+  
   useEffect(() => {
-    // Canvas elementimizi al
-    const canvasElement = document.getElementById('drawing-canvas');
-    if (!canvasElement) return;
-    
     // Özel olayları işleme fonksiyonu
     const handleShapeUpdate = (e: any) => {
       const { detail } = e;
@@ -522,12 +520,28 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    // Olay dinleyiciyi ekle
-    canvasElement.addEventListener('shapeupdate', handleShapeUpdate);
+    // Referansı sakla
+    updateEventRef.current = handleShapeUpdate;
+  }, []);
+  
+  // Container DOM düğümü bağlandığında olayları dinlemeye başla
+  useEffect(() => {
+    const containerElement = containerRef.current;
+    if (!containerElement) return;
+    
+    // Event fonksiyonunu referanstan al
+    const handler = (e: any) => {
+      if (updateEventRef.current) {
+        updateEventRef.current(e);
+      }
+    };
+    
+    // Olay dinleyiciyi container'a ekle
+    containerElement.addEventListener('shapeupdate', handler);
     
     // Cleanup
     return () => {
-      canvasElement.removeEventListener('shapeupdate', handleShapeUpdate);
+      containerElement.removeEventListener('shapeupdate', handler);
     };
   }, []);
   

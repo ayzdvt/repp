@@ -37,6 +37,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const dragStartRef = useRef<Point>({ x: 0, y: 0 });
   const isDraggingRef = useRef<boolean>(false);
   const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
+  const requestRef = useRef<number | null>(null); // AnimationFrame request ID
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -61,7 +62,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // Render işlevi - komponentten bağımsız olarak çağrılacak, state'e bağlı değil
+  // Render işlevi - render frame içinde kullanılacak
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -86,26 +87,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   }, [canvasState]); // Sadece canvas state değiştiğinde fonksiyonu yeniden oluştur
   
-  // Canvas state değiştiğinde render işlemini tetikle
+  // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
-    renderCanvas();
-  }, [canvasState, renderCanvas]);
-  
-  // Animasyon frame'i ile sürekli render et
-  useEffect(() => {
-    let animationId: number;
-    
+    // Animasyon frame'i yönet
     const animate = () => {
       renderCanvas();
-      animationId = requestAnimationFrame(animate);
+      requestRef.current = requestAnimationFrame(animate);
     };
     
-    animationId = requestAnimationFrame(animate);
+    // İlk frame'i başlat
+    requestRef.current = requestAnimationFrame(animate);
     
+    // Cleanup işlevi
     return () => {
-      cancelAnimationFrame(animationId);
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+        requestRef.current = null;
+      }
     };
-  }, [renderCanvas]);
+  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

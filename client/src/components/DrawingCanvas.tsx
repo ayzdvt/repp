@@ -96,8 +96,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
     
-    // Eğer çizim aracı aktifse ve snap özelliği açıksa yakalama noktalarını göster
-    if (activeTool !== 'selection' && snapEnabled && currentMousePosRef.current) {
+    // Eğer snap özelliği açıksa veya line uçları çekilirken yakalama noktalarını göster
+    if ((snapEnabled && currentMousePosRef.current) && (activeTool !== 'selection' || isDraggingEndpoint)) {
       // Yakalama noktaları için şekilleri tara
       const snapPoints: Array<{x: number, y: number}> = [];
       
@@ -157,7 +157,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
+  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled, isDraggingEndpoint]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {

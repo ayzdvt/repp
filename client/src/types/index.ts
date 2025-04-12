@@ -11,7 +11,7 @@ export interface Size {
 }
 
 // Tool types
-export type Tool = 'selection' | 'point' | 'line' | 'rectangle' | 'circle' | 'text';
+export type Tool = 'selection' | 'point' | 'line' | 'text';
 
 // Canvas state
 export interface CanvasState {
@@ -22,7 +22,7 @@ export interface CanvasState {
 }
 
 // Shape types
-export type ShapeType = 'point' | 'line' | 'rectangle' | 'circle' | 'text';
+export type ShapeType = 'point' | 'line' | 'text';
 
 // Base shape interface
 export interface BaseShape {

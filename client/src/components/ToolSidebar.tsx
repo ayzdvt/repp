@@ -50,26 +50,6 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         </button>
         
         <button 
-          className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'rectangle' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Rectangle Tool" 
-          onClick={() => onToolChange('rectangle')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <rect x="4" y="4" width="16" height="16" strokeWidth="2" />
-          </svg>
-        </button>
-        
-        <button 
-          className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'circle' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Circle Tool" 
-          onClick={() => onToolChange('circle')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle cx="12" cy="12" r="8" strokeWidth="2" />
-          </svg>
-        </button>
-        
-        <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'text' ? 'bg-[#D0D0D0]' : ''}`}
           title="Text Tool" 
           onClick={() => onToolChange('text')}

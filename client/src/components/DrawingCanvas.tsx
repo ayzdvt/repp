@@ -69,12 +69,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Draw all shapes
     shapes.forEach(shape => {
+      // Normal drawing
       drawShape(ctx, shape, canvasState);
     });
     
     // Draw current shape being created
     if (currentShape) {
       drawShape(ctx, currentShape, canvasState);
+    }
+    
+    // Debug info for troubleshooting
+    if (shapes.length > 0) {
+      console.log("Available shapes for selection:", shapes);
     }
   }, [canvasState, shapes, currentShape]);
   
@@ -142,29 +148,43 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       switch (shape.type) {
         case 'point':
           // For a point, check if the click is within a small radius
-          if (distance(point, { x: shape.x, y: shape.y }) <= 5) {
+          if (distance(point, { x: shape.x, y: shape.y }) <= 10) { // Daha kolay seçilebilmesi için toleransı artırdık
             return shape;
           }
           break;
           
         case 'line':
           // For a line, check if the click is near the line
-          if (pointNearLine(point, shape)) {
+          // Tolerance'ı artırarak daha kolay seçme
+          if (pointNearLine(point, shape, 10)) { // Daha geniş seçim alanı için tolerance'ı artırdım
             return shape;
           }
           break;
           
         case 'rectangle':
           // For a rectangle, check if the click is inside
-          if (pointInRectangle(point, shape)) {
+          // Eğer genişlik veya yükseklik negatifse, koordinatları düzeltmeliyiz
+          const rect = { ...shape };
+          
+          if (rect.width < 0) {
+            rect.x += rect.width;
+            rect.width = Math.abs(rect.width);
+          }
+          
+          if (rect.height < 0) {
+            rect.y += rect.height;
+            rect.height = Math.abs(rect.height);
+          }
+          
+          if (pointInRectangle(point, rect)) {
             return shape;
           }
           break;
           
         case 'circle':
-          // For a circle, check if the click is near the circle perimeter or inside
+          // For a circle, check if the click is inside the circle or near its perimeter
           const distToCenter = distance(point, { x: shape.x, y: shape.y });
-          if (distToCenter <= shape.radius + 5 && distToCenter >= shape.radius - 5) {
+          if (distToCenter <= shape.radius + 5) { // İçinde veya kenara yakın olma durumu
             return shape;
           }
           break;
@@ -209,7 +229,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Try to select a shape under the click point
       const selectedShape = findShapeAtPoint(worldPos);
       
+      // Debug için log ekleyelim
+      console.log("Selection check:", { worldPos, selectedShape, hasOnSelectObject: !!onSelectObject });
+      
       if (selectedShape && onSelectObject) {
+        console.log("Selected shape:", selectedShape);
         onSelectObject(selectedShape);
       } else if (canvasRef.current) {
         // If no shape was clicked, prepare for canvas panning

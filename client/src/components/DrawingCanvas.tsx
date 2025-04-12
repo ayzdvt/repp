@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
-import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
+import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
 import { pointNearLine, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
@@ -94,13 +94,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
     
-    // Çizgi çizim aracı aktifse veya seçme aracı aktif ve çizim yapılmıyorsa
-    // yakalama noktalarını göster
-    if (activeTool === 'line' || (activeTool === 'selection' && !isDragging)) {
-      // Fare pozisyonuna en yakın yakalama noktasını göster
-      const snapTolerance = 10 / canvasState.zoom;
-      drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState, snapTolerance);
-    }
+    // Çizgi çizim modunda sadece fare canvas üzerindeyse yakalama noktalarını göstermek isterdik
+    // Ancak bu özellik performans problemlerine neden olduğu için şimdilik devre dışı bırakıldı
+    // Yakalama özelliği hâlâ çalışıyor, sadece görsel göstergeler devre dışı
   }, [canvasState, selectedId, activeTool, isDragging]); // Araç değiştiğinde veya sürükleme durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle

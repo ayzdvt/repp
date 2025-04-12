@@ -158,37 +158,44 @@ export function drawSnapIndicators(
   let closestPoint: Point | null = null;
   let minDistance = snapTolerance;
   
-  snapPoints.forEach(point => {
-    const distance = Math.sqrt(
-      Math.pow(point.x - currentMousePos.x, 2) + 
-      Math.pow(point.y - currentMousePos.y, 2)
-    );
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestPoint = point;
-    }
-  });
+  // Fareden gelen konum geçerli mi kontrolü
+  if (currentMousePos && typeof currentMousePos.x === 'number' && typeof currentMousePos.y === 'number') {
+    snapPoints.forEach(point => {
+      const distance = Math.sqrt(
+        Math.pow(point.x - currentMousePos.x, 2) + 
+        Math.pow(point.y - currentMousePos.y, 2)
+      );
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = point;
+      }
+    });
+  }
   
   // En yakın yakalama noktasını vurgula
-  if (closestPoint) {
-    const screenPos = worldToScreen(closestPoint.x, closestPoint.y, state);
-    
-    // Yeşil daire çiz
-    ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, 6, 0, Math.PI * 2);
-    ctx.strokeStyle = '#00C853';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
-    // İçi beyaz daire
-    ctx.beginPath();
-    ctx.arc(screenPos.x, screenPos.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-    ctx.strokeStyle = '#00C853';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  if (closestPoint && typeof closestPoint.x === 'number' && typeof closestPoint.y === 'number') {
+    try {
+      const screenPos = worldToScreen(closestPoint.x, closestPoint.y, state);
+      
+      // Yeşil daire çiz
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, 6, 0, Math.PI * 2);
+      ctx.strokeStyle = '#00C853';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
+      // İçi beyaz daire
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.strokeStyle = '#00C853';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } catch (err) {
+      console.error('Error drawing snap indicator:', err);
+    }
   }
 }
 

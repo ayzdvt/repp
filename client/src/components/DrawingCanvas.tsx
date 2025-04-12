@@ -12,6 +12,7 @@ interface DrawingCanvasProps {
   onCanvasSizeChange: (width: number, height: number) => void;
   onSelectObject?: (object: any) => void;
   onToolChange?: (tool: Tool) => void; // Aracı değiştirmek için prop ekledik
+  snapEnabled?: boolean; // Snap özelliğinin açık/kapalı durumu
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -22,7 +23,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onZoomChange,
   onCanvasSizeChange,
   onSelectObject,
-  onToolChange
+  onToolChange,
+  snapEnabled = true // Default olarak snap aktif
 }) => {
   // DOM References
   const canvasRef = useRef<HTMLCanvasElement>(null);

@@ -148,6 +148,8 @@ export default function DrawingApp() {
         gridSize={gridSize}
         zoom={zoom}
         mousePosition={mousePosition}
+        snapEnabled={snapEnabled}
+        onToggleSnap={toggleSnap}
       />
     </div>
   );

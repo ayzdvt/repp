@@ -126,8 +126,12 @@ export function drawSnapIndicators(
   shapes: any[],
   currentMousePos: Point,
   state: CanvasState,
-  snapTolerance: number
+  snapTolerance: number,
+  snapEnabled: boolean = true
 ) {
+  // Snap özelliği kapalıysa hiçbir şey çizme
+  if (!snapEnabled) return;
+  
   // Eğer geçerli fare pozisyonu yoksa (ilk render gibi), işlemi atla
   if (!currentMousePos || typeof currentMousePos.x !== 'number' || typeof currentMousePos.y !== 'number') {
     return;

@@ -7,6 +7,11 @@ interface PropertiesSidebarProps {
 const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject }) => {
   const hasSelection = selectedObject !== null;
   
+  // Format coordinate values to show 2 decimal places
+  const formatCoordinate = (value: number): string => {
+    return value.toFixed(2);
+  };
+  
   return (
     <div className="bg-white w-0 md:w-64 border-l border-gray-300 flex-shrink-0 overflow-y-auto custom-scrollbar hidden md:block">
       <div className="p-4">
@@ -28,7 +33,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                value={selectedObject.x} 
+                value={formatCoordinate(selectedObject.x)} 
                 onChange={() => {}} // Will be implemented when object selection is added
               />
             </div>
@@ -38,7 +43,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                value={selectedObject.y}
+                value={formatCoordinate(selectedObject.y)}
                 onChange={() => {}} // Will be implemented when object selection is added
               />
             </div>
@@ -68,7 +73,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                  value={selectedObject.startX}
+                  value={formatCoordinate(selectedObject.startX)}
                   onChange={() => {}} // Will be implemented when object selection is added
                 />
               </div>
@@ -77,7 +82,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                  value={selectedObject.startY}
+                  value={formatCoordinate(selectedObject.startY)}
                   onChange={() => {}} // Will be implemented when object selection is added
                 />
               </div>
@@ -89,7 +94,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                  value={selectedObject.endX}
+                  value={formatCoordinate(selectedObject.endX)}
                   onChange={() => {}} // Will be implemented when object selection is added
                 />
               </div>
@@ -98,7 +103,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject })
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                  value={selectedObject.endY}
+                  value={formatCoordinate(selectedObject.endY)}
                   onChange={() => {}} // Will be implemented when object selection is added
                 />
               </div>

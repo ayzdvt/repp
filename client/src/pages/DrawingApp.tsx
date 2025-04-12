@@ -11,6 +11,7 @@ export default function DrawingApp() {
   const [zoom, setZoom] = useState<number>(1);
   const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
   const [gridSize, setGridSize] = useState<number>(10);
+  const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
   const [canvasState, setCanvasState] = useState<CanvasState>({
     gridSize: 10,
     zoom: 1,
@@ -57,6 +58,10 @@ export default function DrawingApp() {
   
   const handleMousePositionChange = (position: Point) => {
     setMousePosition(position);
+  };
+  
+  const toggleSnap = () => {
+    setSnapEnabled(prevState => !prevState);
   };
   
   const handleCanvasSizeChange = (width: number, height: number) => {

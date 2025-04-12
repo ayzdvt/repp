@@ -159,11 +159,27 @@ export function drawShape(
     const start = worldToScreen(shape.startX, shape.startY, state);
     const end = worldToScreen(shape.endX, shape.endY, state);
     
+    // Çizgiyi çiz
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
     ctx.lineWidth = shape.thickness; // Sabit kalınlık - zoom'dan etkilenmesin
     ctx.stroke();
+    
+    // Eğer çizgi seçiliyse uç noktaları göster
+    if (isSelected) {
+      // Başlangıç noktasını çiz
+      ctx.beginPath();
+      ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#FF4500";
+      ctx.fill();
+      
+      // Bitiş noktasını çiz
+      ctx.beginPath();
+      ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#FF4500";
+      ctx.fill();
+    }
   } else if (shape.type === 'rectangle') {
     const topLeft = worldToScreen(shape.x, shape.y, state);
     const width = shape.width * state.zoom;

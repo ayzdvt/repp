@@ -128,6 +128,11 @@ export function drawSnapIndicators(
   state: CanvasState,
   snapTolerance: number
 ) {
+  // Eğer geçerli fare pozisyonu yoksa (ilk render gibi), işlemi atla
+  if (!currentMousePos || typeof currentMousePos.x !== 'number' || typeof currentMousePos.y !== 'number') {
+    return;
+  }
+  
   // Şekilden yakalama noktalarını al
   const snapPoints: Point[] = [];
   

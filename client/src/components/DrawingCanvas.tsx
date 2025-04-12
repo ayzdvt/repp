@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
-import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
+import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
 import { pointNearLine, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
@@ -38,6 +38,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const nextIdRef = useRef<number>(1); // Şekiller için benzersiz ID'ler
   const draggingLineEndpointRef = useRef<'start' | 'end' | null>(null); // Hangi çizgi ucunun sürüklendiği
   const originalLineRef = useRef<any | null>(null); // Sürükleme başladığında çizginin orijinal hali
+  const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -92,7 +93,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (currentShapeRef.current) {
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
-  }, [canvasState, selectedId]); // Sadece canvas state ve sabit referans değiştiğinde yeniden oluştur
+    
+    // Çizgi çizim aracı aktifse veya seçme aracı aktif ve çizim yapılmıyorsa
+    // yakalama noktalarını göster
+    if (activeTool === 'line' || (activeTool === 'selection' && !isDragging)) {
+      // Fare pozisyonuna en yakın yakalama noktasını göster
+      const snapTolerance = 10 / canvasState.zoom;
+      drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState, snapTolerance);
+    }
+  }, [canvasState, selectedId, activeTool, isDragging]); // Araç değiştiğinde veya sürükleme durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -124,6 +133,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Convert screen coordinates to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
+    
+    // Yakalama özelliği için fare pozisyonunu güncelle
+    currentMousePosRef.current = worldPos;
     
     // Update mouse position in parent component
     onMousePositionChange(worldPos);

@@ -103,6 +103,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Tüm şekillerden yakalama noktalarını topla
       shapesRef.current.forEach(shape => {
+        // Çizgi uçlarını sürüklerken, sürüklenen çizginin snap noktalarını gösterme
+        if (isDraggingEndpoint && shape.id === selectedId) {
+          return; // Bu çizgiyi atla
+        }
+        
         if (shape.type === 'point') {
           // Nokta şekilleri için kendisi bir yakalama noktasıdır
           snapPoints.push({ x: shape.x, y: shape.y });
@@ -221,8 +226,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Snap özelliği için kontrol yap
         const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
         // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+        // Seçili olan şeklin kendi snap noktalarını hariç tut (kendisine yapışmasın)
         const snapPoint = snapEnabled
-          ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+          ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance, selectedShapeId)
           : null;
           
         // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan

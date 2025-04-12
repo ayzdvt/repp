@@ -123,11 +123,21 @@ export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 
 }
 
 // Verilen noktaya en yakın yakalama noktasını bulur (tüm şekilleri kontrol eder)
-export function findNearestSnapPoint(point: Point, shapes: any[], tolerance: number = 10): Point | null {
+export function findNearestSnapPoint(
+  point: Point, 
+  shapes: any[], 
+  tolerance: number = 10,
+  excludeShapeId?: number // Dışlanacak şeklin ID'si (kendisine snap yapmaması için)
+): Point | null {
   let nearestSnapPoint: Point | null = null;
   let minDistance = tolerance;
   
   for (const shape of shapes) {
+    // Eğer bu şekil dışlanacaksa, atla
+    if (excludeShapeId !== undefined && shape.id === excludeShapeId) {
+      continue;
+    }
+    
     let snapPoint: Point | null = null;
     
     if (shape.type === 'point') {

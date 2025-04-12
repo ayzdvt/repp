@@ -63,10 +63,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                 value={pointX} 
+                onFocus={(e) => (e.target as HTMLInputElement).select()}
                 onChange={(e) => {
                   setPointX(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
+                    input.blur();
+                  }
+                }}
+                onBlur={(e) => {
                   if (onPropertyChange && selectedObject.id) {
-                    onPropertyChange('x', parseFloat(e.target.value), selectedObject.id);
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
                   }
                 }}
               />
@@ -78,10 +89,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                 value={pointY}
+                onFocus={(e) => (e.target as HTMLInputElement).select()}
                 onChange={(e) => {
                   setPointY(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('y', parseFloat(input.value), selectedObject.id);
+                    input.blur();
+                  }
+                }}
+                onBlur={(e) => {
                   if (onPropertyChange && selectedObject.id) {
-                    onPropertyChange('y', parseFloat(e.target.value), selectedObject.id);
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('y', parseFloat(input.value), selectedObject.id);
                   }
                 }}
               />
@@ -118,10 +140,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                   value={lineStartX}
+                  onFocus={(e) => (e.target as HTMLInputElement).select()}
                   onChange={(e) => {
                     setLineStartX(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('startX', parseFloat(input.value), selectedObject.id);
+                      input.blur();
+                    }
+                  }}
+                  onBlur={(e) => {
                     if (onPropertyChange && selectedObject.id) {
-                      onPropertyChange('startX', parseFloat(e.target.value), selectedObject.id);
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('startX', parseFloat(input.value), selectedObject.id);
                     }
                   }}
                 />
@@ -132,10 +165,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                   value={lineStartY}
+                  onFocus={(e) => (e.target as HTMLInputElement).select()}
                   onChange={(e) => {
                     setLineStartY(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('startY', parseFloat(input.value), selectedObject.id);
+                      input.blur();
+                    }
+                  }}
+                  onBlur={(e) => {
                     if (onPropertyChange && selectedObject.id) {
-                      onPropertyChange('startY', parseFloat(e.target.value), selectedObject.id);
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('startY', parseFloat(input.value), selectedObject.id);
                     }
                   }}
                 />
@@ -149,10 +193,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
                   value={lineEndX}
+                  onFocus={(e) => (e.target as HTMLInputElement).select()}
                   onChange={(e) => {
                     setLineEndX(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('endX', parseFloat(input.value), selectedObject.id);
+                      input.blur();
+                    }
+                  }}
+                  onBlur={(e) => {
                     if (onPropertyChange && selectedObject.id) {
-                      onPropertyChange('endX', parseFloat(e.target.value), selectedObject.id);
+                      const input = e.target as HTMLInputElement;
+                      onPropertyChange('endX', parseFloat(input.value), selectedObject.id);
                     }
                   }}
                 />

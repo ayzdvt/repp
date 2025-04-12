@@ -20,7 +20,7 @@ export default function DrawingApp() {
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
   // Canvas içindeki referans
-  const canvasRef = useRef<any>(null);
+  // Removed canvasRef
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -72,15 +72,19 @@ export default function DrawingApp() {
     value: number | string, 
     objectId: number
   ) => {
-    // Canvas ref fonksiyonunu burada kullanacağız
-    if (canvasRef.current && typeof canvasRef.current.updateShapeProperty === 'function') {
-      // Canvas üzerindeki şekli güncelle
-      const updatedObject = canvasRef.current.updateShapeProperty(objectId, property, value);
+    // Mevcut seçili nesnenin bir kopyasını oluştur
+    if (selectedObject && selectedObject.id === objectId) {
+      // Özelliği doğrudan güncelleme
+      const updatedObject = { ...selectedObject };
       
-      if (updatedObject) {
-        // State'i güncelle
-        setSelectedObject(updatedObject);
+      // Hangi özelliği güncellediğimize bağlı olarak değeri ayarla
+      if (property in updatedObject) {
+        // @ts-ignore - Dinamik özellik ataması
+        updatedObject[property] = value;
       }
+      
+      // Güncellenmiş nesneyi state'e kaydet
+      setSelectedObject(updatedObject);
     }
   };
   
@@ -99,7 +103,6 @@ export default function DrawingApp() {
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
           <DrawingCanvas 
-            ref={canvasRef}
             canvasState={canvasState}
             activeTool={activeTool}
             onMousePositionChange={handleMousePositionChange}

@@ -154,21 +154,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       else if (isDraggingRef.current) {
         if (activeTool === 'point') {
           // Nothing to update for point
-        } else if (activeTool === 'rectangle') {
-          currentShapeRef.current = {
-            ...currentShapeRef.current,
-            width: worldPos.x - currentShapeRef.current.x,
-            height: worldPos.y - currentShapeRef.current.y
-          };
-        } else if (activeTool === 'circle') {
-          const dx = worldPos.x - currentShapeRef.current.x;
-          const dy = worldPos.y - currentShapeRef.current.y;
-          const radius = Math.sqrt(dx * dx + dy * dy);
-          currentShapeRef.current = {
-            ...currentShapeRef.current,
-            radius
-          };
         }
+        // Rectangle ve circle araçları kaldırıldı
       }
     }
   };
@@ -328,21 +315,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               setDrawingLine(false);
             }
           }
-        } else if (activeTool === 'rectangle') {
-          currentShapeRef.current = {
-            type: 'rectangle',
-            x: worldPos.x,
-            y: worldPos.y,
-            width: 0,
-            height: 0
-          };
-        } else if (activeTool === 'circle') {
-          currentShapeRef.current = {
-            type: 'circle',
-            x: worldPos.x,
-            y: worldPos.y,
-            radius: 0
-          };
+        // Rectangle ve circle araçları kaldırıldı
         }
       }
     }
@@ -416,6 +389,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       if (activeTool === 'selection') {
         canvasRef.current.style.cursor = isDragging ? 'grabbing' : 'grab';
       } else {
+        // İmleci + şeklinde göster
         canvasRef.current.style.cursor = 'crosshair';
       }
     }

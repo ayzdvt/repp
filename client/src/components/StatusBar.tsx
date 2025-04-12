@@ -14,9 +14,9 @@ const StatusBar: React.FC<StatusBarProps> = ({
   zoom, 
   mousePosition 
 }) => {
-  // Format the mouse position to display 2 decimal places
-  const formattedX = Math.round(mousePosition.x * 100) / 100;
-  const formattedY = Math.round(mousePosition.y * 100) / 100;
+  // Format the mouse position to display exactly 2 decimal places
+  const formattedX = mousePosition.x.toFixed(2);
+  const formattedY = mousePosition.y.toFixed(2);
   
   return (
     <div className="h-8 bg-[#EEEEEE] border-t border-gray-300 flex items-center justify-between px-4 text-sm">

@@ -435,12 +435,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         dragStartRef.current = { x: e.clientX, y: e.clientY };
         
         if (activeTool === 'point') {
+          // Snap özelliği için kontrol yap
+          const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          const snapPoint = snapEnabled
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            : null;
+          
+          // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+          const pointPosition = snapPoint || worldPos;
+          
           // Create a point and add it directly to shapes
           const newPoint = {
             id: nextIdRef.current++,
             type: 'point',
-            x: worldPos.x,
-            y: worldPos.y,
+            x: pointPosition.x,
+            y: pointPosition.y,
             style: 'default'
           };
           shapesRef.current.push(newPoint);

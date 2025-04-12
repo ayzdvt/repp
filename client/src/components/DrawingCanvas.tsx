@@ -177,7 +177,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         requestRef.current = null;
       }
     };
-  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
+  }, []); // Bileşen takıldığında bir kez çalıştır
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -215,16 +215,30 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Hangi çizginin düzenleneceğini bul
       const lineIndex = shapesRef.current.findIndex(shape => shape.id === selectedShapeId);
       if (lineIndex !== -1) {
+        // Snap özelliği için kontrol yap
+        const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+        
+        // Şu anki çizgi hariç diğer şekillere snap yapmak için geçici bir dizi oluştur
+        const otherShapes = shapesRef.current.filter(shape => shape.id !== selectedShapeId);
+        
+        // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+        const snapPoint = snapEnabled
+          ? findNearestSnapPoint(worldPos, otherShapes, snapTolerance)
+          : null;
+        
+        // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+        const targetPos = snapPoint || worldPos;
+        
         // Çizgiyi bul
         const lineShape = shapesRef.current[lineIndex];
         
         // Hangi uç noktasının taşındığına göre güncelle
         if (draggingLineEndpointRef.current === 'start') {
-          lineShape.startX = worldPos.x;
-          lineShape.startY = worldPos.y;
+          lineShape.startX = targetPos.x;
+          lineShape.startY = targetPos.y;
         } else if (draggingLineEndpointRef.current === 'end') {
-          lineShape.endX = worldPos.x;
-          lineShape.endY = worldPos.y;
+          lineShape.endX = targetPos.x;
+          lineShape.endY = targetPos.y;
         }
         
         // UI güncellemesi için seçili nesneyi güncelle

@@ -59,6 +59,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
+  // Seçilen şekil ID'sini sabitlemek için useMemo kullanıyoruz
+  // Bu şekilde her render'da aynı referans olacak ve sonsuz döngü olmayacak
+  const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
+
   // Render işlevi - render frame içinde kullanılacak
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -76,14 +80,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
       // Seçilen şekil ise farklı renkte çiz
-      drawShape(ctx, shape, canvasState, shape.id === selectedShapeId);
+      drawShape(ctx, shape, canvasState, shape.id === selectedId);
     });
     
     // Oluşturulmakta olan şekli çiz
     if (currentShapeRef.current) {
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
-  }, [canvasState, selectedShapeId]); // canvas state veya seçilen şekil değiştiğinde fonksiyonu yeniden oluştur
+  }, [canvasState, selectedId]); // Sadece canvas state ve sabit referans değiştiğinde yeniden oluştur
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -222,6 +226,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       setIsDragging(true); // UI için
       dragStartRef.current = { x: e.clientX, y: e.clientY };
       
+      // Cursor doğrudan burada ayarlanıyor
       if (canvasRef.current) {
         canvasRef.current.style.cursor = 'grabbing';
       }
@@ -259,9 +264,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             style: 'default'
           };
           shapesRef.current.push(newPoint);
-          // Otomatik olarak yeni eklenen şekli seç
-          setSelectedShapeId(newPoint.id);
-          if (onSelectObject) onSelectObject(newPoint);
+          // Otomatik seçim özelliğini kaldırdık
         } else if (activeTool === 'line') {
           // Eğer daha önce ilk nokta seçilmemişse (çizgi çizme işleminin başlangıcı)
           if (!drawingLine) {
@@ -293,9 +296,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               };
               shapesRef.current.push(newLine);
               
-              // Otomatik olarak yeni eklenen şekli seç
-              setSelectedShapeId(newLine.id);
-              if (onSelectObject) onSelectObject(newLine);
+              // Otomatik seçim özelliğini kaldırdık
               
               // Çizim modunu kapat ve referansları temizle
               lineFirstPointRef.current = null;
@@ -371,17 +372,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
-  // Update cursor based on the selected tool
+  // İmleci ilk render'da bir kez ayarla
   useEffect(() => {
     if (canvasRef.current) {
       if (activeTool === 'selection') {
-        canvasRef.current.style.cursor = isDragging ? 'grabbing' : 'grab';
+        canvasRef.current.style.cursor = 'grab';
       } else {
-        // İmleci + şeklinde göster
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, isDragging]);
+  }, []);
   
   // Sağ tıklamayı engelle
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

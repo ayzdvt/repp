@@ -104,7 +104,7 @@ export default function DrawingApp() {
         });
         
         // Event'i container üzerinden yayınla çünkü containerRef'i dinliyoruz canvas'ta
-        canvasContainer.querySelector('div')?.dispatchEvent(updateEvent);
+        canvasContainer.dispatchEvent(updateEvent);
       }
     }
   };

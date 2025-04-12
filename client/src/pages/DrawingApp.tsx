@@ -78,6 +78,7 @@ export default function DrawingApp() {
             onMousePositionChange={handleMousePositionChange}
             onPanChange={handlePanChange}
             onZoomChange={handleZoomChange}
+            onSelectObject={setSelectedObject}
             onCanvasSizeChange={handleCanvasSizeChange}
           />
         </div>

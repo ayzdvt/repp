@@ -172,14 +172,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         case 'text':
           // For text, simplified check using a rectangular area
           // Would need more sophisticated checking for actual text bounds
-          const textRect = {
-            type: 'rectangle',
+          // Create a bounding box for the text
+          const textBounds = {
             x: shape.x,
             y: shape.y - shape.fontSize,
             width: shape.text.length * shape.fontSize * 0.6, // Rough estimate
             height: shape.fontSize * 1.2
           };
-          if (pointInRectangle(point, textRect)) {
+          if (point.x >= textBounds.x && 
+              point.x <= textBounds.x + textBounds.width && 
+              point.y >= textBounds.y && 
+              point.y <= textBounds.y + textBounds.height) {
             return shape;
           }
           break;

@@ -53,8 +53,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // Main rendering function
+  // Main rendering function - optimize to prevent rendering issues
   useEffect(() => {
+    // Create a reference to prevent unnecessary renders
+    const renderRef = {
+      shapes: [...shapes],
+      current: currentShape,
+      state: {...canvasState}
+    };
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -65,22 +72,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw the grid
-    drawGrid(ctx, canvasState);
+    drawGrid(ctx, renderRef.state);
     
     // Draw all shapes
-    shapes.forEach(shape => {
-      // Normal drawing
-      drawShape(ctx, shape, canvasState);
+    renderRef.shapes.forEach(shape => {
+      drawShape(ctx, shape, renderRef.state);
     });
     
     // Draw current shape being created
-    if (currentShape) {
-      drawShape(ctx, currentShape, canvasState);
-    }
-    
-    // Debug info for troubleshooting
-    if (shapes.length > 0) {
-      console.log("Available shapes for selection:", shapes);
+    if (renderRef.current) {
+      drawShape(ctx, renderRef.current, renderRef.state);
     }
   }, [canvasState, shapes, currentShape]);
   
@@ -98,8 +99,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Update mouse position in parent component
     onMousePositionChange(worldPos);
     
-    // Sadece orta tuş veya seçme aracı dışındaki araçlarla kaydırma
-    if (e.buttons === 4 || (isDragging && e.buttons === 1 && activeTool !== 'selection')) {
+    // SADECE orta fare tuşu (wheel button) ile pan yapmaya izin ver (buttons=4)
+    if (e.buttons === 4) {
       const dx = e.clientX - dragStart.x;
       const dy = e.clientY - dragStart.y;
       
@@ -215,9 +216,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-    
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -225,52 +223,64 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    if (activeTool === 'selection') {
-      // Try to select a shape under the click point
-      const selectedShape = findShapeAtPoint(worldPos);
-      
-      // Debug için log ekleyelim
-      console.log("Selection check:", { worldPos, selectedShape, hasOnSelectObject: !!onSelectObject });
-      
-      if (selectedShape && onSelectObject) {
-        console.log("Selected shape:", selectedShape);
-        onSelectObject(selectedShape);
+    // Orta fare tuşu için kaydırma (pan) işlemini başlat
+    if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = 'grabbing';
       }
-    } else {
-      // Handle starting to draw a shape
-      if (activeTool === 'point') {
-        // Create a point and add it directly to shapes
-        const newPoint = {
-          type: 'point',
-          x: worldPos.x,
-          y: worldPos.y,
-          style: 'default'
-        };
-        setShapes([...shapes, newPoint]);
-      } else if (activeTool === 'line') {
-        setCurrentShape({
-          type: 'line',
-          startX: worldPos.x,
-          startY: worldPos.y,
-          endX: worldPos.x,
-          endY: worldPos.y,
-          thickness: 1
-        });
-      } else if (activeTool === 'rectangle') {
-        setCurrentShape({
-          type: 'rectangle',
-          x: worldPos.x,
-          y: worldPos.y,
-          width: 0,
-          height: 0
-        });
-      } else if (activeTool === 'circle') {
-        setCurrentShape({
-          type: 'circle',
-          x: worldPos.x,
-          y: worldPos.y,
-          radius: 0
-        });
+      return;
+    }
+    
+    // Sol fare tuşu için araçlara göre farklı davranışlar
+    if (e.button === 0) { // 0 = sol fare tuşu
+      if (activeTool === 'selection') {
+        // Selection tool için nesne seçme
+        const selectedShape = findShapeAtPoint(worldPos);
+        
+        if (selectedShape && onSelectObject) {
+          onSelectObject(selectedShape);
+        }
+      } else {
+        // Diğer çizim araçları için
+        setIsDragging(true);
+        setDragStart({ x: e.clientX, y: e.clientY });
+        
+        if (activeTool === 'point') {
+          // Create a point and add it directly to shapes
+          const newPoint = {
+            type: 'point',
+            x: worldPos.x,
+            y: worldPos.y,
+            style: 'default'
+          };
+          setShapes([...shapes, newPoint]);
+        } else if (activeTool === 'line') {
+          setCurrentShape({
+            type: 'line',
+            startX: worldPos.x,
+            startY: worldPos.y,
+            endX: worldPos.x,
+            endY: worldPos.y,
+            thickness: 1
+          });
+        } else if (activeTool === 'rectangle') {
+          setCurrentShape({
+            type: 'rectangle',
+            x: worldPos.x,
+            y: worldPos.y,
+            width: 0,
+            height: 0
+          });
+        } else if (activeTool === 'circle') {
+          setCurrentShape({
+            type: 'circle',
+            x: worldPos.x,
+            y: worldPos.y,
+            radius: 0
+          });
+        }
       }
     }
   };

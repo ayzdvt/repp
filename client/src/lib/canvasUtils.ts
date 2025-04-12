@@ -159,7 +159,7 @@ export function drawSnapIndicators(
   });
   
   // En yakın yakalama noktasını bul
-  let closestPoint: Point | null = null;
+  let closestPoint: { x: number, y: number } | null = null;
   let minDistance = snapTolerance;
   
   // Fareden gelen konum geçerli mi kontrolü
@@ -178,7 +178,7 @@ export function drawSnapIndicators(
   }
   
   // En yakın yakalama noktasını vurgula
-  if (closestPoint && typeof closestPoint.x === 'number' && typeof closestPoint.y === 'number') {
+  if (closestPoint) {
     try {
       const screenPos = worldToScreen(closestPoint.x, closestPoint.y, state);
       

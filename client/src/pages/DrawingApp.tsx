@@ -133,6 +133,7 @@ export default function DrawingApp() {
               onSelectObject={setSelectedObject}
               onCanvasSizeChange={handleCanvasSizeChange}
               onToolChange={handleToolChange}
+              snapEnabled={snapEnabled}
             />
           </div>
         </div>

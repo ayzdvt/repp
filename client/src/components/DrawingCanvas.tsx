@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
-import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
+import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
 import { pointNearLine, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
@@ -96,9 +96,21 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
     
-    // Çizgi çizim modunda sadece fare canvas üzerindeyse yakalama noktalarını göstermek isterdik
-    // Ancak bu özellik performans problemlerine neden olduğu için şimdilik devre dışı bırakıldı
-    // Yakalama özelliği hâlâ çalışıyor, sadece görsel göstergeler devre dışı
+    // Eğer çizim aracı aktifse ve snap özelliği açıksa yakalama noktalarını göster
+    if (activeTool !== 'selection' && snapEnabled) {
+      // Yakalama göstergeleri için tolerans belirle (zoom'a göre ayarlanacak)
+      const snapTolerance = 10 / canvasState.zoom;
+      
+      // Yakalama noktaları göstergesini çiz
+      drawSnapIndicators(
+        ctx,
+        shapesRef.current,
+        currentMousePosRef.current,
+        canvasState,
+        snapTolerance,
+        snapEnabled
+      );
+    }
   }, [canvasState, selectedId, activeTool, isDragging]); // Araç değiştiğinde veya sürükleme durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
@@ -192,7 +204,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         if (lineFirstPointRef.current) {
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
-          const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+          // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          const snapPoint = snapEnabled
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
           const endPoint = snapPoint || worldPos;
@@ -389,7 +404,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           if (!drawingLine) {
             // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
             const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
-            const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+            // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+            const snapPoint = snapEnabled
+              ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+              : null;
             
             // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
             const startPoint = snapPoint || worldPos;
@@ -412,7 +430,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             if (lineFirstPointRef.current) {
               // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
               const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
-              const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+              // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+              const snapPoint = snapEnabled
+                ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+                : null;
               
               // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
               const endPoint = snapPoint || worldPos;

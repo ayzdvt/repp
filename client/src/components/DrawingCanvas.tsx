@@ -33,10 +33,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const isDraggingRef = useRef<boolean>(false);
   const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
   const requestRef = useRef<number | null>(null); // AnimationFrame request ID
+  const nextIdRef = useRef<number>(1); // Şekiller için benzersiz ID'ler
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
+  const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null); // Seçilen şeklin ID'si
   
   // Handle canvas resize
   useEffect(() => {
@@ -73,7 +75,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
-      drawShape(ctx, shape, canvasState);
+      // Seçilen şekil ise farklı renkte çiz
+      drawShape(ctx, shape, canvasState, shape.id === selectedShapeId);
     });
     
     // Oluşturulmakta olan şekli çiz

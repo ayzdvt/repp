@@ -123,10 +123,17 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
 export function drawShape(
   ctx: CanvasRenderingContext2D, 
   shape: any, 
-  state: CanvasState
+  state: CanvasState,
+  isSelected: boolean = false
 ) {
-  ctx.strokeStyle = '#000000';
-  ctx.fillStyle = '#000000';
+  // Seçilen şekiller için farklı renk kullan
+  if (isSelected) {
+    ctx.strokeStyle = '#FF4500'; // Turuncu-kırmızı renk
+    ctx.fillStyle = '#FF4500';
+  } else {
+    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = '#000000';
+  }
   
   if (shape.type === 'point') {
     const { x: screenX, y: screenY } = worldToScreen(shape.x, shape.y, state);

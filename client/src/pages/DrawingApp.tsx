@@ -7,7 +7,7 @@ import DrawingCanvas from "@/components/DrawingCanvas";
 import { CanvasState, Tool, Point } from "@/types";
 
 export default function DrawingApp() {
-  const [activeTool, setActiveTool] = useState<Tool>("point");
+  const [activeTool, setActiveTool] = useState<Tool>("selection");
   const [zoom, setZoom] = useState<number>(1);
   const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
   const [gridSize, setGridSize] = useState<number>(10);
@@ -85,6 +85,7 @@ export default function DrawingApp() {
             onZoomChange={handleZoomChange}
             onSelectObject={setSelectedObject}
             onCanvasSizeChange={handleCanvasSizeChange}
+            onToolChange={handleToolChange}
           />
         </div>
         

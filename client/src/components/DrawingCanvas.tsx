@@ -11,6 +11,7 @@ interface DrawingCanvasProps {
   onZoomChange: (zoom: number) => void;
   onCanvasSizeChange: (width: number, height: number) => void;
   onSelectObject?: (object: any) => void;
+  onToolChange?: (tool: Tool) => void; // Aracı değiştirmek için prop ekledik
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -20,7 +21,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onPanChange,
   onZoomChange,
   onCanvasSizeChange,
-  onSelectObject
+  onSelectObject,
+  onToolChange
 }) => {
   // DOM References
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -394,7 +396,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // ESC tuşuna basıldığında seçimi iptal et
+  // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -412,6 +414,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           lineFirstPointRef.current = null;
           currentShapeRef.current = null;
         }
+        
+        // Eğer seçim aracında değilsek seçim aracına geç
+        if (activeTool !== 'selection' && onToolChange) {
+          onToolChange('selection');
+        }
       }
     };
     
@@ -422,7 +429,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [drawingLine, onSelectObject]);
+  }, [activeTool, drawingLine, onSelectObject, onToolChange]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak

@@ -218,13 +218,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Çizgiyi bul
         const lineShape = shapesRef.current[lineIndex];
         
+        // Snap özelliği için kontrol yap
+        const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+        // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+        const snapPoint = snapEnabled
+          ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+          : null;
+          
+        // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+        const endPoint = snapPoint || worldPos;
+        
         // Hangi uç noktasının taşındığına göre güncelle
         if (draggingLineEndpointRef.current === 'start') {
-          lineShape.startX = worldPos.x;
-          lineShape.startY = worldPos.y;
+          lineShape.startX = endPoint.x;
+          lineShape.startY = endPoint.y;
         } else if (draggingLineEndpointRef.current === 'end') {
-          lineShape.endX = worldPos.x;
-          lineShape.endY = worldPos.y;
+          lineShape.endX = endPoint.x;
+          lineShape.endY = endPoint.y;
         }
         
         // UI güncellemesi için seçili nesneyi güncelle

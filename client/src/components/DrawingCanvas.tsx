@@ -1,12 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
-import { 
-  pointNearLine, 
-  pointNearCircle, 
-  pointInRectangle, 
-  distance
-} from '@/lib/drawingPrimitives';
+import { pointNearLine, distance } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -183,33 +178,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           }
           break;
           
-        case 'rectangle':
-          // For a rectangle, check if the click is inside
-          // Eğer genişlik veya yükseklik negatifse, koordinatları düzeltmeliyiz
-          const rect = { ...shape };
-          
-          if (rect.width < 0) {
-            rect.x += rect.width;
-            rect.width = Math.abs(rect.width);
-          }
-          
-          if (rect.height < 0) {
-            rect.y += rect.height;
-            rect.height = Math.abs(rect.height);
-          }
-          
-          if (pointInRectangle(point, rect)) {
-            return shape;
-          }
-          break;
-          
-        case 'circle':
-          // For a circle, check if the click is inside the circle or near its perimeter
-          const distToCenter = distance(point, { x: shape.x, y: shape.y });
-          if (distToCenter <= shape.radius + 5) { // İçinde veya kenara yakın olma durumu
-            return shape;
-          }
-          break;
+        // Rectangle ve circle case'leri kaldırıldı
           
         case 'text':
           // For text, simplified check using a rectangular area

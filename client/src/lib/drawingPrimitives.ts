@@ -38,41 +38,7 @@ export function createLine(startX: number, startY: number, endX: number, endY: n
   };
 }
 
-// Rectangle primitive
-export interface RectangleShape {
-  type: 'rectangle';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export function createRectangle(x: number, y: number, width: number, height: number): RectangleShape {
-  return {
-    type: 'rectangle',
-    x,
-    y,
-    width,
-    height
-  };
-}
-
-// Circle primitive
-export interface CircleShape {
-  type: 'circle';
-  x: number;
-  y: number;
-  radius: number;
-}
-
-export function createCircle(x: number, y: number, radius: number): CircleShape {
-  return {
-    type: 'circle',
-    x,
-    y,
-    radius
-  };
-}
+// Rectangle ve circle primitives kaldırıldı
 
 // Text primitive
 export interface TextShape {
@@ -100,15 +66,7 @@ export function distance(p1: Point, p2: Point): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Check if a point is inside a rectangle
-export function pointInRectangle(point: Point, rect: RectangleShape): boolean {
-  return (
-    point.x >= rect.x && 
-    point.x <= rect.x + rect.width && 
-    point.y >= rect.y && 
-    point.y <= rect.y + rect.height
-  );
-}
+// Rectangle fonksiyonu kaldırıldı
 
 // Check if a point is near a line (for selection)
 export function pointNearLine(point: Point, line: LineShape, tolerance: number = 5): boolean {
@@ -133,8 +91,4 @@ export function pointNearLine(point: Point, line: LineShape, tolerance: number =
   return distance(point, { x: closestX, y: closestY }) <= tolerance;
 }
 
-// Check if a point is near a circle (for selection)
-export function pointNearCircle(point: Point, circle: CircleShape, tolerance: number = 5): boolean {
-  const dist = distance(point, { x: circle.x, y: circle.y });
-  return Math.abs(dist - circle.radius) <= tolerance;
-}
+// Circle fonksiyonu kaldırıldı

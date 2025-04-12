@@ -83,7 +83,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (currentShapeRef.current) {
       drawShape(ctx, currentShapeRef.current, canvasState);
     }
-  }, [canvasState]); // Sadece canvas state değiştiğinde fonksiyonu yeniden oluştur
+  }, [canvasState, selectedShapeId]); // canvas state veya seçilen şekil değiştiğinde fonksiyonu yeniden oluştur
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -235,7 +235,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const selectedShape = findShapeAtPoint(worldPos);
         
         if (selectedShape && onSelectObject) {
+          // Seçili şeklin ID'sini ayarla
+          setSelectedShapeId(selectedShape.id);
           onSelectObject(selectedShape);
+        } else {
+          // Hiçbir şekil seçilmediyse seçimi temizle
+          setSelectedShapeId(null);
+          if (onSelectObject) onSelectObject(null);
         }
       } else {
         // Diğer çizim araçları için
@@ -246,12 +252,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         if (activeTool === 'point') {
           // Create a point and add it directly to shapes
           const newPoint = {
+            id: nextIdRef.current++,
             type: 'point',
             x: worldPos.x,
             y: worldPos.y,
             style: 'default'
           };
           shapesRef.current.push(newPoint);
+          // Otomatik olarak yeni eklenen şekli seç
+          setSelectedShapeId(newPoint.id);
+          if (onSelectObject) onSelectObject(newPoint);
         } else if (activeTool === 'line') {
           // Eğer daha önce ilk nokta seçilmemişse (çizgi çizme işleminin başlangıcı)
           if (!drawingLine) {
@@ -272,14 +282,20 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             // İkinci tıklama - çizgiyi tamamla
             if (lineFirstPointRef.current) {
               // Tamamlanmış çizgiyi shapesRef'e ekle
-              shapesRef.current.push({
+              const newLine = {
+                id: nextIdRef.current++,
                 type: 'line',
                 startX: lineFirstPointRef.current.x,
                 startY: lineFirstPointRef.current.y,
                 endX: worldPos.x,
                 endY: worldPos.y,
                 thickness: 1
-              });
+              };
+              shapesRef.current.push(newLine);
+              
+              // Otomatik olarak yeni eklenen şekli seç
+              setSelectedShapeId(newLine.id);
+              if (onSelectObject) onSelectObject(newLine);
               
               // Çizim modunu kapat ve referansları temizle
               lineFirstPointRef.current = null;

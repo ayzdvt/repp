@@ -36,11 +36,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
   const requestRef = useRef<number | null>(null); // AnimationFrame request ID
   const nextIdRef = useRef<number>(1); // Şekiller için benzersiz ID'ler
+  const draggingLineEndpointRef = useRef<'start' | 'end' | null>(null); // Hangi çizgi ucunun sürüklendiği
+  const originalLineRef = useRef<any | null>(null); // Sürükleme başladığında çizginin orijinal hali
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
   const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null); // Seçilen şeklin ID'si
+  const [isDraggingEndpoint, setIsDraggingEndpoint] = useState<boolean>(false); // Çizgi uç noktası sürükleme durumu
   
   // Handle canvas resize
   useEffect(() => {
@@ -137,10 +140,42 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Güncelleme sonrası başlangıç noktasını güncelle
       dragStartRef.current = { x: e.clientX, y: e.clientY };
-    }
+    } 
+    
+    // Çizgi uç noktası sürükleme işlemi
+    else if (isDraggingEndpoint && draggingLineEndpointRef.current && selectedShapeId !== null && (e.buttons === 1)) {
+      // Hangi çizginin düzenleneceğini bul
+      const lineIndex = shapesRef.current.findIndex(shape => shape.id === selectedShapeId);
+      if (lineIndex !== -1) {
+        // Çizgiyi bul
+        const lineShape = shapesRef.current[lineIndex];
+        
+        // Hangi uç noktasının taşındığına göre güncelle
+        if (draggingLineEndpointRef.current === 'start') {
+          lineShape.startX = worldPos.x;
+          lineShape.startY = worldPos.y;
+        } else if (draggingLineEndpointRef.current === 'end') {
+          lineShape.endX = worldPos.x;
+          lineShape.endY = worldPos.y;
+        }
+        
+        // UI güncellemesi için seçili nesneyi güncelle
+        if (onSelectObject) {
+          onSelectObject(lineShape);
+        }
+        
+        // Canvas'ın yeniden çizilmesini sağlayan düzenleme
+        shapesRef.current[lineIndex] = { ...lineShape };
+        
+        // İmleç stilini güncelle
+        if (canvasRef.current) {
+          canvasRef.current.style.cursor = 'move';
+        }
+      }
+    } 
     
     // Handle shape drawing (sol fare tuşu çizim)
-    if (currentShapeRef.current && activeTool !== 'selection') {
+    else if (currentShapeRef.current && activeTool !== 'selection') {
       // Çizgi çizme özel durumu
       if (activeTool === 'line' && drawingLine) {
         // Birinci nokta sabit, ikinci nokta fare ile hareket eder
@@ -164,6 +199,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
+  // Çizginin başlangıç noktasında mı tıklandı kontrolü
+  const isNearLineStart = (line: any, point: Point, tolerance: number): boolean => {
+    return distance(point, { x: line.startX, y: line.startY }) <= tolerance;
+  };
+  
+  // Çizginin bitiş noktasında mı tıklandı kontrolü
+  const isNearLineEnd = (line: any, point: Point, tolerance: number): boolean => {
+    return distance(point, { x: line.endX, y: line.endY }) <= tolerance;
+  };
+  
+  // Çizgi uç noktalarından birinde mi tıklandı kontrolü
+  const getLineEndpoint = (line: any, point: Point, tolerance: number): 'start' | 'end' | null => {
+    // Bitiş noktası (daha önce çizileni kolay seçmek için)
+    if (isNearLineEnd(line, point, tolerance)) {
+      return 'end';
+    }
+    // Başlangıç noktası
+    if (isNearLineStart(line, point, tolerance)) {
+      return 'start';
+    }
+    return null;
+  };
+  
   // Helper function to find the shape under a given point
   const findShapeAtPoint = (point: Point): any | null => {
     // Zoom seviyesine göre seçim toleransını hesapla
@@ -178,6 +236,26 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Toleransı sınırlar içinde tut
     const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
     
+    // Eğer zaten bir çizgi seçiliyse, uç noktalarına tıklandığını kontrol et
+    if (selectedShapeId !== null && activeTool === 'selection') {
+      const selectedShape = shapesRef.current.find(s => s.id === selectedShapeId);
+      if (selectedShape && selectedShape.type === 'line') {
+        // Eğer çizginin uç noktalarından birine tıklandıysa
+        const endpoint = getLineEndpoint(selectedShape, point, tolerance * 1.5); // Biraz daha geniş tolerans
+        
+        if (endpoint) {
+          // Uç noktası sürükleme modu için çizgiyi ve hangi ucunu seçtiğimizi kaydet
+          draggingLineEndpointRef.current = endpoint;
+          originalLineRef.current = { ...selectedShape };
+          setIsDraggingEndpoint(true);
+          
+          // Aynı çizgiyi döndür - zaten seçiliydi
+          return selectedShape;
+        }
+      }
+    }
+    
+    // Normal şekil arama devam ediyor
     // Check shapes in reverse order (last drawn on top)
     const shapes = shapesRef.current;
     for (let i = shapes.length - 1; i >= 0; i--) {
@@ -336,6 +414,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     isDraggingRef.current = false;
     setIsDragging(false); // UI için
     
+    // Çizgi uç noktası sürükleme işlemini sonlandır
+    if (isDraggingEndpoint) {
+      setIsDraggingEndpoint(false);
+      draggingLineEndpointRef.current = null;
+      originalLineRef.current = null;
+    }
+    
     // Reset cursor
     if (canvasRef.current) {
       if (activeTool === 'selection') {
@@ -415,6 +500,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           currentShapeRef.current = null;
         }
         
+        // Çizgi uç noktası sürükleme işlemini de iptal et
+        if (isDraggingEndpoint) {
+          setIsDraggingEndpoint(false);
+          draggingLineEndpointRef.current = null;
+          originalLineRef.current = null;
+        }
+        
         // Eğer seçim aracında değilsek seçim aracına geç
         if (activeTool !== 'selection' && onToolChange) {
           onToolChange('selection');
@@ -457,6 +549,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       setDrawingLine(false);
       lineFirstPointRef.current = null;
       currentShapeRef.current = null;
+    }
+    
+    // Çizgi uç noktası sürükleme işlemini de iptal et
+    if (isDraggingEndpoint) {
+      setIsDraggingEndpoint(false);
+      draggingLineEndpointRef.current = null;
+      originalLineRef.current = null;
     }
     
     // İmleç stilini güncelle

@@ -98,20 +98,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Eğer çizim aracı aktifse ve snap özelliği açıksa yakalama noktalarını göster
     if (activeTool !== 'selection' && snapEnabled) {
-      // Yakalama göstergeleri için tolerans belirle (zoom'a göre ayarlanacak)
-      const snapTolerance = 10 / canvasState.zoom;
-      
-      // Yakalama noktaları göstergesini çiz
-      drawSnapIndicators(
-        ctx,
-        shapesRef.current,
-        currentMousePosRef.current,
-        canvasState,
-        snapTolerance,
-        snapEnabled
-      );
+      // Geçici olarak devre dışı bıraktık
+      // console.log("Snap göstergeleri şimdilik devre dışı bırakıldı");
     }
-  }, [canvasState, selectedId, activeTool, isDragging]); // Araç değiştiğinde veya sürükleme durumu değiştiğinde de yeniden çiz
+  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {

@@ -206,30 +206,40 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     
-    // Get mouse position before zoom
+    // Get mouse position
     if (!canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Get the world coordinates of the mouse pointer
-    const mouseWorldX = (mouseX - rect.width / 2 - canvasState.panOffset.x) / canvasState.zoom;
-    const mouseWorldY = (rect.height / 2 - mouseY + canvasState.panOffset.y) / canvasState.zoom;
+    // Calculate world coordinates of the mouse position
+    const worldPos = screenToWorld(mouseX, mouseY, canvasState);
     
-    // Calculate new zoom
-    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+    // Calculate new zoom level
+    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1; // Reduce zoom on scroll down, increase on scroll up
     const newZoom = canvasState.zoom * zoomDelta;
     
     // Limit zoom range
     if (newZoom > 0.1 && newZoom < 10) {
-      // Calculate new pan offset to keep the point under the mouse in the same position
-      const newPanX = mouseX - mouseWorldX * newZoom - rect.width / 2;
-      const newPanY = rect.height / 2 - mouseY + mouseWorldY * newZoom;
-      
-      // Update zoom and pan
+      // Update zoom first
       onZoomChange(newZoom);
-      onPanChange(newPanX, newPanY);
+      
+      // Calculate the screen position after the zoom change
+      const screenPos = worldToScreen(worldPos.x, worldPos.y, {
+        ...canvasState,
+        zoom: newZoom
+      });
+      
+      // Calculate the difference between where the point is now drawn and where the mouse is
+      const dx = screenPos.x - mouseX;
+      const dy = screenPos.y - mouseY;
+      
+      // Adjust the pan offset to compensate for this difference
+      onPanChange(
+        canvasState.panOffset.x - dx,
+        canvasState.panOffset.y - dy
+      );
     }
   };
   

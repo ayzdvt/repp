@@ -1,6 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
+import { 
+  pointNearLine, 
+  pointNearCircle, 
+  pointInRectangle, 
+  distance
+} from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -9,6 +15,7 @@ interface DrawingCanvasProps {
   onPanChange: (x: number, y: number) => void;
   onZoomChange: (zoom: number) => void;
   onCanvasSizeChange: (width: number, height: number) => void;
+  onSelectObject?: (object: any) => void;
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -17,7 +24,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onMousePositionChange,
   onPanChange,
   onZoomChange,
-  onCanvasSizeChange
+  onCanvasSizeChange,
+  onSelectObject
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +133,62 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
+  // Helper function to find the shape under a given point
+  const findShapeAtPoint = (point: Point): any | null => {
+    // Check shapes in reverse order (last drawn on top)
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      const shape = shapes[i];
+      
+      switch (shape.type) {
+        case 'point':
+          // For a point, check if the click is within a small radius
+          if (distance(point, { x: shape.x, y: shape.y }) <= 5) {
+            return shape;
+          }
+          break;
+          
+        case 'line':
+          // For a line, check if the click is near the line
+          if (pointNearLine(point, shape)) {
+            return shape;
+          }
+          break;
+          
+        case 'rectangle':
+          // For a rectangle, check if the click is inside
+          if (pointInRectangle(point, shape)) {
+            return shape;
+          }
+          break;
+          
+        case 'circle':
+          // For a circle, check if the click is near the circle perimeter or inside
+          const distToCenter = distance(point, { x: shape.x, y: shape.y });
+          if (distToCenter <= shape.radius + 5 && distToCenter >= shape.radius - 5) {
+            return shape;
+          }
+          break;
+          
+        case 'text':
+          // For text, simplified check using a rectangular area
+          // Would need more sophisticated checking for actual text bounds
+          const textRect = {
+            type: 'rectangle',
+            x: shape.x,
+            y: shape.y - shape.fontSize,
+            width: shape.text.length * shape.fontSize * 0.6, // Rough estimate
+            height: shape.fontSize * 1.2
+          };
+          if (pointInRectangle(point, textRect)) {
+            return shape;
+          }
+          break;
+      }
+    }
+    
+    return null;
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
@@ -138,8 +202,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    // Handle starting to draw a shape
-    if (activeTool !== 'selection') {
+    if (activeTool === 'selection') {
+      // Try to select a shape under the click point
+      const selectedShape = findShapeAtPoint(worldPos);
+      
+      if (selectedShape && onSelectObject) {
+        onSelectObject(selectedShape);
+      } else if (canvasRef.current) {
+        // If no shape was clicked, prepare for canvas panning
+        canvasRef.current.style.cursor = 'grabbing';
+      }
+    } else {
+      // Handle starting to draw a shape
       if (activeTool === 'point') {
         // Create a point and add it directly to shapes
         const newPoint = {
@@ -173,13 +247,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           y: worldPos.y,
           radius: 0
         });
-      }
-    }
-    
-    // Set cursor style based on the selected tool
-    if (activeTool === 'selection') {
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = 'grabbing';
       }
     }
   };

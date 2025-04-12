@@ -481,6 +481,33 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
+  // Özel şekil güncelleme olayını dinleme
+  useEffect(() => {
+    // Canvas elementimizi al
+    const canvasElement = document.getElementById('drawing-canvas');
+    if (!canvasElement) return;
+    
+    // Özel olayları işleme fonksiyonu
+    const handleShapeUpdate = (e: any) => {
+      const { detail } = e;
+      if (detail?.type === 'update' && detail?.shape) {
+        // Güncellenen şekli bul ve güncelle
+        const shapeIndex = shapesRef.current.findIndex(s => s.id === detail.shape.id);
+        if (shapeIndex !== -1) {
+          shapesRef.current[shapeIndex] = detail.shape;
+        }
+      }
+    };
+    
+    // Olay dinleyiciyi ekle
+    canvasElement.addEventListener('shapeupdate', handleShapeUpdate);
+    
+    // Cleanup
+    return () => {
+      canvasElement.removeEventListener('shapeupdate', handleShapeUpdate);
+    };
+  }, []);
+  
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -83,8 +83,22 @@ export default function DrawingApp() {
         updatedObject[property] = value;
       }
       
-      // Güncellenmiş nesneyi state'e kaydet
+      // Önce DrawingCanvas bileşenine referans iletmek için güncellenmiş nesneyi state'e kaydet
       setSelectedObject(updatedObject);
+
+      // DrawingCanvas'a yapılan değişikliği çağırarak ileteceğiz
+      // Bu, DrawingCanvas'ın içindeki shapesRef'i de günceller
+      const canvasElement = document.getElementById('drawing-canvas') as HTMLElement;
+      if (canvasElement) {
+        // Özel olay oluştur - canvas.tsx dosyasında dinleyeceğiz
+        const updateEvent = new CustomEvent('shapeupdate', { 
+          detail: { 
+            type: 'update',
+            shape: updatedObject
+          } 
+        });
+        canvasElement.dispatchEvent(updateEvent);
+      }
     }
   };
   
@@ -102,16 +116,18 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
-          <DrawingCanvas 
-            canvasState={canvasState}
-            activeTool={activeTool}
-            onMousePositionChange={handleMousePositionChange}
-            onPanChange={handlePanChange}
-            onZoomChange={handleZoomChange}
-            onSelectObject={setSelectedObject}
-            onCanvasSizeChange={handleCanvasSizeChange}
-            onToolChange={handleToolChange}
-          />
+          <div id="drawing-canvas">
+            <DrawingCanvas 
+              canvasState={canvasState}
+              activeTool={activeTool}
+              onMousePositionChange={handleMousePositionChange}
+              onPanChange={handlePanChange}
+              onZoomChange={handleZoomChange}
+              onSelectObject={setSelectedObject}
+              onCanvasSizeChange={handleCanvasSizeChange}
+              onToolChange={handleToolChange}
+            />
+          </div>
         </div>
         
         <PropertiesSidebar 

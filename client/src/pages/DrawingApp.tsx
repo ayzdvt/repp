@@ -19,6 +19,9 @@ export default function DrawingApp() {
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
+  // Canvas içindeki referans
+  const canvasRef = useRef<any>(null);
+  
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
     
@@ -63,6 +66,24 @@ export default function DrawingApp() {
     }));
   };
   
+  // Nesne özelliklerinde değişiklik yapıldığında bu fonksiyon çağrılacak
+  const handlePropertyChange = (
+    property: string, 
+    value: number | string, 
+    objectId: number
+  ) => {
+    // Canvas ref fonksiyonunu burada kullanacağız
+    if (canvasRef.current && typeof canvasRef.current.updateShapeProperty === 'function') {
+      // Canvas üzerindeki şekli güncelle
+      const updatedObject = canvasRef.current.updateShapeProperty(objectId, property, value);
+      
+      if (updatedObject) {
+        // State'i güncelle
+        setSelectedObject(updatedObject);
+      }
+    }
+  };
+  
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">
       <Header />
@@ -78,6 +99,7 @@ export default function DrawingApp() {
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
           <DrawingCanvas 
+            ref={canvasRef}
             canvasState={canvasState}
             activeTool={activeTool}
             onMousePositionChange={handleMousePositionChange}
@@ -89,7 +111,10 @@ export default function DrawingApp() {
           />
         </div>
         
-        <PropertiesSidebar selectedObject={selectedObject} />
+        <PropertiesSidebar 
+          selectedObject={selectedObject} 
+          onPropertyChange={handlePropertyChange}
+        />
       </div>
       
       <StatusBar 

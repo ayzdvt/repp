@@ -1,0 +1,96 @@
+import { useState, useRef, useEffect } from "react";
+import Header from "@/components/Header";
+import ToolSidebar from "@/components/ToolSidebar";
+import PropertiesSidebar from "@/components/PropertiesSidebar";
+import StatusBar from "@/components/StatusBar";
+import DrawingCanvas from "@/components/DrawingCanvas";
+import { CanvasState, Tool, Point } from "@/types";
+
+export default function DrawingApp() {
+  const [activeTool, setActiveTool] = useState<Tool>("point");
+  const [zoom, setZoom] = useState<number>(1);
+  const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
+  const [gridSize, setGridSize] = useState<number>(10);
+  const [canvasState, setCanvasState] = useState<CanvasState>({
+    gridSize: 10,
+    zoom: 1,
+    panOffset: { x: 0, y: 0 },
+    canvasSize: { width: 0, height: 0 }
+  });
+  const [selectedObject, setSelectedObject] = useState<any>(null);
+  
+  const handleToolChange = (tool: Tool) => {
+    setActiveTool(tool);
+  };
+  
+  const handleZoomChange = (newZoom: number) => {
+    setZoom(newZoom);
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: newZoom
+    }));
+  };
+  
+  const handlePanChange = (x: number, y: number) => {
+    setCanvasState(prev => ({
+      ...prev,
+      panOffset: { x, y }
+    }));
+  };
+  
+  const handleResetView = () => {
+    setZoom(1);
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: 1,
+      panOffset: { x: 0, y: 0 }
+    }));
+  };
+  
+  const handleMousePositionChange = (position: Point) => {
+    setMousePosition(position);
+  };
+  
+  const handleCanvasSizeChange = (width: number, height: number) => {
+    setCanvasState(prev => ({
+      ...prev, 
+      canvasSize: { width, height }
+    }));
+  };
+  
+  return (
+    <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">
+      <Header />
+      
+      <div className="flex-1 flex overflow-hidden">
+        <ToolSidebar 
+          activeTool={activeTool} 
+          onToolChange={handleToolChange}
+          onZoomIn={() => handleZoomChange(zoom * 1.2)}
+          onZoomOut={() => handleZoomChange(zoom / 1.2)}
+          onFitView={handleResetView}
+        />
+        
+        <div className="flex-1 relative overflow-hidden" id="drawing-container">
+          <DrawingCanvas 
+            canvasState={canvasState}
+            activeTool={activeTool}
+            onMousePositionChange={handleMousePositionChange}
+            onPanChange={handlePanChange}
+            onZoomChange={handleZoomChange}
+            onCanvasSizeChange={handleCanvasSizeChange}
+          />
+        </div>
+        
+        <PropertiesSidebar selectedObject={selectedObject} />
+      </div>
+      
+      <StatusBar 
+        activeTool={activeTool}
+        gridSize={gridSize}
+        zoom={zoom}
+        mousePosition={mousePosition}
+      />
+    </div>
+  );
+}

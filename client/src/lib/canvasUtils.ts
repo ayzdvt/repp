@@ -155,7 +155,7 @@ export function drawShape(
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
-    ctx.lineWidth = shape.thickness * state.zoom;
+    ctx.lineWidth = shape.thickness; // Sabit kalınlık - zoom'dan etkilenmesin
     ctx.stroke();
   } else if (shape.type === 'rectangle') {
     const topLeft = worldToScreen(shape.x, shape.y, state);

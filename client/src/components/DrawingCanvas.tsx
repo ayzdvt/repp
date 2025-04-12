@@ -36,9 +36,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const currentShapeRef = useRef<any | null>(null);
   const dragStartRef = useRef<Point>({ x: 0, y: 0 });
   const isDraggingRef = useRef<boolean>(false);
+  const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
   
   // Handle canvas resize
   useEffect(() => {
@@ -134,29 +136,39 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     
     // Handle shape drawing (sol fare tuşu çizim)
-    if (currentShapeRef.current && activeTool !== 'selection' && isDraggingRef.current) {
-      if (activeTool === 'point') {
-        // Nothing to update for point
-      } else if (activeTool === 'line') {
-        currentShapeRef.current = {
-          ...currentShapeRef.current,
-          endX: worldPos.x,
-          endY: worldPos.y
-        };
-      } else if (activeTool === 'rectangle') {
-        currentShapeRef.current = {
-          ...currentShapeRef.current,
-          width: worldPos.x - currentShapeRef.current.x,
-          height: worldPos.y - currentShapeRef.current.y
-        };
-      } else if (activeTool === 'circle') {
-        const dx = worldPos.x - currentShapeRef.current.x;
-        const dy = worldPos.y - currentShapeRef.current.y;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        currentShapeRef.current = {
-          ...currentShapeRef.current,
-          radius
-        };
+    if (currentShapeRef.current && activeTool !== 'selection') {
+      // Çizgi çizme özel durumu
+      if (activeTool === 'line' && drawingLine) {
+        // Birinci nokta sabit, ikinci nokta fare ile hareket eder
+        if (lineFirstPointRef.current) {
+          currentShapeRef.current = {
+            ...currentShapeRef.current,
+            startX: lineFirstPointRef.current.x,
+            startY: lineFirstPointRef.current.y,
+            endX: worldPos.x,
+            endY: worldPos.y
+          };
+        }
+      } 
+      // Diğer şekil çizimleri için sürükle-bırak davranışı (fare basılı tutulduğunda)
+      else if (isDraggingRef.current) {
+        if (activeTool === 'point') {
+          // Nothing to update for point
+        } else if (activeTool === 'rectangle') {
+          currentShapeRef.current = {
+            ...currentShapeRef.current,
+            width: worldPos.x - currentShapeRef.current.x,
+            height: worldPos.y - currentShapeRef.current.y
+          };
+        } else if (activeTool === 'circle') {
+          const dx = worldPos.x - currentShapeRef.current.x;
+          const dy = worldPos.y - currentShapeRef.current.y;
+          const radius = Math.sqrt(dx * dx + dy * dy);
+          currentShapeRef.current = {
+            ...currentShapeRef.current,
+            radius
+          };
+        }
       }
     }
   };
@@ -282,14 +294,40 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           };
           shapesRef.current.push(newPoint);
         } else if (activeTool === 'line') {
-          currentShapeRef.current = {
-            type: 'line',
-            startX: worldPos.x,
-            startY: worldPos.y,
-            endX: worldPos.x,
-            endY: worldPos.y,
-            thickness: 1
-          };
+          // Eğer daha önce ilk nokta seçilmemişse (çizgi çizme işleminin başlangıcı)
+          if (!drawingLine) {
+            // İlk noktayı kaydet
+            lineFirstPointRef.current = { x: worldPos.x, y: worldPos.y };
+            setDrawingLine(true);
+            
+            // Geçici gösterim için çizgi oluştur
+            currentShapeRef.current = {
+              type: 'line',
+              startX: worldPos.x,
+              startY: worldPos.y,
+              endX: worldPos.x,
+              endY: worldPos.y,
+              thickness: 1
+            };
+          } else {
+            // İkinci tıklama - çizgiyi tamamla
+            if (lineFirstPointRef.current) {
+              // Tamamlanmış çizgiyi shapesRef'e ekle
+              shapesRef.current.push({
+                type: 'line',
+                startX: lineFirstPointRef.current.x,
+                startY: lineFirstPointRef.current.y,
+                endX: worldPos.x,
+                endY: worldPos.y,
+                thickness: 1
+              });
+              
+              // Çizim modunu kapat ve referansları temizle
+              lineFirstPointRef.current = null;
+              currentShapeRef.current = null;
+              setDrawingLine(false);
+            }
+          }
         } else if (activeTool === 'rectangle') {
           currentShapeRef.current = {
             type: 'rectangle',
@@ -323,11 +361,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     }
     
-    // Add current shape to shapes array if it exists
-    if (currentShapeRef.current && activeTool !== 'selection') {
+    // Çizgi aracı dışındaki araçlar için şekli ekle
+    if (currentShapeRef.current && activeTool !== 'selection' && activeTool !== 'line') {
       shapesRef.current.push(currentShapeRef.current);
       currentShapeRef.current = null;
     }
+    
+    // Çizgi aracı için handleMouseUp'ta bir şey yapmayalım - tüm işlem mouseDown'da gerçekleşiyor
   };
   
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {

@@ -71,8 +71,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Bu şekilde her render'da aynı referans olacak ve sonsuz döngü olmayacak
   const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
 
-  // Render işlevi - render frame içinde kullanılacak
-  const renderCanvas = useCallback(() => {
+  // Render işlevi - normal işlev olarak tanımla, useCallback kullanma
+  const renderCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -157,7 +157,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
+  }
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {

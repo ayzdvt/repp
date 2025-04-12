@@ -98,8 +98,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Update mouse position in parent component
     onMousePositionChange(worldPos);
     
-    // Handle panning if selection tool is active and dragging
-    if (activeTool === 'selection' && isDragging) {
+    // Sadece orta tuş veya seçme aracı dışındaki araçlarla kaydırma
+    if (e.buttons === 4 || (isDragging && e.buttons === 1 && activeTool !== 'selection')) {
       const dx = e.clientX - dragStart.x;
       const dy = e.clientY - dragStart.y;
       
@@ -235,9 +235,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       if (selectedShape && onSelectObject) {
         console.log("Selected shape:", selectedShape);
         onSelectObject(selectedShape);
-      } else if (canvasRef.current) {
-        // If no shape was clicked, prepare for canvas panning
-        canvasRef.current.style.cursor = 'grabbing';
       }
     } else {
       // Handle starting to draw a shape
@@ -348,6 +345,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   }, [activeTool, isDragging]);
   
+  // Sağ tıklamayı engelle
+  const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    return false;
+  };
+
   return (
     <div 
       ref={containerRef} 
@@ -360,6 +363,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
+        onContextMenu={handleContextMenu}
       />
     </div>
   );

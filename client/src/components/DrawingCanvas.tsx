@@ -164,6 +164,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // Helper function to find the shape under a given point
   const findShapeAtPoint = (point: Point): any | null => {
+    // Zoom seviyesine göre seçim toleransını hesapla
+    // Zoom büyükse tolerans düşük, zoom küçükse tolerans yüksek olmalı
+    const baseTolerance = 10; // Baz tolerans değeri
+    const zoomAdjustedTolerance = baseTolerance / canvasState.zoom;
+    
+    // En düşük ve en yüksek tolerans sınırları
+    const minTolerance = 2;  // Çok yakından bile en az bu kadar tolerans olsun
+    const maxTolerance = 15; // Çok uzaktan bile en fazla bu kadar tolerans olsun
+    
+    // Toleransı sınırlar içinde tut
+    const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
+    
     // Check shapes in reverse order (last drawn on top)
     const shapes = shapesRef.current;
     for (let i = shapes.length - 1; i >= 0; i--) {
@@ -172,15 +184,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       switch (shape.type) {
         case 'point':
           // For a point, check if the click is within a small radius
-          if (distance(point, { x: shape.x, y: shape.y }) <= 10) { // Daha kolay seçilebilmesi için toleransı artırdık
+          if (distance(point, { x: shape.x, y: shape.y }) <= tolerance) {
             return shape;
           }
           break;
           
         case 'line':
           // For a line, check if the click is near the line
-          // Tolerance'ı artırarak daha kolay seçme
-          if (pointNearLine(point, shape, 10)) { // Daha geniş seçim alanı için tolerance'ı artırdım
+          if (pointNearLine(point, shape, tolerance)) {
             return shape;
           }
           break;
@@ -197,10 +208,19 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             width: shape.text.length * shape.fontSize * 0.6, // Rough estimate
             height: shape.fontSize * 1.2
           };
-          if (point.x >= textBounds.x && 
-              point.x <= textBounds.x + textBounds.width && 
-              point.y >= textBounds.y && 
-              point.y <= textBounds.y + textBounds.height) {
+          
+          // Text için de biraz tolerans ekle
+          const expandedTextBounds = {
+            x: textBounds.x - tolerance,
+            y: textBounds.y - tolerance,
+            width: textBounds.width + 2 * tolerance,
+            height: textBounds.height + 2 * tolerance
+          };
+          
+          if (point.x >= expandedTextBounds.x && 
+              point.x <= expandedTextBounds.x + expandedTextBounds.width && 
+              point.y >= expandedTextBounds.y && 
+              point.y <= expandedTextBounds.y + expandedTextBounds.height) {
             return shape;
           }
           break;

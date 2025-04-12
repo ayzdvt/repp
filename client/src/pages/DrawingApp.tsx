@@ -95,16 +95,20 @@ export default function DrawingApp() {
       // Bu, DrawingCanvas'ın içindeki shapesRef'i de günceller
       const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
       if (canvasContainer) {
-        // Özel olay oluştur - canvas.tsx dosyasında dinleyeceğiz
-        const updateEvent = new CustomEvent('shapeupdate', { 
-          detail: { 
-            type: 'update',
-            shape: updatedObject
-          } 
-        });
-        
-        // Event'i container üzerinden yayınla çünkü containerRef'i dinliyoruz canvas'ta
-        canvasContainer.dispatchEvent(updateEvent);
+        // İçindeki canvas containerına erişelim
+        const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+        if (canvasElement) {
+          // Özel olay oluştur - canvas.tsx dosyasında dinleyeceğiz
+          const updateEvent = new CustomEvent('shapeupdate', { 
+            detail: { 
+              type: 'update',
+              shape: updatedObject
+            } 
+          });
+          
+          // Event'i div.absolute üzerinden yayınla çünkü containerRef'i dinliyoruz canvas'ta
+          canvasElement.dispatchEvent(updateEvent);
+        }
       }
     }
   };

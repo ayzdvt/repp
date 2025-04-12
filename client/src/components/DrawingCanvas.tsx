@@ -405,7 +405,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, [drawingLine, onSelectObject]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
+  // activeTool değiştikçe çalışacak
+  const prevToolRef = useRef(activeTool);
   useEffect(() => {
+    // İlk render'da çalıştırma
+    if (prevToolRef.current === activeTool) {
+      prevToolRef.current = activeTool;
+      return;
+    }
+    
+    // Araç değiştiğinde
+    prevToolRef.current = activeTool;
+    
     // Seçili şekli temizle
     setSelectedShapeId(null);
     
@@ -429,7 +440,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, drawingLine, onSelectObject]);
+  }, [activeTool, onSelectObject]);  // drawingLine'ı izlemiyor, sadece activeTool değişimini izliyor
   
   // Sağ tıklamayı engelle
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

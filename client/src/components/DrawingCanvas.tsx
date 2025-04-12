@@ -212,7 +212,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const worldPos = screenToWorld(mouseX, mouseY, canvasState);
+    
+    // Get the world coordinates of the mouse pointer
+    const mouseWorldX = (mouseX - rect.width / 2 - canvasState.panOffset.x) / canvasState.zoom;
+    const mouseWorldY = (rect.height / 2 - mouseY + canvasState.panOffset.y) / canvasState.zoom;
     
     // Calculate new zoom
     const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -220,18 +223,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Limit zoom range
     if (newZoom > 0.1 && newZoom < 10) {
+      // Calculate new pan offset to keep the point under the mouse in the same position
+      const newPanX = mouseX - mouseWorldX * newZoom - rect.width / 2;
+      const newPanY = rect.height / 2 - mouseY + mouseWorldY * newZoom;
+      
+      // Update zoom and pan
       onZoomChange(newZoom);
-      
-      // Adjust pan to zoom at mouse position
-      const newWorldPos = screenToWorld(mouseX, mouseY, { 
-        ...canvasState, 
-        zoom: newZoom 
-      });
-      
-      onPanChange(
-        canvasState.panOffset.x + (worldPos.x - newWorldPos.x) * newZoom,
-        canvasState.panOffset.y + (worldPos.y - newWorldPos.y) * newZoom
-      );
+      onPanChange(newPanX, newPanY);
     }
   };
   

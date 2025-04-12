@@ -97,9 +97,65 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     
     // Eğer çizim aracı aktifse ve snap özelliği açıksa yakalama noktalarını göster
-    if (activeTool !== 'selection' && snapEnabled) {
-      // Geçici olarak devre dışı bıraktık
-      // console.log("Snap göstergeleri şimdilik devre dışı bırakıldı");
+    if (activeTool !== 'selection' && snapEnabled && currentMousePosRef.current) {
+      // Yakalama noktaları için şekilleri tara
+      const snapPoints: Array<{x: number, y: number}> = [];
+      
+      // Tüm şekillerden yakalama noktalarını topla
+      shapesRef.current.forEach(shape => {
+        if (shape.type === 'point') {
+          // Nokta şekilleri için kendisi bir yakalama noktasıdır
+          snapPoints.push({ x: shape.x, y: shape.y });
+        } else if (shape.type === 'line') {
+          // Çizgiler için başlangıç ve bitiş noktaları yakalanabilir
+          snapPoints.push({ x: shape.startX, y: shape.startY }); // Başlangıç
+          snapPoints.push({ x: shape.endX, y: shape.endY });     // Bitiş
+          
+          // Orta nokta
+          snapPoints.push({
+            x: (shape.startX + shape.endX) / 2,
+            y: (shape.startY + shape.endY) / 2
+          });
+        }
+      });
+      
+      // En yakın yakalama noktasını bul
+      const snapTolerance = 10 / canvasState.zoom;
+      let closestPoint = null;
+      let minDistance = snapTolerance;
+      
+      for (const point of snapPoints) {
+        const dx = point.x - currentMousePosRef.current.x;
+        const dy = point.y - currentMousePosRef.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPoint = point;
+        }
+      }
+      
+      // En yakın yakalama noktası varsa görsel olarak göster
+      if (closestPoint) {
+        // Dünya koordinatlarını ekran koordinatlarına çevir
+        const screenPos = worldToScreen(closestPoint.x, closestPoint.y, canvasState);
+        
+        // Yeşil daire çiz
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, 6, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00C853';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        // İçi beyaz daire
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.strokeStyle = '#00C853';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
     }
   }, [canvasState, selectedId, activeTool, isDragging, snapEnabled]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
   

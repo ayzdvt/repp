@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
-import { pointNearLine, distance } from '@/lib/drawingPrimitives';
+import { pointNearLine, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -180,12 +180,21 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       if (activeTool === 'line' && drawingLine) {
         // Birinci nokta sabit, ikinci nokta fare ile hareket eder
         if (lineFirstPointRef.current) {
+          // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+          const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+          
+          // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+          const endPoint = snapPoint || worldPos;
+          
           currentShapeRef.current = {
             ...currentShapeRef.current,
             startX: lineFirstPointRef.current.x,
             startY: lineFirstPointRef.current.y,
-            endX: worldPos.x,
-            endY: worldPos.y
+            endX: endPoint.x,
+            endY: endPoint.y,
+            // Yakalama noktası varsa bunu görsel olarak belirt
+            isSnapping: !!snapPoint
           };
         }
       } 
@@ -368,30 +377,44 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         } else if (activeTool === 'line') {
           // Eğer daha önce ilk nokta seçilmemişse (çizgi çizme işleminin başlangıcı)
           if (!drawingLine) {
+            // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+            const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+            const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+            
+            // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+            const startPoint = snapPoint || worldPos;
+            
             // İlk noktayı kaydet
-            lineFirstPointRef.current = { x: worldPos.x, y: worldPos.y };
+            lineFirstPointRef.current = { x: startPoint.x, y: startPoint.y };
             setDrawingLine(true);
             
             // Geçici gösterim için çizgi oluştur
             currentShapeRef.current = {
               type: 'line',
-              startX: worldPos.x,
-              startY: worldPos.y,
-              endX: worldPos.x,
-              endY: worldPos.y,
+              startX: startPoint.x,
+              startY: startPoint.y,
+              endX: startPoint.x,
+              endY: startPoint.y,
               thickness: 1
             };
           } else {
             // İkinci tıklama - çizgiyi tamamla
             if (lineFirstPointRef.current) {
+              // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+              const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+              const snapPoint = findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance);
+              
+              // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+              const endPoint = snapPoint || worldPos;
+              
               // Tamamlanmış çizgiyi shapesRef'e ekle
               const newLine = {
                 id: nextIdRef.current++,
                 type: 'line',
                 startX: lineFirstPointRef.current.x,
                 startY: lineFirstPointRef.current.y,
-                endX: worldPos.x,
-                endY: worldPos.y,
+                endX: endPoint.x,
+                endY: endPoint.y,
                 thickness: 1
               };
               shapesRef.current.push(newLine);

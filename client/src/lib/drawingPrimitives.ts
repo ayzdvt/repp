@@ -92,3 +92,63 @@ export function pointNearLine(point: Point, line: LineShape, tolerance: number =
 }
 
 // Circle fonksiyonu kaldırıldı
+
+// Çizginin orta noktasını hesaplar
+export function getLineMidpoint(line: LineShape): Point {
+  return {
+    x: (line.startX + line.endX) / 2,
+    y: (line.startY + line.endY) / 2
+  };
+}
+
+// Bir nokta çizginin başlangıç, orta veya bitiş noktasına yakın mı kontrol eder
+export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 10): Point | null {
+  // Başlangıç noktasını kontrol et
+  if (distance(point, { x: line.startX, y: line.startY }) <= tolerance) {
+    return { x: line.startX, y: line.startY };
+  }
+  
+  // Bitiş noktasını kontrol et
+  if (distance(point, { x: line.endX, y: line.endY }) <= tolerance) {
+    return { x: line.endX, y: line.endY };
+  }
+  
+  // Orta noktayı kontrol et
+  const midpoint = getLineMidpoint(line);
+  if (distance(point, midpoint) <= tolerance) {
+    return midpoint;
+  }
+  
+  return null;
+}
+
+// Verilen noktaya en yakın yakalama noktasını bulur (tüm şekilleri kontrol eder)
+export function findNearestSnapPoint(point: Point, shapes: any[], tolerance: number = 10): Point | null {
+  let nearestSnapPoint: Point | null = null;
+  let minDistance = tolerance;
+  
+  for (const shape of shapes) {
+    let snapPoint: Point | null = null;
+    
+    if (shape.type === 'point') {
+      // Nokta şekli
+      if (distance(point, { x: shape.x, y: shape.y }) <= tolerance) {
+        snapPoint = { x: shape.x, y: shape.y };
+      }
+    } else if (shape.type === 'line') {
+      // Çizgi şekli - başlangıç, orta ve bitiş noktalarını kontrol et
+      snapPoint = getSnapPoint(point, shape, tolerance);
+    }
+    
+    // En yakın yakalama noktasını güncelle
+    if (snapPoint) {
+      const dist = distance(point, snapPoint);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestSnapPoint = snapPoint;
+      }
+    }
+  }
+  
+  return nearestSnapPoint;
+}

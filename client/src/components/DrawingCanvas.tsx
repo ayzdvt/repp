@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape } from '@/lib/canvasUtils';
 import { 
@@ -27,12 +27,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onCanvasSizeChange,
   onSelectObject
 }) => {
+  // DOM References
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Mutable References (State'in sonsuz döngü yapmaması için ref kullanıyoruz)
+  const shapesRef = useRef<any[]>([]); 
+  const currentShapeRef = useRef<any | null>(null);
+  const dragStartRef = useRef<Point>({ x: 0, y: 0 });
+  const isDraggingRef = useRef<boolean>(false);
+  
+  // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [dragStart, setDragStart] = useState<Point>({ x: 0, y: 0 });
-  const [shapes, setShapes] = useState<any[]>([]);
-  const [currentShape, setCurrentShape] = useState<any | null>(null);
   
   // Handle canvas resize
   useEffect(() => {
@@ -53,37 +59,51 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // Main rendering function - optimize to prevent rendering issues
-  useEffect(() => {
-    // Create a reference to prevent unnecessary renders
-    const renderRef = {
-      shapes: [...shapes],
-      current: currentShape,
-      state: {...canvasState}
-    };
-    
+  // Render işlevi - komponentten bağımsız olarak çağrılacak, state'e bağlı değil
+  const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Clear the canvas
+    // Canvas'ı temizle
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw the grid
-    drawGrid(ctx, renderRef.state);
+    // Izgarayı çiz
+    drawGrid(ctx, canvasState);
     
-    // Draw all shapes
-    renderRef.shapes.forEach(shape => {
-      drawShape(ctx, shape, renderRef.state);
+    // Tüm şekilleri çiz
+    shapesRef.current.forEach(shape => {
+      drawShape(ctx, shape, canvasState);
     });
     
-    // Draw current shape being created
-    if (renderRef.current) {
-      drawShape(ctx, renderRef.current, renderRef.state);
+    // Oluşturulmakta olan şekli çiz
+    if (currentShapeRef.current) {
+      drawShape(ctx, currentShapeRef.current, canvasState);
     }
-  }, [canvasState, shapes, currentShape]);
+  }, [canvasState]); // Sadece canvas state değiştiğinde fonksiyonu yeniden oluştur
+  
+  // Canvas state değiştiğinde render işlemini tetikle
+  useEffect(() => {
+    renderCanvas();
+  }, [canvasState, renderCanvas]);
+  
+  // Animasyon frame'i ile sürekli render et
+  useEffect(() => {
+    let animationId: number;
+    
+    const animate = () => {
+      renderCanvas();
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    animationId = requestAnimationFrame(animate);
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [renderCanvas]);
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -101,41 +121,42 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // SADECE orta fare tuşu (wheel button) ile pan yapmaya izin ver (buttons=4)
     if (e.buttons === 4) {
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
       
       onPanChange(
         canvasState.panOffset.x + dx,
         canvasState.panOffset.y + dy
       );
       
-      setDragStart({ x: e.clientX, y: e.clientY });
+      // Güncelleme sonrası başlangıç noktasını güncelle
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
     }
     
-    // Handle shape drawing
-    if (currentShape && activeTool !== 'selection' && isDragging) {
+    // Handle shape drawing (sol fare tuşu çizim)
+    if (currentShapeRef.current && activeTool !== 'selection' && isDraggingRef.current) {
       if (activeTool === 'point') {
         // Nothing to update for point
       } else if (activeTool === 'line') {
-        setCurrentShape({
-          ...currentShape,
+        currentShapeRef.current = {
+          ...currentShapeRef.current,
           endX: worldPos.x,
           endY: worldPos.y
-        });
+        };
       } else if (activeTool === 'rectangle') {
-        setCurrentShape({
-          ...currentShape,
-          width: worldPos.x - currentShape.x,
-          height: worldPos.y - currentShape.y
-        });
+        currentShapeRef.current = {
+          ...currentShapeRef.current,
+          width: worldPos.x - currentShapeRef.current.x,
+          height: worldPos.y - currentShapeRef.current.y
+        };
       } else if (activeTool === 'circle') {
-        const dx = worldPos.x - currentShape.x;
-        const dy = worldPos.y - currentShape.y;
+        const dx = worldPos.x - currentShapeRef.current.x;
+        const dy = worldPos.y - currentShapeRef.current.y;
         const radius = Math.sqrt(dx * dx + dy * dy);
-        setCurrentShape({
-          ...currentShape,
+        currentShapeRef.current = {
+          ...currentShapeRef.current,
           radius
-        });
+        };
       }
     }
   };
@@ -143,6 +164,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Helper function to find the shape under a given point
   const findShapeAtPoint = (point: Point): any | null => {
     // Check shapes in reverse order (last drawn on top)
+    const shapes = shapesRef.current;
     for (let i = shapes.length - 1; i >= 0; i--) {
       const shape = shapes[i];
       
@@ -225,8 +247,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
     if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)
-      setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
+      isDraggingRef.current = true;
+      setIsDragging(true); // UI için
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+      
       if (canvasRef.current) {
         canvasRef.current.style.cursor = 'grabbing';
       }
@@ -244,8 +268,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       } else {
         // Diğer çizim araçları için
-        setIsDragging(true);
-        setDragStart({ x: e.clientX, y: e.clientY });
+        isDraggingRef.current = true;
+        setIsDragging(true); // UI için
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
         
         if (activeTool === 'point') {
           // Create a point and add it directly to shapes
@@ -255,38 +280,39 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             y: worldPos.y,
             style: 'default'
           };
-          setShapes([...shapes, newPoint]);
+          shapesRef.current.push(newPoint);
         } else if (activeTool === 'line') {
-          setCurrentShape({
+          currentShapeRef.current = {
             type: 'line',
             startX: worldPos.x,
             startY: worldPos.y,
             endX: worldPos.x,
             endY: worldPos.y,
             thickness: 1
-          });
+          };
         } else if (activeTool === 'rectangle') {
-          setCurrentShape({
+          currentShapeRef.current = {
             type: 'rectangle',
             x: worldPos.x,
             y: worldPos.y,
             width: 0,
             height: 0
-          });
+          };
         } else if (activeTool === 'circle') {
-          setCurrentShape({
+          currentShapeRef.current = {
             type: 'circle',
             x: worldPos.x,
             y: worldPos.y,
             radius: 0
-          });
+          };
         }
       }
     }
   };
   
   const handleMouseUp = () => {
-    setIsDragging(false);
+    isDraggingRef.current = false;
+    setIsDragging(false); // UI için
     
     // Reset cursor
     if (canvasRef.current) {
@@ -298,9 +324,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     
     // Add current shape to shapes array if it exists
-    if (currentShape && activeTool !== 'selection') {
-      setShapes([...shapes, currentShape]);
-      setCurrentShape(null);
+    if (currentShapeRef.current && activeTool !== 'selection') {
+      shapesRef.current.push(currentShapeRef.current);
+      currentShapeRef.current = null;
     }
   };
   

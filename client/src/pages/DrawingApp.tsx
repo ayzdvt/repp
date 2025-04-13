@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import ToolSidebar from "@/components/ToolSidebar";
 import PropertiesSidebar from "@/components/PropertiesSidebar";
@@ -40,6 +40,7 @@ export default function DrawingApp() {
     }));
   };
   
+  // Pan değişikliği işleme
   const handlePanChange = (x: number, y: number) => {
     setCanvasState(prev => ({
       ...prev,

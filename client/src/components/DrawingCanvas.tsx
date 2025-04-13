@@ -1030,6 +1030,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak
   const prevToolRef = useRef(activeTool);
+  
+  // Çizim durumlarını sıfırlayan yardımcı fonksiyon - daha temiz bir yaklaşım
+  const resetDrawingStates = useCallback(() => {
+    // Çizgi çizme işlemini iptal et
+    if (drawingLine) {
+      lineFirstPointRef.current = null;
+      currentShapeRef.current = null;
+      setDrawingLine(false);
+    }
+    
+    // Polyline çizim işlemini iptal et
+    if (drawingPolyline) {
+      polylinePointsRef.current = [];
+      currentShapeRef.current = null;
+      setDrawingPolyline(false);
+    }
+    
+    // Çizgi uç noktası sürükleme işlemini iptal et
+    if (isDraggingEndpoint) {
+      draggingLineEndpointRef.current = null;
+      originalLineRef.current = null;
+      setIsDraggingEndpoint(false);
+    }
+  }, [drawingLine, drawingPolyline, isDraggingEndpoint]);
+  
+  // Tool değişikliğini yakalayan useEffect
   useEffect(() => {
     // Eğer aktiveTool değişmediyse hiçbir şey yapma
     if (prevToolRef.current === activeTool) {
@@ -1048,30 +1074,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     
     // Çizim durumlarını sıfırla
-    const resetDrawingStates = () => {
-      // Çizgi çizme işlemini iptal et
-      if (drawingLine) {
-        lineFirstPointRef.current = null;
-        currentShapeRef.current = null;
-        setDrawingLine(false);
-      }
-      
-      // Polyline çizim işlemini iptal et
-      if (drawingPolyline) {
-        polylinePointsRef.current = [];
-        currentShapeRef.current = null;
-        setDrawingPolyline(false);
-      }
-      
-      // Çizgi uç noktası sürükleme işlemini iptal et
-      if (isDraggingEndpoint) {
-        draggingLineEndpointRef.current = null;
-        originalLineRef.current = null;
-        setIsDraggingEndpoint(false);
-      }
-    };
-    
-    // Çizim durumlarını sıfırla
     resetDrawingStates();
     
     // İmleç stilini güncelle
@@ -1082,7 +1084,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, onSelectObject]);  // Sadece activeTool değiştiğinde çalışacak
+  }, [activeTool, onSelectObject, resetDrawingStates]);
   
   // Sağ tıklama işlemleri
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

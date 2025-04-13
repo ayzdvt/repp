@@ -191,7 +191,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled, isDraggingEndpoint]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
+  }, [canvasState, selectedId, activeTool, snapEnabled, isDraggingEndpoint]); // NOT: isDragging bağımlılığını kaldırdık - sonsuz döngü oluşturuyordu
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -660,9 +660,28 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          
+          // Çizilen polyline'ın noktalarını da snap için kullan
+          let snapPoints = [...shapesRef.current];
+          
+          // Eğer polyline çizimi devam ediyorsa, mevcut noktaları da snap kaynağı olarak ekle
+          if (drawingPolyline && polylinePointsRef.current.length > 1) {
+            // Mevcut polyline noktalarını snap noktaları olarak ekle
+            const currentPolylineSnapPoints = polylinePointsRef.current.map((point, index) => ({
+              type: 'point',
+              x: point.x,
+              y: point.y,
+              id: -99 - index, // Benzersiz negatif ID'ler
+              style: 'default'
+            }));
+            
+            // Tüm snap noktalarını birleştir
+            snapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
+          }
+          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            ? findNearestSnapPoint(worldPos, snapPoints, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan

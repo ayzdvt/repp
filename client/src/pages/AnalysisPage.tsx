@@ -120,12 +120,7 @@ export default function AnalysisPage() {
     setIsSaving(true);
     
     try {
-      // Koordinatları JSON formatına çevir
-      const projectData = {
-        ...result,
-        // Koordinatları JSON formatına çevir eğer varsa
-        parcel_coordinates: result.parcel_coordinates ? JSON.stringify(result.parcel_coordinates) : '[]'
-      };
+      console.log("Kaydedilecek veri:", result);
       
       // API'ya veriyi gönder
       const response = await fetch('/api/analyses', {
@@ -133,7 +128,7 @@ export default function AnalysisPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(projectData),
+        body: JSON.stringify(result),
       });
       
       if (!response.ok) {

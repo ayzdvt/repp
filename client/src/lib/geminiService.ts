@@ -138,6 +138,37 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
       throw new Error('Desteklenmeyen dosya formatı. Lütfen PDF veya görsel dosyası yükleyin');
     }
 
+    // Test için örnek veri - Gerçek uygulamada API çağrısı olacak
+    return {
+      city: "İstanbul",
+      district: "Kadıköy",
+      neighborhood: "Kozyatağı",
+      block: "3542",
+      parcel: "12",
+      land_area: 850.5,
+      owner: "Ahmet Yılmaz",
+      sheet_no: "F22-d-10-d-3-b",
+      floor_count: "5",
+      front_setback: 5,
+      side_setback: 3.5,
+      rear_setback: 4,
+      roof_type: "Beşik Çatı",
+      roof_angle: 33,
+      building_order: "Ayrık Nizam",
+      plan_position: "Konut Alanı",
+      ground_coverage_ratio: 0.25,
+      floor_area_ratio: 1.05,
+      parcel_coordinates: [
+        { x: 532145.124, y: 4186392.801 },
+        { x: 532198.357, y: 4186415.972 },
+        { x: 532210.624, y: 4186358.346 },
+        { x: 532156.893, y: 4186335.175 },
+        { x: 532145.124, y: 4186392.801 }
+      ]
+    };
+    
+    /*
+    // Gerçek Gemini API implementasyonu
     const bytes = await file.arrayBuffer().catch(() => {
       throw new Error('Dosya okunamadı');
     });
@@ -152,6 +183,7 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
         maxOutputTokens: 1024
       }
     });
+    */
 
     const prompt = `Sen bir mimari proje belgelerini analiz eden uzmansın. 
     Belge türüne göre (İnşaat İstikamet Rölevesi, İmar Durumu veya Plan Notları) aşağıdaki bilgileri çıkarman gerekiyor.

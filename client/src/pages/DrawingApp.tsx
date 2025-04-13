@@ -1,14 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import ToolSidebar from "@/components/ToolSidebar";
 import PropertiesSidebar from "@/components/PropertiesSidebar";
 import StatusBar from "@/components/StatusBar";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { CanvasState, Tool, Point } from "@/types";
-import { parseDxfFile, parseDwgFile } from "@/lib/dxfService";
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 export default function DrawingApp() {
   const [activeTool, setActiveTool] = useState<Tool>("selection");
@@ -23,12 +19,9 @@ export default function DrawingApp() {
     canvasSize: { width: 0, height: 0 }
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
-  const [isLoadingCad, setIsLoadingCad] = useState<boolean>(false);
-  const [cadError, setCadError] = useState<string | null>(null);
   
-  // URL parametrelerini al
-  const [location] = useLocation();
-  const source = location.includes('source=cad') ? 'cad' : null;
+  // Canvas içindeki referans
+  // Removed canvasRef
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -56,7 +49,7 @@ export default function DrawingApp() {
   };
   
   // Tüm çizimleri ekrana sığdıran Fit View fonksiyonu
-  const handleResetView = useCallback(() => {
+  const handleResetView = () => {
     // Canvas'ı al
     const drawingContainer = document.getElementById('drawing-container');
     if (!drawingContainer) return;
@@ -195,10 +188,16 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
+    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
+    
     // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
     // Orijinal worldToScreen formülünden:
     // screenX = worldX * zoom + width / 2 + panOffset.x;
     // screenY = height / 2 - worldY * zoom + panOffset.y;
+    
+    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
+    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
+    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
     
     // Bu denklemleri çözersek:
     // panOffset.x = -centerX * zoom
@@ -217,9 +216,7 @@ export default function DrawingApp() {
       panOffset: { x: panOffsetX, y: panOffsetY },
       canvasSize: canvasState.canvasSize
     });
-  }, [canvasState]);
-  
-  // No longer needed
+  };
   
   const handleMousePositionChange = (position: Point) => {
     setMousePosition(position);
@@ -235,269 +232,6 @@ export default function DrawingApp() {
       canvasSize: { width, height }
     }));
   };
-  
-  // CAD dosyasını işleyen fonksiyon
-  const loadCadFile = useCallback(async () => {
-    // resetViewRef ve handleResetView'i direkt kullanmak yerine bağlı olduğumuz değerleri kullanalım
-    const resetViewSafe = () => {
-      console.log('Reset view çağrıldı');
-      
-      // Canvas'ı al
-      const drawingContainer = document.getElementById('drawing-container');
-      if (!drawingContainer) {
-        console.error('Drawing container bulunamadı');
-        return;
-      }
-      
-      // Absolute div'i bul
-      const absoluteDiv = drawingContainer.querySelector('div.absolute');
-      if (!absoluteDiv) {
-        console.error('Canvas absolute div bulunamadı');
-        return;
-      }
-      
-      // Canvas boyutları
-      const width = canvasState.canvasSize.width;
-      const height = canvasState.canvasSize.height;
-      
-      if (width === 0 || height === 0) {
-        console.error('Geçersiz canvas boyutları', width, height);
-        return;
-      }
-      
-      // Şekilleri almak için bir dummy referans oluştur
-      let shapeList: any[] = [];
-      
-      try {
-        // Event oluştur ve gönder
-        const customEvent = new CustomEvent('getAllShapes', {
-          detail: { 
-            callback: (shapes: any[]) => {
-              // Callback çağrıldığında şekilleri listeye atayacak
-              shapeList = shapes || [];
-            }
-          }
-        });
-        absoluteDiv.dispatchEvent(customEvent);
-      } catch (error) {
-        console.error('Shapes retrieval error:', error);
-      }
-      
-      // Şekilleri al (callback tarafından doldurulacak)
-      const shapes = shapeList;
-      
-      console.log('Reset view - bulunan şekil sayısı:', shapes.length);
-      
-      console.log("Fit View - Tüm şekiller:", shapes);
-      
-      // Çizim yoksa, varsayılan görünüme geri dön
-      if (!shapes || shapes.length === 0) {
-        console.log("Fit View - Çizim bulunamadı, varsayılan görünüme dönülüyor");
-        setZoom(1);
-        setCanvasState(prev => ({
-          ...prev,
-          zoom: 1,
-          panOffset: { x: 0, y: 0 }
-        }));
-        return;
-      }
-      
-      // Tüm şekillerin sınırlarını bul
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-      
-      shapes.forEach(shape => {
-        if (shape.type === 'point') {
-          minX = Math.min(minX, shape.x);
-          minY = Math.min(minY, shape.y);
-          maxX = Math.max(maxX, shape.x);
-          maxY = Math.max(maxY, shape.y);
-        } 
-        else if (shape.type === 'line') {
-          minX = Math.min(minX, shape.startX, shape.endX);
-          minY = Math.min(minY, shape.startY, shape.endY);
-          maxX = Math.max(maxX, shape.startX, shape.endX);
-          maxY = Math.max(maxY, shape.startY, shape.endY);
-        }
-        else if (shape.type === 'polyline' && Array.isArray(shape.points)) {
-          shape.points.forEach((point: {x: number, y: number}) => {
-            if (point && typeof point.x === 'number' && typeof point.y === 'number') {
-              minX = Math.min(minX, point.x);
-              minY = Math.min(minY, point.y);
-              maxX = Math.max(maxX, point.x);
-              maxY = Math.max(maxY, point.y);
-            }
-          });
-        }
-        else if (shape.type === 'text') {
-          minX = Math.min(minX, shape.x);
-          minY = Math.min(minY, shape.y);
-          maxX = Math.max(maxX, shape.x + 20); 
-          maxY = Math.max(maxY, shape.y + 20); 
-        }
-      });
-      
-      // Geçerli sınırlar yoksa, varsayılan görünüme dön
-      if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
-        setZoom(1);
-        setCanvasState(prev => ({
-          ...prev,
-          zoom: 1,
-          panOffset: { x: 0, y: 0 }
-        }));
-        return;
-      }
-      
-      // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
-      const margin = 50;
-      minX -= margin;
-      minY -= margin;
-      maxX += margin;
-      maxY += margin;
-      
-      // Objelerin boyutları
-      const objWidth = maxX - minX;
-      const objHeight = maxY - minY;
-      
-      // Zoom faktörlerini hesapla
-      const zoomX = width / objWidth;
-      const zoomY = height / objHeight;
-      
-      // Daha kısıtlayıcı olanı seç
-      const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-      
-      // Merkez noktayı hesapla
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-      
-      // canvasUtils.ts'deki worldToScreen formülünden:
-      // screenX = worldX * zoom + width / 2 + panOffset.x;
-      // screenY = height / 2 - worldY * zoom + panOffset.y;
-      
-      // Bu denklemleri çözersek:
-      // Merkezi ekranın ortasına yerleştirmek için:
-      // width/2 = centerX * zoom + width/2 + panOffset.x
-      // height/2 = height/2 - centerY * zoom + panOffset.y
-      
-      // O halde:
-      // panOffset.x = -centerX * zoom
-      // panOffset.y = centerY * zoom
-      const panOffsetX = -centerX * newZoom;
-      const panOffsetY = centerY * newZoom;
-      
-      console.log('NewZoom:', newZoom);
-      console.log('Center point:', centerX, centerY);
-      console.log('Pan offset:', panOffsetX, panOffsetY);
-      
-      // Yeni değerleri ayarla
-      setZoom(newZoom);
-      setCanvasState(prev => ({
-        ...prev,
-        zoom: newZoom,
-        panOffset: { x: panOffsetX, y: panOffsetY }
-      }));
-    };
-    
-    try {
-      // CAD dosyasını localStorage'dan al
-      const fileName = localStorage.getItem('cadFileName');
-      const fileType = localStorage.getItem('cadFileType');
-      const fileUrl = localStorage.getItem('cadFileUrl');
-      
-      if (!fileName || !fileUrl) {
-        throw new Error('CAD dosyası bulunamadı');
-      }
-      
-      setIsLoadingCad(true);
-      
-      try {
-        // URL'den Blob'a dönüştür ve File nesnesine çevir
-        const response = await fetch(fileUrl);
-        const blob = await response.blob();
-        const file = new File([blob], fileName, { type: fileType || 'application/octet-stream' });
-        
-        // Dosya uzantısına göre uygun parser'ı çağır
-        let parsedData;
-        
-        if (fileName.toLowerCase().endsWith('.dxf')) {
-          parsedData = await parseDxfFile(file);
-        } else if (fileName.toLowerCase().endsWith('.dwg')) {
-          parsedData = await parseDwgFile(file);
-        } else {
-          throw new Error('Desteklenmeyen dosya formatı. Lütfen DXF veya DWG dosyası kullanın.');
-        }
-        
-        console.log('Parsed CAD data:', parsedData);
-        console.log('Parsed Shapes Count:', parsedData.shapes.length);
-        console.log('Bounds:', parsedData.bounds);
-        
-        if (parsedData.shapes.length === 0) {
-          throw new Error('CAD dosyasında çizilebilecek öğe bulunamadı.');
-        }
-        
-        // Şimdi CAD nesnelerini canvas'a ekle
-        // DrawingCanvas bileşenine erişelim
-        const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-        if (!canvasContainer) {
-          throw new Error('Çizim alanı bulunamadı');
-        }
-        
-        const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-        if (!canvasElement) {
-          throw new Error('Canvas elementi bulunamadı');
-        }
-        
-        // Öncelikle mevcut canvas durumunu sıfırlayalım
-        setZoom(1);
-        setCanvasState(prev => ({
-          ...prev,
-          zoom: 1,
-          panOffset: { x: 0, y: 0 }
-        }));
-        
-        // Özel olay oluştur - shapes parametresi, DrawingCanvas bileşeninde
-        // shapesRef'e aktarılacak olan şekil dizisi
-        const addShapesEvent = new CustomEvent('addshapes', { 
-          detail: { 
-            shapes: parsedData.shapes
-          } 
-        });
-        
-        // Event'i div.absolute üzerinden yayınla
-        canvasElement.dispatchEvent(addShapesEvent);
-        
-        // DrawingCanvas'ın yenilenmesi için yeterli zaman verin
-        // Sonra viewport ayarlamalarını yapın
-        setTimeout(() => {
-          console.log('Şekiller eklendi, viewport ayarlanıyor...');
-          resetViewSafe();
-        }, 300);
-      } catch (error) {
-        console.error('CAD dosyası işlenirken hata:', error);
-        throw error;
-      }
-      
-      setCadError(null);
-    } catch (error: any) {
-      console.error('CAD dosyası yüklenirken hata oluştu:', error);
-      setCadError(error.message || 'CAD dosyası yüklenirken bir hata oluştu.');
-    } finally {
-      setIsLoadingCad(false);
-      // localStorage'dan CAD dosya bilgilerini temizleyelim
-      localStorage.removeItem('cadFileName');
-      localStorage.removeItem('cadFileType');
-      localStorage.removeItem('cadFileUrl');
-    }
-  }, []);
-  
-  // useEffect içinde loadCadFile'ı çağıralım
-  useEffect(() => {
-    if (source === 'cad') {
-      loadCadFile();
-    }
-  }, [source, loadCadFile]);
   
   // Nesne özelliklerinde değişiklik yapıldığında bu fonksiyon çağrılacak
   const handlePropertyChange = (
@@ -555,26 +289,7 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
-          <div id="drawing-canvas" className="relative">
-            {isLoadingCad && (
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-gray-700">CAD dosyası yükleniyor...</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {cadError && (
-              <Alert variant="destructive" className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 w-96">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Hata</AlertTitle>
-                <AlertDescription>{cadError}</AlertDescription>
-              </Alert>
-            )}
-            
+          <div id="drawing-canvas">
             <DrawingCanvas 
               canvasState={canvasState}
               activeTool={activeTool}

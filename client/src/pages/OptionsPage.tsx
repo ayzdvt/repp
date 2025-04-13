@@ -13,25 +13,10 @@ export default function OptionsPage() {
   
   const handleCADFileUpload = (file: File) => {
     console.log('CAD File uploaded:', file);
-    // Dosyayı localStorage'a kaydedelim ki, çizim sayfasında erişebilelim
-    // Dosyayı doğrudan depolayamayız, bu yüzden yalnızca adını ve türünü saklamak gerekir
-    localStorage.setItem('cadFileName', file.name);
-    localStorage.setItem('cadFileType', file.type);
-    
-    // Dosyayı blob olarak sakla
-    const fileReader = new FileReader();
-    fileReader.onload = (e) => {
-      if (e.target && e.target.result) {
-        const fileData = e.target.result;
-        // Blob verisini bir URL'e dönüştürüp saklıyoruz
-        localStorage.setItem('cadFileUrl', URL.createObjectURL(new Blob([fileData])));
-        
-        // Diyaloğu kapat ve çizim sayfasına yönlendir
-        setIsCADDialogOpen(false);
-        setLocation('/drawing?source=cad');
-      }
-    };
-    fileReader.readAsArrayBuffer(file);
+    // Burada yüklenen CAD dosyasını işleyebilirsiniz
+    setIsCADDialogOpen(false);
+    // İşlemden sonra drawing sayfasına yönlendirme
+    setLocation('/drawing');
   };
   
   return (

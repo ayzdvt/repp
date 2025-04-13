@@ -69,9 +69,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // Seçilen şekil ID'sini sabitlemek için useMemo kullanıyoruz
-  // Bu şekilde her render'da aynı referans olacak ve sonsuz döngü olmayacak
-  const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
+  // Seçilen şekil ID'sini doğrudan prop olarak kullanalım - daha güvenli bir yaklaşım
+  const selectedId = selectedShapeId;
 
   // Render işlevi - render frame içinde kullanılacak
   // İşlevi memoize ediyoruz (önceden hesaplayıp saklıyoruz), böylece her render'da yeniden oluşmaz
@@ -195,10 +194,20 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, [canvasState, selectedId, activeTool, snapEnabled, isDraggingEndpoint]); // isDragging'i kaldırdık, sadece gerçekten gerekli bağımlılıkları kaldık
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
+  // renderCanvas'ı bağımlılık olarak kullanmayacağız - animasyon loop'u içinde current referansını kullanacağız
+  const renderCanvasRef = useRef(renderCanvas);
+  
+  // renderCanvas fonksiyonu değiştiğinde referansı güncelle
+  useEffect(() => {
+    renderCanvasRef.current = renderCanvas;
+  }, [renderCanvas]);
+  
+  // Animasyon loop'u için ayrı bir useEffect
   useEffect(() => {
     // Animasyon frame'i yönet
     const animate = () => {
-      renderCanvas();
+      // renderCanvas yerine renderCanvasRef.current'i kullan
+      renderCanvasRef.current();
       requestRef.current = requestAnimationFrame(animate);
     };
     
@@ -212,7 +221,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         requestRef.current = null;
       }
     };
-  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
+  }, []); // Bileşen takıldığında bir kez çalışsın, renderCanvas değişse bile yeniden çalışmasın
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

@@ -851,7 +851,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               
             case 'polyline':
               if (shape.points && shape.points.length > 0) {
-                shape.points.forEach(point => {
+                shape.points.forEach((point: Point) => {
                   minX = Math.min(minX, point.x);
                   minY = Math.min(minY, point.y);
                   maxX = Math.max(maxX, point.x);

@@ -47,7 +47,7 @@ export default function DrawingApp() {
     }));
   };
   
-  // Çizimlerin bulunduğu alana odaklanmak için fit view fonksiyonu
+  // Tüm çizimleri ekrana sığdırmak için fit view fonksiyonu
   const handleResetView = () => {
     // Canvas element referansını al
     const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
@@ -61,7 +61,7 @@ export default function DrawingApp() {
       detail: { 
         callback: (bounds: { minX: number, minY: number, maxX: number, maxY: number } | null) => {
           if (!bounds) {
-            // Hiç çizim yoksa merkeze odaklan
+            // Hiç çizim yoksa merkeze odaklan ve varsayılan zoom'a dön
             setZoom(1);
             setCanvasState(prev => ({
               ...prev,
@@ -91,27 +91,39 @@ export default function DrawingApp() {
           const canvasWidth = canvasState.canvasSize.width;
           const canvasHeight = canvasState.canvasSize.height;
           
-          // Zoom hesaplama (tüm çizimleri görebilmek için)
-          // Padding eklemek için 0.9 ile çarp
-          const zoomX = (canvasWidth / width) * 0.8;
-          const zoomY = (canvasHeight / height) * 0.8;
+          // Biraz kenar boşluğu ekleyin - çizimlerin biraz dışına uzanalım
+          const padding = 50; // Piksel cinsinden kenar boşluğu
+          const paddedWidth = width + (padding / (canvasState.zoom || 1)) * 2; // Dünya koordinatlarında padding 
+          const paddedHeight = height + (padding / (canvasState.zoom || 1)) * 2;
+          
+          // En-boy oranlarını koruyarak, tüm çizimlerin sığacağı maksimum zoom seviyesini hesapla
+          const zoomX = canvasWidth / paddedWidth;
+          const zoomY = canvasHeight / paddedHeight;
+          
+          // İki boyut için de çizimlerin sığacağı en düşük zoom değerini kullan
           const newZoom = Math.min(zoomX, zoomY);
           
-          // Merkez hesaplama
+          // Çizim alanının merkezi
           const centerX = (minX + maxX) / 2;
           const centerY = (minY + maxY) / 2;
           
-          // Pan hesaplama (çizimlerin merkezi canvasın merkezine gelecek şekilde)
+          // Pan değerlerini, çizim alanının merkezi ekranın merkezine gelecek şekilde hesapla
           const panX = (canvasWidth / 2) - (centerX * newZoom);
-          const panY = (canvasHeight / 2) + (centerY * newZoom);
+          const panY = (canvasHeight / 2) + (centerY * newZoom); // Y ters olduğu için + 
           
-          // Zoom ve pan güncelleme
+          // Zoom ve pan değerlerini uygula
           setZoom(newZoom);
           setCanvasState(prev => ({
             ...prev,
             zoom: newZoom,
             panOffset: { x: panX, y: panY }
           }));
+          
+          console.log("Fit View - Tüm objeler ekrana sığdırıldı", { 
+            objeSınırları: bounds, 
+            yeniZoom: newZoom, 
+            yeniPan: { x: panX, y: panY } 
+          });
         }
       } 
     });

@@ -110,6 +110,45 @@ export default function AnalysisPage() {
   const handleReturn = () => {
     setLocation('/options');
   };
+  
+  // Analiz sonuçlarını veritabanına kaydetme işlemi
+  const saveToDatabase = async () => {
+    if (!result) return;
+    
+    setError(null);
+    setSuccess(null);
+    setIsSaving(true);
+    
+    try {
+      // Koordinatları JSON formatına çevir
+      const projectData = {
+        ...result,
+        // Koordinatları JSON formatına çevir eğer varsa
+        parcel_coordinates: result.parcel_coordinates ? JSON.stringify(result.parcel_coordinates) : '[]'
+      };
+      
+      // API'ya veriyi gönder
+      const response = await fetch('/api/analyses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Veri kaydedilirken bir hata oluştu');
+      }
+      
+      const savedData = await response.json();
+      setSuccess(`Analiz sonuçları başarıyla veritabanına kaydedildi (ID: ${savedData.id})`);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Veri kaydedilirken bir hata oluştu');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Dosya seçimi ve yükleme görünümü
   if (!result) {

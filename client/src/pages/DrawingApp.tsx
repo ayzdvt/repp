@@ -240,17 +240,30 @@ export default function DrawingApp() {
   const loadCadFile = useCallback(async () => {
     // resetViewRef ve handleResetView'i direkt kullanmak yerine bağlı olduğumuz değerleri kullanalım
     const resetViewSafe = () => {
+      console.log('Reset view çağrıldı');
+      
       // Canvas'ı al
       const drawingContainer = document.getElementById('drawing-container');
-      if (!drawingContainer) return;
+      if (!drawingContainer) {
+        console.error('Drawing container bulunamadı');
+        return;
+      }
       
       // Absolute div'i bul
       const absoluteDiv = drawingContainer.querySelector('div.absolute');
-      if (!absoluteDiv) return;
+      if (!absoluteDiv) {
+        console.error('Canvas absolute div bulunamadı');
+        return;
+      }
       
       // Canvas boyutları
       const width = canvasState.canvasSize.width;
       const height = canvasState.canvasSize.height;
+      
+      if (width === 0 || height === 0) {
+        console.error('Geçersiz canvas boyutları', width, height);
+        return;
+      }
       
       // Şekilleri almak için bir dummy referans oluştur
       let shapeList: any[] = [];
@@ -272,6 +285,8 @@ export default function DrawingApp() {
       
       // Şekilleri al (callback tarafından doldurulacak)
       const shapes = shapeList;
+      
+      console.log('Reset view - bulunan şekil sayısı:', shapes.length);
       
       console.log("Fit View - Tüm şekiller:", shapes);
       
@@ -362,10 +377,19 @@ export default function DrawingApp() {
       // screenY = height / 2 - worldY * zoom + panOffset.y;
       
       // Bu denklemleri çözersek:
-      // panOffset.x = -centerX * zoom + width / 2
-      // panOffset.y = centerY * zoom + height / 2
+      // Merkezi ekranın ortasına yerleştirmek için:
+      // width/2 = centerX * zoom + width/2 + panOffset.x
+      // height/2 = height/2 - centerY * zoom + panOffset.y
+      
+      // O halde:
+      // panOffset.x = -centerX * zoom
+      // panOffset.y = centerY * zoom
       const panOffsetX = -centerX * newZoom;
       const panOffsetY = centerY * newZoom;
+      
+      console.log('NewZoom:', newZoom);
+      console.log('Center point:', centerX, centerY);
+      console.log('Pan offset:', panOffsetX, panOffsetY);
       
       // Yeni değerleri ayarla
       setZoom(newZoom);
@@ -388,44 +412,71 @@ export default function DrawingApp() {
       
       setIsLoadingCad(true);
       
-      // URL'den Blob'a dönüştür ve File nesnesine çevir
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: fileType || 'application/octet-stream' });
-      
-      // Dosya uzantısına göre uygun parser'ı çağır
-      let parsedData;
-      
-      if (fileName.toLowerCase().endsWith('.dxf')) {
-        parsedData = await parseDxfFile(file);
-      } else if (fileName.toLowerCase().endsWith('.dwg')) {
-        parsedData = await parseDwgFile(file);
-      } else {
-        throw new Error('Desteklenmeyen dosya formatı. Lütfen DXF veya DWG dosyası kullanın.');
-      }
-      
-      console.log('Parsed CAD data:', parsedData);
-      
-      // Şimdi CAD nesnelerini canvas'a ekle
-      // DrawingCanvas bileşenine erişelim
-      const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-      if (canvasContainer) {
-        const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-        if (canvasElement) {
-          // Özel olay oluştur - shapes parametresi, DrawingCanvas bileşeninde
-          // shapesRef'e aktarılacak olan şekil dizisi
-          const addShapesEvent = new CustomEvent('addshapes', { 
-            detail: { 
-              shapes: parsedData.shapes
-            } 
-          });
-          
-          // Event'i div.absolute üzerinden yayınla
-          canvasElement.dispatchEvent(addShapesEvent);
-          
-          // Fit View fonksiyonunu çağırarak şekilleri ekrana sığdır
-          setTimeout(() => resetViewSafe(), 100);
+      try {
+        // URL'den Blob'a dönüştür ve File nesnesine çevir
+        const response = await fetch(fileUrl);
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: fileType || 'application/octet-stream' });
+        
+        // Dosya uzantısına göre uygun parser'ı çağır
+        let parsedData;
+        
+        if (fileName.toLowerCase().endsWith('.dxf')) {
+          parsedData = await parseDxfFile(file);
+        } else if (fileName.toLowerCase().endsWith('.dwg')) {
+          parsedData = await parseDwgFile(file);
+        } else {
+          throw new Error('Desteklenmeyen dosya formatı. Lütfen DXF veya DWG dosyası kullanın.');
         }
+        
+        console.log('Parsed CAD data:', parsedData);
+        console.log('Parsed Shapes Count:', parsedData.shapes.length);
+        console.log('Bounds:', parsedData.bounds);
+        
+        if (parsedData.shapes.length === 0) {
+          throw new Error('CAD dosyasında çizilebilecek öğe bulunamadı.');
+        }
+        
+        // Şimdi CAD nesnelerini canvas'a ekle
+        // DrawingCanvas bileşenine erişelim
+        const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+        if (!canvasContainer) {
+          throw new Error('Çizim alanı bulunamadı');
+        }
+        
+        const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+        if (!canvasElement) {
+          throw new Error('Canvas elementi bulunamadı');
+        }
+        
+        // Öncelikle mevcut canvas durumunu sıfırlayalım
+        setZoom(1);
+        setCanvasState(prev => ({
+          ...prev,
+          zoom: 1,
+          panOffset: { x: 0, y: 0 }
+        }));
+        
+        // Özel olay oluştur - shapes parametresi, DrawingCanvas bileşeninde
+        // shapesRef'e aktarılacak olan şekil dizisi
+        const addShapesEvent = new CustomEvent('addshapes', { 
+          detail: { 
+            shapes: parsedData.shapes
+          } 
+        });
+        
+        // Event'i div.absolute üzerinden yayınla
+        canvasElement.dispatchEvent(addShapesEvent);
+        
+        // DrawingCanvas'ın yenilenmesi için yeterli zaman verin
+        // Sonra viewport ayarlamalarını yapın
+        setTimeout(() => {
+          console.log('Şekiller eklendi, viewport ayarlanıyor...');
+          resetViewSafe();
+        }, 300);
+      } catch (error) {
+        console.error('CAD dosyası işlenirken hata:', error);
+        throw error;
       }
       
       setCadError(null);

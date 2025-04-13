@@ -69,9 +69,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // Seçilen şekil ID'sini sabitlemek için useMemo kullanıyoruz
-  // Bu şekilde her render'da aynı referans olacak ve sonsuz döngü olmayacak
-  const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
+  // selectedId referansını kaldırdık, doğrudan selectedShapeId kullanıyoruz
 
   // Render işlevi - render frame içinde kullanılacak
   const renderCanvas = useCallback(() => {
@@ -90,7 +88,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
       // Seçilen şekil ise farklı renkte çiz
-      drawShape(ctx, shape, canvasState, shape.id === selectedId);
+      drawShape(ctx, shape, canvasState, shape.id === selectedShapeId);
     });
     
     // Oluşturulmakta olan şekli çiz
@@ -106,7 +104,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Tüm şekillerden yakalama noktalarını topla
       shapesRef.current.forEach(shape => {
         // Çizgi uçlarını sürüklerken, sürüklenen çizginin snap noktalarını gösterme
-        if (isDraggingEndpoint && shape.id === selectedId) {
+        if (isDraggingEndpoint && shape.id === selectedShapeId) {
           return; // Bu çizgiyi atla
         }
         
@@ -191,7 +189,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedId, activeTool, snapEnabled, isDraggingEndpoint]); // NOT: isDragging bağımlılığını kaldırdık - sonsuz döngü oluşturuyordu
+  }, [canvasState, selectedShapeId, activeTool, snapEnabled, isDraggingEndpoint]); // selectedId yerine selectedShapeId kullanıyoruz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -219,7 +217,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           
           // Draw snap indicators if snapping is enabled
           if (snapEnabled) {
-            drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState);
+            const snapTolerance = 10 / canvasState.zoom;
+            drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState, snapTolerance, snapEnabled);
           }
         }
       }

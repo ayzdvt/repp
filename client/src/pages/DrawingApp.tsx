@@ -83,28 +83,27 @@ export default function DrawingApp() {
     // Şekilleri al (callback tarafından doldurulacak)
     const shapes = shapeList;
     
-    // Debug: Şekilleri konsola yazdır
     console.log("Fit View - Tüm şekiller:", shapes);
-    
-    // Tüm şekillerin sınırlarını bulma
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
     
     // Çizim yoksa, varsayılan görünüme geri dön
     if (!shapes || shapes.length === 0) {
       console.log("Fit View - Çizim bulunamadı, varsayılan görünüme dönülüyor");
       setZoom(1);
-      setCanvasState(prev => ({
-        ...prev,
+      setCanvasState({
+        gridSize: 10,
         zoom: 1,
-        panOffset: { x: 0, y: 0 }
-      }));
+        panOffset: { x: 0, y: 0 },
+        canvasSize: canvasState.canvasSize
+      });
       return;
     }
     
     // Tüm şekillerin sınırlarını bul
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    
     shapes.forEach(shape => {
       if (shape.type === 'point') {
         minX = Math.min(minX, shape.x);
@@ -131,79 +130,90 @@ export default function DrawingApp() {
       else if (shape.type === 'text') {
         minX = Math.min(minX, shape.x);
         minY = Math.min(minY, shape.y);
-        maxX = Math.max(maxX, shape.x + 20); // Yaklaşık metin genişliği
-        maxY = Math.max(maxY, shape.y + 20); // Yaklaşık metin yüksekliği
+        maxX = Math.max(maxX, shape.x + 20); 
+        maxY = Math.max(maxY, shape.y + 20); 
       }
     });
+    
+    console.log("Fit View - Bulunan ham sınırlar:", { minX, minY, maxX, maxY });
     
     // Geçerli sınırlar yoksa, varsayılan görünüme dön
     if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
       setZoom(1);
-      setCanvasState(prev => ({
-        ...prev,
+      setCanvasState({
+        gridSize: 10,
         zoom: 1,
-        panOffset: { x: 0, y: 0 }
-      }));
+        panOffset: { x: 0, y: 0 },
+        canvasSize: canvasState.canvasSize
+      });
       return;
     }
     
-    // Çizimlerin çevresine kenar boşluğu ekle
-    const padding = 50; // Çizimlerin etrafındaki boşluk miktarı
-    minX -= padding;
-    minY -= padding;
-    maxX += padding;
-    maxY += padding;
+    // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
+    const margin = 50;
+    minX -= margin;
+    minY -= margin;
+    maxX += margin;
+    maxY += margin;
     
-    // Tek nokta veya çok küçük çizimler için daha fazla boşluk ekle
-    if (Math.abs(maxX - minX) < 10) {
-      minX -= 50;
-      maxX += 50;
+    // Çok küçük nesneler veya tek nokta için ekstra marj
+    if (maxX - minX < 20) {
+      const center = (minX + maxX) / 2;
+      minX = center - 50;
+      maxX = center + 50;
     }
     
-    if (Math.abs(maxY - minY) < 10) {
-      minY -= 50;
-      maxY += 50;
+    if (maxY - minY < 20) {
+      const center = (minY + maxY) / 2;
+      minY = center - 50;
+      maxY = center + 50;
     }
     
-    // Tüm şekillerin boyutlarını hesapla
-    const objectsWidth = maxX - minX;
-    const objectsHeight = maxY - minY;
+    // Objelerin boyutları
+    const width = maxX - minX;
+    const height = maxY - minY;
     
-    // X ve Y eksenleri için zoom oranlarını hesapla
-    const zoomX = canvasWidth / objectsWidth;
-    const zoomY = canvasHeight / objectsHeight;
+    // Zoom faktörlerini hesapla
+    const zoomX = canvasWidth / width;
+    const zoomY = canvasHeight / height;
     
-    // Her iki eksendeki sınırlamalara göre daha küçük zoom değerini seç
-    const newZoom = Math.min(zoomX, zoomY) * 0.95; // %95 ölçek (ekstra marj için)
+    // Daha kısıtlayıcı olanı seç
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
-    // Orta noktayı hesapla
+    console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
+    
+    // Merkez noktayı hesapla
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
-    // Debug: Bulunan sınırları ve merkezi konsola yazdır
-    console.log("Fit View - Bulunan sınırlar:", { minX, minY, maxX, maxY });
-    console.log("Fit View - Hesaplanan merkez:", { centerX, centerY });
-    console.log("Fit View - Hesaplanan zoom:", { zoomX, zoomY, selectedZoom: newZoom });
+    console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // Zoom'u ayarla
+    // viewPort'un merkezi olacak dünya koordinatını hesapla
+    // ekranın ortasını merkez noktasına kaydırma işlemi
+    const panX = canvasWidth / 2;
+    const panY = canvasHeight / 2;
+    
+    // Nihai dünya sisteminden ekran sistemine dönüşümü hesapla
+    // screenX = (worldX - centerX) * zoom + panX;
+    // screenY = panY - (worldY - centerY) * zoom; // Y ekseni ters
+    
+    // Yani:
+    // panOffset.x = panX - centerX * zoom
+    // panOffset.y = panY + centerY * zoom
+    
+    const panOffsetX = panX - centerX * newZoom;
+    const panOffsetY = panY + centerY * newZoom;
+    
+    console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
+    
+    // Yeni değerleri ayarla
     setZoom(newZoom);
-    
-    // Canvas'ı ortala
-    // Dünya koordinatlarındaki merkezi ekranın ortasına getirmeliyiz
-    // worldToScreen mantığına göre dönüşüm yapıyoruz
-    const newPanX = canvasWidth / 2 - centerX * newZoom;
-    const newPanY = canvasHeight / 2 + centerY * newZoom; // Y ekseni yukarı pozitif
-    
-    console.log("Fit View - Hesaplanan pan değerleri:", { newPanX, newPanY });
-    
-    setCanvasState(prev => ({
-      ...prev,
+    setCanvasState({
+      gridSize: 10, 
       zoom: newZoom,
-      panOffset: {
-        x: newPanX,
-        y: newPanY
-      }
-    }));
+      panOffset: { x: panOffsetX, y: panOffsetY },
+      canvasSize: canvasState.canvasSize
+    });
   };
   
   const handleMousePositionChange = (position: Point) => {

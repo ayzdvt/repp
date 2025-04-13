@@ -26,7 +26,7 @@ export async function parseDxfFile(file: File): Promise<{
     let maxY = Number.MIN_VALUE;
     
     // Varlıkları kendi formatımıza dönüştürelim
-    if (dxf.entities && dxf.entities.length > 0) {
+    if (dxf && dxf.entities && dxf.entities.length > 0) {
       for (const entity of dxf.entities) {
         // Bu entity'nin sınırlarını güncelle
         const bounds = getEntityBounds(entity);

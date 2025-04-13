@@ -30,13 +30,6 @@ export default function DrawingApp() {
   const [location] = useLocation();
   const source = location.includes('source=cad') ? 'cad' : null;
   
-  // CAD dosyasını yükleme
-  useEffect(() => {
-    if (source === 'cad') {
-      loadCadFile();
-    }
-  }, [source, loadCadFile]);
-  
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
     
@@ -63,7 +56,7 @@ export default function DrawingApp() {
   };
   
   // Tüm çizimleri ekrana sığdıran Fit View fonksiyonu
-  const handleResetView = () => {
+  const handleResetView = useCallback(() => {
     // Canvas'ı al
     const drawingContainer = document.getElementById('drawing-container');
     if (!drawingContainer) return;
@@ -202,16 +195,10 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
-    
     // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
     // Orijinal worldToScreen formülünden:
     // screenX = worldX * zoom + width / 2 + panOffset.x;
     // screenY = height / 2 - worldY * zoom + panOffset.y;
-    
-    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
-    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
-    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
     
     // Bu denklemleri çözersek:
     // panOffset.x = -centerX * zoom
@@ -230,7 +217,15 @@ export default function DrawingApp() {
       panOffset: { x: panOffsetX, y: panOffsetY },
       canvasSize: canvasState.canvasSize
     });
-  };
+  }, [canvasState]);
+  
+  // handleResetView fonksiyonunu kullanabilmek için referans oluştur
+  const handleResetViewRef = useRef<() => void>(() => {});
+  
+  // Referansı güncelleyelim
+  useEffect(() => {
+    handleResetViewRef.current = handleResetView;
+  }, [handleResetView]);
   
   const handleMousePositionChange = (position: Point) => {
     setMousePosition(position);
@@ -246,14 +241,6 @@ export default function DrawingApp() {
       canvasSize: { width, height }
     }));
   };
-  
-  // handleResetView fonksiyonunu kullanabilmek için burada bileşeni referans olarak tanımlıyoruz
-  const handleResetViewRef = useRef(handleResetView);
-  
-  // Referansı güncelleyelim
-  useEffect(() => {
-    handleResetViewRef.current = handleResetView;
-  }, [handleResetView]);
   
   // CAD dosyasını işleyen fonksiyon
   const loadCadFile = useCallback(async () => {
@@ -320,7 +307,14 @@ export default function DrawingApp() {
       localStorage.removeItem('cadFileType');
       localStorage.removeItem('cadFileUrl');
     }
-  }, [handleResetView]);
+  }, []);
+  
+  // useEffect içinde loadCadFile'ı çağıralım
+  useEffect(() => {
+    if (source === 'cad') {
+      loadCadFile();
+    }
+  }, [source, loadCadFile]);
   
   // Nesne özelliklerinde değişiklik yapıldığında bu fonksiyon çağrılacak
   const handlePropertyChange = (

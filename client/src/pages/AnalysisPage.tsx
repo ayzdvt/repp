@@ -23,27 +23,37 @@ export default function AnalysisPage() {
     setError(null);
     
     if (event.target.files && event.target.files.length > 0) {
-      const selectedFile = event.target.files[0];
+      // FileList'i array'e çevirelim
+      const newFiles = Array.from(event.target.files);
       
-      // Dosya tipi kontrolü
-      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-      if (!validTypes.includes(selectedFile.type)) {
-        setError('Desteklenmeyen dosya formatı. Lütfen PDF veya görüntü dosyası yükleyin (PDF, JPG, PNG).');
-        return;
+      // Her dosya için kontrolleri yapalım
+      for (const selectedFile of newFiles) {
+        // Dosya tipi kontrolü
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(selectedFile.type)) {
+          setError('Desteklenmeyen dosya formatı. Lütfen PDF veya görüntü dosyası yükleyin (PDF, JPG, PNG).');
+          return;
+        }
+        
+        // Dosya boyutu kontrolü (10MB limit)
+        if (selectedFile.size > 10 * 1024 * 1024) {
+          setError('Dosya boyutu çok büyük. 10MB\'dan küçük dosyalar yükleyin.');
+          return;
+        }
       }
       
-      // Dosya boyutu kontrolü (10MB limit)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError('Dosya boyutu çok büyük. 10MB\'dan küçük dosyalar yükleyin.');
-        return;
-      }
+      // Tüm dosyaları files dizisine ekle
+      setFiles(prev => [...prev, ...newFiles]);
       
-      setFile(selectedFile);
+      // İlk dosya seçilmediyse, ilk dosyayı currentFile olarak ayarla
+      if (!currentFile && newFiles.length > 0) {
+        setCurrentFile(newFiles[0]);
+      }
     }
   };
 
   const handleUpload = async () => {
-    if (!file) {
+    if (!currentFile) {
       setError('Lütfen bir dosya seçin.');
       return;
     }
@@ -75,7 +85,7 @@ export default function AnalysisPage() {
         }, 500);
         
         try {
-          const data = await analyzeDocument(file);
+          const data = await analyzeDocument(currentFile);
           setResult(data);
         } catch (err) {
           const error = err as Error;
@@ -127,9 +137,11 @@ export default function AnalysisPage() {
                 <input
                   type="file"
                   id="file-upload"
+                  ref={fileInputRef}
                   className="hidden"
                   onChange={handleFileChange}
                   accept=".pdf,.jpg,.jpeg,.png"
+                  multiple
                   disabled={isUploading || isAnalyzing}
                 />
                 
@@ -156,11 +168,11 @@ export default function AnalysisPage() {
                 </div>
               </div>
               
-              {file && (
+              {currentFile && (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      {file.type === 'application/pdf' ? (
+                      {currentFile.type === 'application/pdf' ? (
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -172,15 +184,18 @@ export default function AnalysisPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {file.name}
+                        {currentFile.name}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {Math.round(file.size / 1024)} KB
+                        {Math.round(currentFile.size / 1024)} KB
                       </p>
                     </div>
                     <div>
                       <button
-                        onClick={() => setFile(null)}
+                        onClick={() => {
+                          setCurrentFile(null);
+                          setFiles(files.filter(f => f !== currentFile));
+                        }}
                         disabled={isUploading || isAnalyzing}
                         className="text-gray-400 hover:text-gray-500"
                       >
@@ -189,6 +204,39 @@ export default function AnalysisPage() {
                         </svg>
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Tüm dosyaları göster */}
+              {files.length > 1 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Tüm Dosyalar ({files.length})</p>
+                  <div className="space-y-2">
+                    {files.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className={`bg-gray-50 p-2 rounded flex items-center justify-between ${file === currentFile ? 'border border-blue-500' : ''}`}
+                        onClick={() => setCurrentFile(file)}
+                      >
+                        <span className="text-sm truncate">{file.name}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Bu dosya şu an seçili olan dosya ise, seçimi kaldır
+                            if (file === currentFile) {
+                              setCurrentFile(files.length > 1 ? files.find(f => f !== file) || null : null);
+                            }
+                            setFiles(files.filter(f => f !== file));
+                          }}
+                          className="text-gray-400 hover:text-gray-500"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -213,7 +261,7 @@ export default function AnalysisPage() {
               <div className="flex justify-end">
                 <Button
                   onClick={handleUpload}
-                  disabled={!file || isUploading || isAnalyzing}
+                  disabled={!currentFile || isUploading || isAnalyzing}
                 >
                   {isUploading ? 'Yükleniyor...' : isAnalyzing ? 'Analiz Ediliyor...' : 'Analiz Et'}
                 </Button>

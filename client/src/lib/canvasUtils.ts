@@ -244,7 +244,16 @@ export function drawShape(
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
     ctx.lineWidth = shape.thickness; // Sabit kalınlık - zoom'dan etkilenmesin
+    
+    // Eğer kesikli çizgi özelliği varsa (önizleme için)
+    if (shape.isDashed) {
+      ctx.setLineDash([5, 5]); // Kesikli çizgi
+    }
+    
     ctx.stroke();
+    
+    // Dash ayarlarını sıfırla
+    ctx.setLineDash([]);
     
     // Eğer çizgi seçiliyse uç noktaları göster
     if (isSelected) {

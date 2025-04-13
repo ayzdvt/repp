@@ -353,7 +353,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             endX: endPoint.x,
             endY: endPoint.y,
             // Yakalama noktası varsa bunu görsel olarak belirt
-            isSnapping: !!snapPoint
+            isSnapping: !!snapPoint,
+            isDashed: true // Kesikli çizgi olarak göster
           };
         }
       } 

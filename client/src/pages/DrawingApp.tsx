@@ -47,13 +47,76 @@ export default function DrawingApp() {
     }));
   };
   
+  // Çizimlerin bulunduğu alana odaklanmak için fit view fonksiyonu
   const handleResetView = () => {
-    setZoom(1);
-    setCanvasState(prev => ({
-      ...prev,
-      zoom: 1,
-      panOffset: { x: 0, y: 0 }
-    }));
+    // Canvas element referansını al
+    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+    if (!canvasContainer) return;
+    
+    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+    if (!canvasElement) return;
+    
+    // Özel olay ile çizimlerin sınırlarını almak için istek gönder
+    const event = new CustomEvent('getShapesBounds', {
+      detail: { 
+        callback: (bounds: { minX: number, minY: number, maxX: number, maxY: number } | null) => {
+          if (!bounds) {
+            // Hiç çizim yoksa merkeze odaklan
+            setZoom(1);
+            setCanvasState(prev => ({
+              ...prev,
+              zoom: 1,
+              panOffset: { x: 0, y: 0 }
+            }));
+            return;
+          }
+          
+          // Eğer çizimler varsa, sınırlara göre hesapla
+          const { minX, minY, maxX, maxY } = bounds;
+          const width = maxX - minX;
+          const height = maxY - minY;
+          
+          // Boş çizim alanı kontrolü
+          if (width === 0 && height === 0) {
+            setZoom(1);
+            setCanvasState(prev => ({
+              ...prev,
+              zoom: 1,
+              panOffset: { x: 0, y: 0 }
+            }));
+            return;
+          }
+          
+          // Canvas boyutları
+          const canvasWidth = canvasState.canvasSize.width;
+          const canvasHeight = canvasState.canvasSize.height;
+          
+          // Zoom hesaplama (tüm çizimleri görebilmek için)
+          // Padding eklemek için 0.9 ile çarp
+          const zoomX = (canvasWidth / width) * 0.8;
+          const zoomY = (canvasHeight / height) * 0.8;
+          const newZoom = Math.min(zoomX, zoomY);
+          
+          // Merkez hesaplama
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          
+          // Pan hesaplama (çizimlerin merkezi canvasın merkezine gelecek şekilde)
+          const panX = (canvasWidth / 2) - (centerX * newZoom);
+          const panY = (canvasHeight / 2) + (centerY * newZoom);
+          
+          // Zoom ve pan güncelleme
+          setZoom(newZoom);
+          setCanvasState(prev => ({
+            ...prev,
+            zoom: newZoom,
+            panOffset: { x: panX, y: panY }
+          }));
+        }
+      } 
+    });
+    
+    canvasElement.dispatchEvent(event);
   };
   
   const handleMousePositionChange = (position: Point) => {

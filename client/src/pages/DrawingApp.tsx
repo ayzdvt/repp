@@ -179,14 +179,15 @@ export default function DrawingApp() {
     // Zoom'u ayarla
     setZoom(newZoom);
     
-    // Canvas'ı ortala - koordinat sisteminin ortada olduğunu unutma
-    // x ve y değerleri, canvas'ın ortası ile dünyadaki orta nokta arasındaki ilişkiyi belirler
+    // Canvas'ı ortala
+    // Dünya koordinatlarındaki merkezi ekranın ortasına getirmeliyiz
+    // worldToScreen mantığına göre dönüşüm yapıyoruz
     setCanvasState(prev => ({
       ...prev,
       zoom: newZoom,
       panOffset: {
-        x: centerX * newZoom, 
-        y: -centerY * newZoom // Y ekseni ters olduğu için negatif işaret
+        x: canvasWidth / 2 - centerX * newZoom,
+        y: canvasHeight / 2 + centerY * newZoom // Y ekseni yukarı pozitif olduğu için işaretler bu şekilde olmalı
       }
     }));
   };

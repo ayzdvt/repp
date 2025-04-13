@@ -129,7 +129,8 @@ export function drawSnapIndicators(
   currentMousePos: Point | null,
   state: CanvasState,
   snapTolerance: number,
-  snapEnabled: boolean = true
+  snapEnabled: boolean = true,
+  selectedId?: number | null
 ): void {
   // Snap özelliği kapalıysa çıkış yap
   if (!snapEnabled) return;
@@ -142,6 +143,11 @@ export function drawSnapIndicators(
   
   // Mevcut tüm şekillerden yakalama noktaları topla
   shapes.forEach(shape => {
+    // Seçilen şeklin snap noktalarını gösterme (sürükleme sırasında)
+    if (selectedId !== undefined && shape.id === selectedId) {
+      return; // Bu şekli atla
+    }
+    
     if (shape.type === 'point') {
       snapPoints.push({ x: shape.x, y: shape.y });
     } else if (shape.type === 'line') {

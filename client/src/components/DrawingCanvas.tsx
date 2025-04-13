@@ -72,6 +72,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
 
   // Render işlevi - render frame içinde kullanılacak
+  // useCallback ile fonksiyonu cache'liyoruz, dependencies listesini doğru şekilde belirterek
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -182,7 +183,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         requestRef.current = null;
       }
     };
-  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
+  }, []); // Bağımlılıkları kaldırdık, çünkü renderCanvas zaten useCallback ile sabitleştirilmiş
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

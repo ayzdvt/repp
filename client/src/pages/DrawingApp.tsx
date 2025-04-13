@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import ToolSidebar from "@/components/ToolSidebar";
 import PropertiesSidebar from "@/components/PropertiesSidebar";
 import StatusBar from "@/components/StatusBar";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { CanvasState, Tool, Point } from "@/types";
+import { parseDxfFile, parseDwgFile } from "@/lib/dxfService";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function DrawingApp() {
   const [activeTool, setActiveTool] = useState<Tool>("selection");
@@ -19,9 +23,12 @@ export default function DrawingApp() {
     canvasSize: { width: 0, height: 0 }
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
+  const [isLoadingCad, setIsLoadingCad] = useState<boolean>(false);
+  const [cadError, setCadError] = useState<string | null>(null);
   
-  // Canvas içindeki referans
-  // Removed canvasRef
+  // URL parametrelerini al
+  const [location] = useLocation();
+  const source = location.includes('source=cad') ? 'cad' : null;
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -232,6 +239,81 @@ export default function DrawingApp() {
       canvasSize: { width, height }
     }));
   };
+  
+  // handleResetView fonksiyonunu kullanabilmek için burada bileşeni referans olarak tanımlıyoruz
+  const handleResetViewRef = useRef(handleResetView);
+  
+  // Referansı güncelleyelim
+  useEffect(() => {
+    handleResetViewRef.current = handleResetView;
+  }, [handleResetView]);
+  
+  // CAD dosyasını işleyen fonksiyon
+  const loadCadFile = useCallback(async () => {
+    try {
+      // CAD dosyasını localStorage'dan al
+      const fileName = localStorage.getItem('cadFileName');
+      const fileType = localStorage.getItem('cadFileType');
+      const fileUrl = localStorage.getItem('cadFileUrl');
+      
+      if (!fileName || !fileUrl) {
+        throw new Error('CAD dosyası bulunamadı');
+      }
+      
+      setIsLoadingCad(true);
+      
+      // URL'den Blob'a dönüştür ve File nesnesine çevir
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: fileType || 'application/octet-stream' });
+      
+      // Dosya uzantısına göre uygun parser'ı çağır
+      let parsedData;
+      
+      if (fileName.toLowerCase().endsWith('.dxf')) {
+        parsedData = await parseDxfFile(file);
+      } else if (fileName.toLowerCase().endsWith('.dwg')) {
+        parsedData = await parseDwgFile(file);
+      } else {
+        throw new Error('Desteklenmeyen dosya formatı. Lütfen DXF veya DWG dosyası kullanın.');
+      }
+      
+      console.log('Parsed CAD data:', parsedData);
+      
+      // Şimdi CAD nesnelerini canvas'a ekle
+      // DrawingCanvas bileşenine erişelim
+      const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+      if (canvasContainer) {
+        const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+        if (canvasElement) {
+          // Özel olay oluştur - shapes parametresi, DrawingCanvas bileşeninde
+          // shapesRef'e aktarılacak olan şekil dizisi
+          const addShapesEvent = new CustomEvent('addshapes', { 
+            detail: { 
+              shapes: parsedData.shapes
+            } 
+          });
+          
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(addShapesEvent);
+          
+          // Fit View fonksiyonunu çağırarak şekilleri ekrana sığdır
+          setTimeout(() => handleResetViewRef.current(), 100);
+        }
+      }
+      
+      setCadError(null);
+    } catch (error: any) {
+      console.error('CAD dosyası yüklenirken hata oluştu:', error);
+      setCadError(error.message || 'CAD dosyası yüklenirken bir hata oluştu.');
+    } finally {
+      setIsLoadingCad(false);
+      // localStorage'dan CAD dosya bilgilerini temizleyelim
+      localStorage.removeItem('cadFileName');
+      localStorage.removeItem('cadFileType');
+      localStorage.removeItem('cadFileUrl');
+    }
+  }, [handleResetView]);
   
   // Nesne özelliklerinde değişiklik yapıldığında bu fonksiyon çağrılacak
   const handlePropertyChange = (

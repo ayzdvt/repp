@@ -230,6 +230,35 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Update mouse position in parent component
     onMousePositionChange(worldPos);
     
+    // Polyline çizimi sırasında önizleme çizgisini göster
+    if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
+      // Snap kontrolü
+      const snapTolerance = 10 / canvasState.zoom;
+      const snapPoint = snapEnabled
+        ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+        : null;
+      
+      // Fare pozisyonu veya snap noktası
+      const currentPoint = snapPoint || worldPos;
+      
+      // Önizleme çizgisini güncelle
+      if (currentShapeRef.current) {
+        // Mevcut noktaları al
+        const points = [...polylinePointsRef.current];
+        
+        // Geçici önizleme oluştur - son noktayı fare pozisyonuyla değiştir
+        const tempPoints = [...points]; // Noktaları kopyala
+        
+        // Eğer fare hareket ediyorsa, son noktadan fareye bir çizgi göster
+        currentShapeRef.current = {
+          ...currentShapeRef.current,
+          points: tempPoints,
+          previewPoint: currentPoint, // Önizleme noktası ekle
+          isSnapping: !!snapPoint
+        };
+      }
+    }
+    
     // SADECE orta fare tuşu (wheel button) ile pan yapmaya izin ver (buttons=4)
     if (e.buttons === 4) {
       const dx = e.clientX - dragStartRef.current.x;
@@ -329,7 +358,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           
           // Tüm noktaları koruyarak son noktayı fare pozisyonuyla güncelle (çizim önizlemesi için)
           if (currentShapeRef.current) {
-            // Mevcut noktaları al ama son noktayı ekleme (o zaten tıklamayla ekleniyor)
+            // Mevcut noktaları al
             const points = [...polylinePointsRef.current];
             
             // Şu anki fare pozisyonunu geçici olarak ekle (taslak gösterim için)

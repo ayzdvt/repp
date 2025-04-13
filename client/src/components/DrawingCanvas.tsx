@@ -241,16 +241,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Fare pozisyonu veya snap noktası
       const currentPoint = snapPoint || worldPos;
       
-      // Önizleme çizgisini güncelle
-      if (currentShapeRef.current) {
-        // Mevcut noktaları al
-        const points = [...polylinePointsRef.current];
+      // Önizleme çizgisini güncelle - sadece fare pozisyonunu değiştiriyoruz, gerçek noktaları değil
+      if (currentShapeRef.current && currentPoint) {
+        // Mevcut noktaları kopyala, değiştirmeyelim
+        const currentPoints = [...polylinePointsRef.current];
         
-        // Son noktadan fareye bir çizgi göster (önizleme)
+        // Önizleme noktasını güncelle - bu sadece çizim için
         currentShapeRef.current = {
-          id: -1, // Geçici ID
+          id: currentShapeRef.current.id || -1,
           type: 'polyline',
-          points: points,
+          points: currentPoints,  // Orijinal noktaları kullan
           thickness: 1,
           closed: false,
           previewPoint: currentPoint, // Önizleme noktası ekle
@@ -695,13 +695,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     }
     
-    // Çizgi aracı dışındaki araçlar için şekli ekle
-    if (currentShapeRef.current && activeTool !== 'selection' && activeTool !== 'line') {
-      shapesRef.current.push(currentShapeRef.current);
-      currentShapeRef.current = null;
+    // Polyline aracı için currentShapeRef'i koruyoruz, çünkü şekil mouseDown'da shapesRef'e ekleniyor
+    // mouseUp'ta sadece sürükleme durumunu sıfırlıyoruz
+    if (activeTool === 'polyline' && drawingPolyline) {
+      return; // Polyline aracı için MouseUp işlemini kapat
     }
     
     // Çizgi aracı için handleMouseUp'ta bir şey yapmayalım - tüm işlem mouseDown'da gerçekleşiyor
+    if (activeTool === 'line') {
+      return; // Çizgi aracı için MouseUp işlemini kapat
+    }
+    
+    // Diğer araçlar için şekli ekle
+    if (currentShapeRef.current && activeTool !== 'selection') {
+      shapesRef.current.push(currentShapeRef.current);
+      currentShapeRef.current = null;
+    }
   };
   
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {

@@ -296,27 +296,34 @@ export function drawShape(
     
     // Eğer önizleme noktası varsa, son noktadan önizleme noktasına çizgi çiz (fare ile çizim yaparken)
     if (shape.previewPoint) {
-      const lastPoint = shape.points[shape.points.length - 1];
-      const lastScreenPoint = worldToScreen(lastPoint.x, lastPoint.y, state);
-      const previewScreenPoint = worldToScreen(shape.previewPoint.x, shape.previewPoint.y, state);
-      
-      // Normal çizgiyi çiz
-      ctx.stroke();
-      
-      // Önizleme çizgisini kesikli çizgi olarak çiz
-      ctx.beginPath();
-      ctx.moveTo(lastScreenPoint.x, lastScreenPoint.y);
-      ctx.lineTo(previewScreenPoint.x, previewScreenPoint.y);
-      ctx.setLineDash([4, 4]); // Kesikli çizgi
-      ctx.stroke();
-      ctx.setLineDash([]); // Kesikli çizgiyi sıfırla
-      
-      // Snap varsa özel görünüm ekle
-      if (shape.isSnapping) {
+      // Son noktaya erişim için points dizisi boş değilse devam et
+      if (shape.points && shape.points.length > 0) {
+        const lastPoint = shape.points[shape.points.length - 1];
+        const lastScreenPoint = worldToScreen(lastPoint.x, lastPoint.y, state);
+        const previewScreenPoint = worldToScreen(shape.previewPoint.x, shape.previewPoint.y, state);
+
+        // Önce normal çizgiyi çiz (noktaları birleştiren)
+        ctx.lineWidth = shape.thickness || 1;
+        ctx.stroke();
+        
+        // Sonra önizleme çizgisini farklı stilde çiz
         ctx.beginPath();
-        ctx.arc(previewScreenPoint.x, previewScreenPoint.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#00C853"; // Yeşil renk
-        ctx.fill();
+        ctx.moveTo(lastScreenPoint.x, lastScreenPoint.y);
+        ctx.lineTo(previewScreenPoint.x, previewScreenPoint.y);
+        ctx.strokeStyle = isSelected ? "#FF6600" : "#0088FF"; // Önizleme için mavi veya turuncu
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]); // Kesikli çizgi
+        ctx.stroke();
+        ctx.setLineDash([]); // Kesikli çizgiyi sıfırla
+        ctx.strokeStyle = isSelected ? "#FF4500" : "#000000"; // Orijinal renge geri dön
+        
+        // Snap varsa özel görünüm ekle
+        if (shape.isSnapping) {
+          ctx.beginPath();
+          ctx.arc(previewScreenPoint.x, previewScreenPoint.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "#00C853"; // Yeşil renk
+          ctx.fill();
+        }
       }
     } else {
       // Eğer kapalı bir polyline ise, ilk noktaya geri dön

@@ -38,7 +38,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
   const requestRef = useRef<number | null>(null); // AnimationFrame request ID
   const nextIdRef = useRef<number>(1); // Şekiller için benzersiz ID'ler
-  const draggingLineEndpointRef = useRef<'start' | 'end' | null>(null); // Hangi çizgi ucunun sürüklendiği
+  const draggingLineEndpointRef = useRef<'start' | 'end' | 'vertex' | null>(null); // Hangi uç veya noktanın sürüklendiği
   const originalLineRef = useRef<any | null>(null); // Sürükleme başladığında çizginin orijinal hali
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
@@ -287,13 +287,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       dragStartRef.current = { x: e.clientX, y: e.clientY };
     } 
     
-    // Çizgi uç noktası sürükleme işlemi
+    // Çizgi veya polyline noktası sürükleme işlemi
     else if (isDraggingEndpoint && draggingLineEndpointRef.current && selectedShapeId !== null && (e.buttons === 1)) {
-      // Hangi çizginin düzenleneceğini bul
-      const lineIndex = shapesRef.current.findIndex(shape => shape.id === selectedShapeId);
-      if (lineIndex !== -1) {
-        // Çizgiyi bul
-        const lineShape = shapesRef.current[lineIndex];
+      // Hangi şeklin düzenleneceğini bul
+      const shapeIndex = shapesRef.current.findIndex(shape => shape.id === selectedShapeId);
+      if (shapeIndex !== -1) {
+        // Şekli bul
+        const shape = shapesRef.current[shapeIndex];
         
         // Snap özelliği için kontrol yap
         const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
@@ -306,22 +306,33 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
         const endPoint = snapPoint || worldPos;
         
-        // Hangi uç noktasının taşındığına göre güncelle
-        if (draggingLineEndpointRef.current === 'start') {
-          lineShape.startX = endPoint.x;
-          lineShape.startY = endPoint.y;
-        } else if (draggingLineEndpointRef.current === 'end') {
-          lineShape.endX = endPoint.x;
-          lineShape.endY = endPoint.y;
+        if (shape.type === 'line') {
+          // Çizgi uç noktası taşıma
+          // Hangi uç noktasının taşındığına göre güncelle
+          if (draggingLineEndpointRef.current === 'start') {
+            shape.startX = endPoint.x;
+            shape.startY = endPoint.y;
+          } else if (draggingLineEndpointRef.current === 'end') {
+            shape.endX = endPoint.x;
+            shape.endY = endPoint.y;
+          }
+        } 
+        else if (shape.type === 'polyline' && draggingLineEndpointRef.current === 'vertex') {
+          // Polyline noktası taşıma
+          const vertexIndex = originalLineRef.current?.vertexIndex;
+          if (vertexIndex !== undefined && Array.isArray(shape.points) && vertexIndex < shape.points.length) {
+            // Belirli bir vertex'i güncelle
+            shape.points[vertexIndex] = { x: endPoint.x, y: endPoint.y };
+          }
         }
         
         // UI güncellemesi için seçili nesneyi güncelle
         if (onSelectObject) {
-          onSelectObject(lineShape);
+          onSelectObject(shape);
         }
         
         // Canvas'ın yeniden çizilmesini sağlayan düzenleme
-        shapesRef.current[lineIndex] = { ...lineShape };
+        shapesRef.current[shapeIndex] = { ...shape };
         
         // İmleç stilini güncelle
         if (canvasRef.current) {
@@ -436,6 +447,26 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   };
   
   // Helper function to find the shape under a given point
+  // Polyline noktalarını kontrol edip taşınabilecek noktayı bulur
+  const getPolylineVertexAtPoint = (polyline: any, point: Point, tolerance: number): number | null => {
+    if (!polyline.points || !Array.isArray(polyline.points)) return null;
+    
+    // Tüm noktaları kontrol et
+    for (let i = 0; i < polyline.points.length; i++) {
+      const vertex = polyline.points[i];
+      
+      // Nokta ile vertex arasındaki mesafeyi hesapla
+      const dist = distance(point, vertex);
+      
+      // Eğer mesafe toleransın içindeyse, bu noktanın indeksini döndür
+      if (dist <= tolerance) {
+        return i; // Taşınacak noktanın indeksi
+      }
+    }
+    
+    return null; // Hiçbir nokta tolerans içinde değil
+  };
+
   const findShapeAtPoint = (point: Point): any | null => {
     // Zoom seviyesine göre seçim toleransını hesapla
     // Zoom büyükse tolerans düşük, zoom küçükse tolerans yüksek olmalı
@@ -449,9 +480,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Toleransı sınırlar içinde tut
     const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
     
-    // Eğer zaten bir çizgi seçiliyse, uç noktalarına tıklandığını kontrol et
+    // Eğer zaten bir şekil seçiliyse, özel durumları kontrol et
     if (selectedShapeId !== null && activeTool === 'selection') {
       const selectedShape = shapesRef.current.find(s => s.id === selectedShapeId);
+      
+      // Çizgi seçiliyse uç noktalarına tıklandığını kontrol et
       if (selectedShape && selectedShape.type === 'line') {
         // Eğer çizginin uç noktalarından birine tıklandıysa
         const endpoint = getLineEndpoint(selectedShape, point, tolerance * 1.5); // Biraz daha geniş tolerans
@@ -463,6 +496,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           setIsDraggingEndpoint(true);
           
           // Aynı çizgiyi döndür - zaten seçiliydi
+          return selectedShape;
+        }
+      } 
+      // Polyline seçiliyse noktalarına tıklandığını kontrol et
+      else if (selectedShape && selectedShape.type === 'polyline') {
+        // Polyline noktalarından birine tıklandı mı?
+        const vertexIndex = getPolylineVertexAtPoint(selectedShape, point, tolerance * 1.5);
+        
+        if (vertexIndex !== null) {
+          // Polyline vertex düzenleme modu
+          draggingLineEndpointRef.current = 'vertex';  // İmleç durumunu değiştirmek için
+          originalLineRef.current = { 
+            ...selectedShape,
+            vertexIndex: vertexIndex // Düzenlenen vertex'in indeksini sakla
+          };
+          setIsDraggingEndpoint(true);
+          
+          // Aynı polyline'ı döndür - zaten seçiliydi
           return selectedShape;
         }
       }

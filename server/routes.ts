@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { insertUserSchema, insertDrawingSchema, insertShapeSchema } from "@shared/schema";
+import { insertUserSchema, insertDrawingSchema, insertShapeSchema, insertProjectAnalysisSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -174,6 +174,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting shape:', error);
       res.status(500).json({ error: 'Failed to delete shape' });
+    }
+  });
+  
+  // Project analysis routes
+  app.get('/api/analyses', async (req, res) => {
+    try {
+      const userId = Number(req.query.userId);
+      if (!userId) {
+        return res.status(400).json({ error: 'userId query parameter is required' });
+      }
+      
+      const analyses = await storage.getUserProjectAnalyses(userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error('Error fetching project analyses:', error);
+      res.status(500).json({ error: 'Failed to fetch project analyses' });
+    }
+  });
+  
+  app.get('/api/analyses/:id', async (req, res) => {
+    try {
+      const analysisId = Number(req.params.id);
+      const analysis = await storage.getProjectAnalysis(analysisId);
+      
+      if (!analysis) {
+        return res.status(404).json({ error: 'Project analysis not found' });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error fetching project analysis:', error);
+      res.status(500).json({ error: 'Failed to fetch project analysis' });
+    }
+  });
+  
+  app.post('/api/analyses', async (req, res) => {
+    try {
+      const analysisData = insertProjectAnalysisSchema.parse(req.body);
+      const analysis = await storage.createProjectAnalysis(analysisData);
+      res.status(201).json(analysis);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        console.error('Error creating project analysis:', error);
+        res.status(500).json({ error: 'Failed to create project analysis' });
+      }
+    }
+  });
+  
+  app.patch('/api/analyses/:id', async (req, res) => {
+    try {
+      const analysisId = Number(req.params.id);
+      const analysisData = insertProjectAnalysisSchema.partial().parse(req.body);
+      
+      const updatedAnalysis = await storage.updateProjectAnalysis(analysisId, analysisData);
+      
+      if (!updatedAnalysis) {
+        return res.status(404).json({ error: 'Project analysis not found' });
+      }
+      
+      res.json(updatedAnalysis);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        console.error('Error updating project analysis:', error);
+        res.status(500).json({ error: 'Failed to update project analysis' });
+      }
+    }
+  });
+  
+  app.delete('/api/analyses/:id', async (req, res) => {
+    try {
+      const analysisId = Number(req.params.id);
+      const success = await storage.deleteProjectAnalysis(analysisId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Project analysis not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error('Error deleting project analysis:', error);
+      res.status(500).json({ error: 'Failed to delete project analysis' });
     }
   });
 

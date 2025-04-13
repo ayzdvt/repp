@@ -4,15 +4,18 @@ import { analyzeDocument, analyzeMultipleDocuments, ProjectDetails } from '@/lib
 import AnalysisResult from '@/components/AnalysisResult';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertCircle, CheckCircle, ArrowLeft, Upload, Plus } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, ArrowLeft, Upload, Plus, Database, Save } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function AnalysisPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [result, setResult] = useState<ProjectDetails | null>(null);
   const [, setLocation] = useLocation();
   
@@ -263,17 +266,59 @@ export default function AnalysisPage() {
           </button>
         </div>
         
-        <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Başarılı</AlertTitle>
-          <AlertDescription>
-            {files.length > 1 
-              ? `${files.length} adet imar belgesi başarıyla analiz edildi.` 
-              : 'İmar belgesi başarıyla analiz edildi.'}
-          </AlertDescription>
-        </Alert>
+        {error ? (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Hata</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : success ? (
+          <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Başarılı</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        ) : (
+          <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Başarılı</AlertTitle>
+            <AlertDescription>
+              {files.length > 1 
+                ? `${files.length} adet imar belgesi başarıyla analiz edildi.` 
+                : 'İmar belgesi başarıyla analiz edildi.'}
+            </AlertDescription>
+          </Alert>
+        )}
         
         <AnalysisResult data={result} />
+        
+        <div className="flex justify-end mt-6 space-x-4">
+          <Button 
+            variant="outline" 
+            className="flex items-center space-x-2"
+            onClick={() => window.location.href = '/drawing'}
+          >
+            <span>Çizime Başla</span>
+          </Button>
+          
+          <Button 
+            onClick={saveToDatabase}
+            disabled={isSaving}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Kaydediliyor...</span>
+              </>
+            ) : (
+              <>
+                <Database className="h-4 w-4" />
+                <span>Veritabanına Kaydet</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

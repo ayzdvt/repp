@@ -1033,14 +1033,38 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
+      // Şekilleri toplu eklemek için olay - CAD dosyaları için
+      const addShapesHandler = ((e: any) => {
+        if (e.detail && Array.isArray(e.detail.shapes)) {
+          console.log('Adding shapes:', e.detail.shapes.length);
+          
+          // Önce mevcut şekilleri temizle
+          shapesRef.current = [];
+          
+          // Tüm şekillere benzersiz ID'ler atayalım
+          const shapesWithIds = e.detail.shapes.map((shape: any) => {
+            // Eğer shape'in zaten bir ID'si varsa onu kullan, yoksa yeni oluştur
+            return {
+              ...shape,
+              id: shape.id || nextIdRef.current++
+            };
+          });
+          
+          // Şekilleri ekle
+          shapesRef.current = [...shapesWithIds];
+        }
+      }) as EventListener;
+      
       // Event listener'ları ekle
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
+      containerElement.addEventListener('addshapes', addShapesHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
+        containerElement.removeEventListener('addshapes', addShapesHandler);
       };
     }
     

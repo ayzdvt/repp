@@ -47,26 +47,119 @@ export default function DrawingApp() {
     }));
   };
   
-  // Basitleştirilmiş sabit Fit View fonksiyonu
+  // Çizimlere odaklanan Fit View fonksiyonu
   const handleResetView = () => {
-    // Sabit zoom ve pan değerlerini kullan
-    const newZoom = 0.5; // Sabit zoom değeri
+    // Canvas'ı al
+    const drawingContainer = document.getElementById('drawing-container');
+    if (!drawingContainer) return;
     
-    // Canvas merkezini 0,0 noktasına getir
-    const canvasWidth = canvasState.canvasSize.width;
-    const canvasHeight = canvasState.canvasSize.height;
+    // Absolute div'i bul
+    const absoluteDiv = drawingContainer.querySelector('div.absolute');
+    if (!absoluteDiv) return;
     
-    // Pan değerlerini ayarla - merkez (0,0) noktasına gelecek şekilde
-    const panX = canvasWidth / 2;
-    const panY = canvasHeight / 2;
+    // Özel bir event ile tüm şekilleri alma
+    const event = new CustomEvent('getAllShapes', {
+      detail: { 
+        callback: (shapes: any[]) => {
+          // Canvas boyutları
+          const canvasWidth = canvasState.canvasSize.width;
+          const canvasHeight = canvasState.canvasSize.height;
+          
+          // Eğer hiç şekil yoksa sadece varsayılana dön
+          if (!shapes || shapes.length === 0) {
+            setZoom(1);
+            setCanvasState(prev => ({
+              ...prev,
+              zoom: 1,
+              panOffset: { x: canvasWidth / 2, y: canvasHeight / 2 }
+            }));
+            return;
+          }
+          
+          // Tüm şekillerin sınırlarını hesapla
+          let minX = Infinity;
+          let minY = Infinity;
+          let maxX = -Infinity;
+          let maxY = -Infinity;
+          
+          shapes.forEach(shape => {
+            if (shape.type === 'point') {
+              minX = Math.min(minX, shape.x);
+              minY = Math.min(minY, shape.y);
+              maxX = Math.max(maxX, shape.x);
+              maxY = Math.max(maxY, shape.y);
+            } 
+            else if (shape.type === 'line') {
+              minX = Math.min(minX, shape.startX, shape.endX);
+              minY = Math.min(minY, shape.startY, shape.endY);
+              maxX = Math.max(maxX, shape.startX, shape.endX);
+              maxY = Math.max(maxY, shape.startY, shape.endY);
+            }
+            else if (shape.type === 'polyline' && shape.points) {
+              shape.points.forEach((point: any) => {
+                if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+                  minX = Math.min(minX, point.x);
+                  minY = Math.min(minY, point.y);
+                  maxX = Math.max(maxX, point.x);
+                  maxY = Math.max(maxY, point.y);
+                }
+              });
+            }
+          });
+          
+          // Sadece tek nokta veya nokta boyutunda bir şey varsa boyutlara bir miktar daha ekle
+          if (maxX - minX < 1) {
+            minX -= 10;
+            maxX += 10;
+          }
+          
+          if (maxY - minY < 1) {
+            minY -= 10;
+            maxY += 10;
+          }
+          
+          // Marj ekle
+          const margin = 40; // Dünya birimlerinde marj
+          minX -= margin;
+          minY -= margin;
+          maxX += margin;
+          maxY += margin;
+          
+          // Objelerin genişlik ve yüksekliği
+          const objectWidth = maxX - minX;
+          const objectHeight = maxY - minY;
+          
+          // Zoom faktörünü hesapla
+          const zoomX = canvasWidth / objectWidth;
+          const zoomY = canvasHeight / objectHeight;
+          
+          // Minimum zoom faktörünü al (her şeyin görünür olmasını sağlamak için)
+          let newZoom = Math.min(zoomX, zoomY);
+          
+          // Makul bir zoom limitlemesi
+          newZoom = Math.min(Math.max(0.1, newZoom), 10);
+          
+          // Objelerin merkez noktasını hesapla
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          
+          // Pan değerlerini hesapla - ekran merkezi, obje merkezi ile çakışacak şekilde
+          const panX = canvasWidth / 2 - centerX * newZoom;
+          const panY = canvasHeight / 2 + centerY * newZoom;
+          
+          // Canvas'ı güncelle
+          setZoom(newZoom);
+          setCanvasState(prev => ({
+            ...prev,
+            zoom: newZoom,
+            panOffset: { x: panX, y: panY }
+          }));
+        }
+      }
+    });
     
-    // Canvas'ı güncelle
-    setZoom(newZoom);
-    setCanvasState(prev => ({
-      ...prev,
-      zoom: newZoom,
-      panOffset: { x: panX, y: panY }
-    }));
+    // Event'i gönder
+    absoluteDiv.dispatchEvent(event);
   };
   
   const handleMousePositionChange = (position: Point) => {

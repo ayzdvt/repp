@@ -1,0 +1,102 @@
+import React, { useRef, useEffect, useState } from 'react';
+
+// Çizim için nesne türü: Basit bir dikdörtgen örneği
+type DrawingObject = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: string;
+};
+
+// Örnek nesneler (bu örnekte iki adet dikdörtgen)
+const sampleObjects: DrawingObject[] = [
+  { x: 50, y: 50, width: 100, height: 150, color: 'red' },
+  { x: 200, y: 100, width: 150, height: 100, color: 'blue' },
+];
+
+const DrawingCanvas: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [objects, setObjects] = useState<DrawingObject[]>(sampleObjects);
+
+  // Nesnelerin çizildiği fonksiyon
+  const drawObjects = (ctx: CanvasRenderingContext2D) => {
+    // Tuvali temizle
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // Her nesneyi çiz
+    objects.forEach(obj => {
+      ctx.fillStyle = obj.color || 'black';
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    });
+  };
+
+  // İlk çizim: Varsayılan pozisyonda çiz
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Transformasyonu sıfırlayıp nesneleri çiziyoruz
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    drawObjects(ctx);
+  }, [objects]);
+
+  // Zoom Fit (Tüm Çizimi Ekrana Sığdır) Fonksiyonu
+  const handleZoomFit = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Tüm nesnelerin kapsadığı alanı (bounding box) hesapla
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    objects.forEach(obj => {
+      minX = Math.min(minX, obj.x);
+      minY = Math.min(minY, obj.y);
+      maxX = Math.max(maxX, obj.x + obj.width);
+      maxY = Math.max(maxY, obj.y + obj.height);
+    });
+
+    // Eğer nesne yoksa işleme gerek yok
+    if (minX === Infinity) return;
+
+    // Nesnelerin toplam genişliği ve yüksekliği
+    const objWidth = maxX - minX;
+    const objHeight = maxY - minY;
+
+    // Tuvalin boyutları
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    // Ölçek faktörünü belirle: Hem yatay hem dikey için hesapla, sonra en küçüğü seç (marj bırakmak için %90 kullanıyoruz)
+    const scaleX = canvasWidth / objWidth;
+    const scaleY = canvasHeight / objHeight;
+    const scale = Math.min(scaleX, scaleY) * 0.9;
+
+    // Nesnelerin tuvale ortalanması için ofset hesaplaması
+    const offsetX = (canvasWidth - objWidth * scale) / 2;
+    const offsetY = (canvasHeight - objHeight * scale) / 2;
+
+    // Dönüşümü uygula: Önce ölçek, ardından çevirme (nesnelerin bounding box'unun sol üst köşesini sanki sıfır noktasıymış gibi)
+    ctx.setTransform(scale, 0, 0, scale, offsetX - minX * scale, offsetY - minY * scale);
+
+    // Nesneleri yeni dönüşümle yeniden çiz
+    drawObjects(ctx);
+  };
+
+  return (
+    <div>
+      <canvas 
+        ref={canvasRef} 
+        width={800} 
+        height={600} 
+        style={{ border: '1px solid #ccc', background: '#fff' }}
+      />
+      <br />
+      <button onClick={handleZoomFit}>Zoom Fit</button>
+    </div>
+  );
+};
+
+export default DrawingCanvas;

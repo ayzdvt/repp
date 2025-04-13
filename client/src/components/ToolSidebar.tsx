@@ -6,14 +6,15 @@ interface ToolSidebarProps {
   onToolChange: (tool: Tool) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onFitView?: () => void; // İsteğe bağlı hale getiriyorum
+  onFitView?: () => void; // Fit View butonu için
 }
 
 const ToolSidebar: React.FC<ToolSidebarProps> = ({ 
   activeTool, 
   onToolChange,
   onZoomIn,
-  onZoomOut
+  onZoomOut,
+  onFitView
 }) => {
   return (
     <div className="bg-[#ECECEC] w-14 flex-shrink-0 border-r border-gray-300 flex flex-col">
@@ -94,6 +95,19 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
             <line x1="8" y1="11" x2="14" y2="11" strokeWidth="2" />
           </svg>
         </button>
+        
+        {onFitView && (
+          <button 
+            className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
+            title="Fit View" 
+            onClick={onFitView}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2" />
+              <path d="M9 3v18M3 9h18" strokeWidth="2" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

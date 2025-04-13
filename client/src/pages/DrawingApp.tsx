@@ -47,7 +47,141 @@ export default function DrawingApp() {
     }));
   };
   
-  // Fit View fonksiyonu kaldırıldı
+  // Tüm çizimleri ekrana sığdıran Fit View fonksiyonu
+  const handleResetView = () => {
+    // Canvas'ı al
+    const drawingContainer = document.getElementById('drawing-container');
+    if (!drawingContainer) return;
+    
+    // Absolute div'i bul
+    const absoluteDiv = drawingContainer.querySelector('div.absolute');
+    if (!absoluteDiv) return;
+    
+    // Canvas boyutları
+    const canvasWidth = canvasState.canvasSize.width;
+    const canvasHeight = canvasState.canvasSize.height;
+    
+    // Boş çizim listesi başlat
+    let shapeList: any[] = [];
+    
+    // DrawingCanvas bileşeninden çizimleri al
+    // Bu yapıyı kullanarak async olarak çizimleri alıyoruz
+    const getAllShapesPromise = new Promise<any[]>((resolve) => {
+      // Custom event ile şekilleri al
+      absoluteDiv.dispatchEvent(new CustomEvent('getAllShapes', {
+        detail: { 
+          callback: (shapes: any[]) => {
+            resolve(shapes || []);
+          }
+        }
+      }));
+    });
+    
+    // Sonucu senkron olarak bekle (zaten hazır olacağı için)
+    getAllShapesPromise.then(shapes => {
+      shapeList = shapes;
+    });
+    
+    // Şekilleri al 
+    const shapes = shapeList;
+    
+    // Tüm şekillerin sınırlarını bulma
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    
+    // Çizim yoksa, varsayılan görünüme geri dön
+    if (!shapes || shapes.length === 0) {
+      setZoom(1);
+      setCanvasState(prev => ({
+        ...prev,
+        zoom: 1,
+        panOffset: { x: canvasWidth / 2, y: canvasHeight / 2 }
+      }));
+      return;
+    }
+    
+    // Tüm şekilleri değerlendir
+    shapes.forEach(shape => {
+      if (shape.type === 'point') {
+        minX = Math.min(minX, shape.x);
+        minY = Math.min(minY, shape.y);
+        maxX = Math.max(maxX, shape.x);
+        maxY = Math.max(maxY, shape.y);
+      } 
+      else if (shape.type === 'line') {
+        minX = Math.min(minX, shape.startX, shape.endX);
+        minY = Math.min(minY, shape.startY, shape.endY);
+        maxX = Math.max(maxX, shape.startX, shape.endX);
+        maxY = Math.max(maxY, shape.startY, shape.endY);
+      }
+      else if (shape.type === 'polyline' && Array.isArray(shape.points)) {
+        shape.points.forEach(point => {
+          if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+          }
+        });
+      }
+    });
+    
+    // Geçerli sınırlar yoksa, varsayılan görünüme dön
+    if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
+      setZoom(1);
+      setCanvasState(prev => ({
+        ...prev,
+        zoom: 1,
+        panOffset: { x: canvasWidth / 2, y: canvasHeight / 2 }
+      }));
+      return;
+    }
+    
+    // Tek nokta veya küçük çizimler için marj ekle
+    if (Math.abs(maxX - minX) < 1) {
+      minX -= 20;
+      maxX += 20;
+    }
+    
+    if (Math.abs(maxY - minY) < 1) {
+      minY -= 20;
+      maxY += 20;
+    }
+    
+    // Marj ekle
+    const margin = 40;
+    minX -= margin;
+    minY -= margin;
+    maxX += margin;
+    maxY += margin;
+    
+    // Çizimlerin toplam boyutunu hesapla
+    const objWidth = maxX - minX;
+    const objHeight = maxY - minY;
+    
+    // Ölçek faktörünü hesapla: Hem yatay hem dikey için, daha küçük olanı seç
+    const scaleX = canvasWidth / objWidth;
+    const scaleY = canvasHeight / objHeight;
+    const newZoom = Math.min(scaleX, scaleY) * 0.9; // %90 ölçek (marj için)
+    
+    // Çizimlerin merkezi 
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Pan değerlerini hesapla
+    const panX = canvasWidth / 2 - centerX * newZoom;
+    const panY = canvasHeight / 2 + centerY * newZoom; // Y ekseni ters
+    
+    // Canvas'ı güncelle
+    setZoom(newZoom);
+    setCanvasState(prev => ({
+      ...prev,
+      zoom: newZoom,
+      panOffset: { x: panX, y: panY }
+    }));
+  };
   
   const handleMousePositionChange = (position: Point) => {
     setMousePosition(position);
@@ -116,6 +250,7 @@ export default function DrawingApp() {
           onToolChange={handleToolChange}
           onZoomIn={() => handleZoomChange(zoom * 1.2)}
           onZoomOut={() => handleZoomChange(zoom / 1.2)}
+          onFitView={handleResetView}
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">

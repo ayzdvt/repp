@@ -801,7 +801,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // Özel event'ler için Ref'ler
   const updateEventRef = useRef<(e: any) => void>();
-  const boundsEventRef = useRef<(e: any) => void>();
+  const getAllShapesRef = useRef<(e: any) => void>();
   
   useEffect(() => {
     // Şekil güncelleme
@@ -816,71 +816,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    // Şekil sınırları hesaplama
-    const handleGetShapesBounds = (e: any) => {
+    // Tüm şekilleri döndürme - Fit View için
+    const handleGetAllShapes = (e: any) => {
       const { detail } = e;
       if (detail?.callback && typeof detail.callback === 'function') {
-        // Eğer hiç şekil yoksa null dön
-        if (shapesRef.current.length === 0) {
-          detail.callback(null);
-          return;
-        }
-        
-        // Tüm şekillerin minimum ve maximum koordinatlarını bul
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-        
-        // Her şekil için sınırları hesapla
-        shapesRef.current.forEach(shape => {
-          switch (shape.type) {
-            case 'point':
-              minX = Math.min(minX, shape.x);
-              minY = Math.min(minY, shape.y);
-              maxX = Math.max(maxX, shape.x);
-              maxY = Math.max(maxY, shape.y);
-              break;
-              
-            case 'line':
-              minX = Math.min(minX, shape.startX, shape.endX);
-              minY = Math.min(minY, shape.startY, shape.endY);
-              maxX = Math.max(maxX, shape.startX, shape.endX);
-              maxY = Math.max(maxY, shape.startY, shape.endY);
-              break;
-              
-            case 'polyline':
-              if (shape.points && shape.points.length > 0) {
-                shape.points.forEach(point => {
-                  minX = Math.min(minX, point.x);
-                  minY = Math.min(minY, point.y);
-                  maxX = Math.max(maxX, point.x);
-                  maxY = Math.max(maxY, point.y);
-                });
-              }
-              break;
-              
-            case 'text':
-              minX = Math.min(minX, shape.x);
-              minY = Math.min(minY, shape.y - shape.fontSize);
-              maxX = Math.max(maxX, shape.x + shape.text.length * shape.fontSize * 0.6);
-              maxY = Math.max(maxY, shape.y + shape.fontSize * 0.2);
-              break;
-          }
-        });
-        
-        // Sınırları callback ile döndür
-        if (minX !== Infinity && minY !== Infinity && maxX !== -Infinity && maxY !== -Infinity) {
-          detail.callback({ minX, minY, maxX, maxY });
-        } else {
-          detail.callback(null); // Hiç geçerli koordinat bulunamadıysa null döndür
-        }
+        // Mevcut tüm şekilleri döndür
+        detail.callback([...shapesRef.current]);
       }
     };
     
     // Referansları sakla
     updateEventRef.current = handleShapeUpdate;
-    boundsEventRef.current = handleGetShapesBounds;
+    getAllShapesRef.current = handleGetAllShapes;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -895,20 +842,20 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    const boundsHandler = (e: any) => {
-      if (boundsEventRef.current) {
-        boundsEventRef.current(e);
+    const getAllShapesHandler = (e: any) => {
+      if (getAllShapesRef.current) {
+        getAllShapesRef.current(e);
       }
     };
     
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
-    containerElement.addEventListener('getShapesBounds', boundsHandler);
+    containerElement.addEventListener('getAllShapes', getAllShapesHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
-      containerElement.removeEventListener('getShapesBounds', boundsHandler);
+      containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
     };
   }, []);
   

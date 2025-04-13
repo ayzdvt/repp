@@ -99,12 +99,7 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
               </table>
             </div>
             
-            <div className="mt-4">
-              <h4 className="text-md font-medium mb-2">Vizualizasyon</h4>
-              <div className="border border-gray-200 rounded p-4 bg-gray-50">
-                <CoordinateVisualizer coordinates={data.parcel_coordinates} />
-              </div>
-            </div>
+
           </div>
         </>
       )}
@@ -114,7 +109,14 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
       <div className="flex justify-center mt-6">
         <button 
           className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors mr-4"
-          onClick={() => window.location.href = '/drawing'}
+          onClick={() => {
+            // Koordinatları localStorage'a kaydet
+            if (data.parcel_coordinates && data.parcel_coordinates.length > 0) {
+              localStorage.setItem('parselCoordinates', JSON.stringify(data.parcel_coordinates));
+            }
+            // Çizim sayfasına yönlendir
+            window.location.href = '/drawing';
+          }}
         >
           Çizime Başla
         </button>

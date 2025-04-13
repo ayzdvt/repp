@@ -23,6 +23,52 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
+  // LocalStorage'dan koordinatları al ve çizim alanına ekle
+  useEffect(() => {
+    // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
+    const coordsString = localStorage.getItem('parselCoordinates');
+    if (!coordsString) return;
+    
+    try {
+      const coordinates = JSON.parse(coordsString);
+      
+      if (Array.isArray(coordinates) && coordinates.length > 2) {
+        console.log("Parsel koordinatları bulundu:", coordinates);
+        
+        // Koordinatları çizim için hazırla
+        setTimeout(() => {
+          // Canvas'a erişim
+          const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+          if (!canvasContainer) return;
+          
+          const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+          if (!canvasElement) return;
+          
+          // Polyline oluşturmak için event gönder
+          const createEvent = new CustomEvent('createshape', { 
+            detail: { 
+              type: 'polyline',
+              points: coordinates,
+              thickness: 2,
+              closed: true
+            } 
+          });
+          
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(createEvent);
+          
+          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
+          localStorage.removeItem('parselCoordinates');
+          
+          // Görünümü tam ekrana uyarla
+          handleResetView();
+        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+      }
+    } catch (error) {
+      console.error("Parsel koordinatları yüklenirken hata:", error);
+    }
+  }, []);
+  
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
     

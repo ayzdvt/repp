@@ -310,19 +310,33 @@ export function drawShape(
         ctx.beginPath();
         ctx.moveTo(lastScreenPoint.x, lastScreenPoint.y);
         ctx.lineTo(previewScreenPoint.x, previewScreenPoint.y);
-        ctx.strokeStyle = isSelected ? "#FF6600" : "#0088FF"; // Önizleme için mavi veya turuncu
+        ctx.strokeStyle = isSelected ? "#FF4500" : "#000000"; // Line ile aynı renk
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]); // Kesikli çizgi
         ctx.stroke();
         ctx.setLineDash([]); // Kesikli çizgiyi sıfırla
-        ctx.strokeStyle = isSelected ? "#FF4500" : "#000000"; // Orijinal renge geri dön
         
         // Snap varsa özel görünüm ekle
         if (shape.isSnapping) {
+          // Dünya koordinatlarını ekran koordinatlarına dönüştür
+          const screenX = previewScreenPoint.x;
+          const screenY = previewScreenPoint.y;
+          
+          // Dış yeşil daire çiz
           ctx.beginPath();
-          ctx.arc(previewScreenPoint.x, previewScreenPoint.y, 4, 0, Math.PI * 2);
-          ctx.fillStyle = "#00C853"; // Yeşil renk
+          ctx.arc(screenX, screenY, 6, 0, Math.PI * 2);
+          ctx.strokeStyle = '#00C853';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          
+          // İç beyaz daire çiz
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#FFFFFF';
           ctx.fill();
+          ctx.strokeStyle = '#00C853';
+          ctx.lineWidth = 1;
+          ctx.stroke();
         }
       }
     } else {

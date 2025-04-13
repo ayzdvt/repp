@@ -154,6 +154,29 @@ export function drawSnapIndicators(
         x: (shape.startX + shape.endX) / 2, 
         y: (shape.startY + shape.endY) / 2
       });
+    } else if (shape.type === 'polyline' && shape.points && shape.points.length > 0) {
+      // Polyline için tüm köşe noktaları
+      shape.points.forEach((point: Point) => {
+        snapPoints.push({ x: point.x, y: point.y });
+      });
+      
+      // Polyline segmentlerinin orta noktaları
+      for (let i = 0; i < shape.points.length - 1; i++) {
+        snapPoints.push({
+          x: (shape.points[i].x + shape.points[i+1].x) / 2,
+          y: (shape.points[i].y + shape.points[i+1].y) / 2
+        });
+      }
+      
+      // Kapalı polyline için son nokta ile ilk nokta arasındaki orta nokta
+      if (shape.closed && shape.points.length > 2) {
+        const first = shape.points[0];
+        const last = shape.points[shape.points.length - 1];
+        snapPoints.push({
+          x: (first.x + last.x) / 2,
+          y: (first.y + last.y) / 2
+        });
+      }
     }
   });
   
@@ -259,6 +282,43 @@ export function drawShape(
       ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
       ctx.fillStyle = "#FF4500";
       ctx.fill();
+    }
+  } else if (shape.type === 'polyline') {
+    // Polyline'ı çiz (birbirine bağlı çizgiler serisi)
+    if (!shape.points || shape.points.length < 2) return; // En az 2 nokta gerekli
+    
+    ctx.beginPath();
+    
+    // İlk noktadan başla
+    const firstPoint = worldToScreen(shape.points[0].x, shape.points[0].y, state);
+    ctx.moveTo(firstPoint.x, firstPoint.y);
+    
+    // Tüm noktaları birleştir
+    for (let i = 1; i < shape.points.length; i++) {
+      const point = worldToScreen(shape.points[i].x, shape.points[i].y, state);
+      ctx.lineTo(point.x, point.y);
+    }
+    
+    // Eğer kapalı poliçizgi ise, son noktayı ilk noktaya bağla
+    if (shape.closed && shape.points.length > 2) {
+      ctx.closePath();
+    }
+    
+    ctx.lineWidth = shape.thickness || 1; // Sabit kalınlık
+    ctx.stroke();
+    
+    // Eğer seçiliyse kontrol noktalarını göster
+    if (isSelected) {
+      // Tüm köşe noktalarını göster
+      for (const point of shape.points) {
+        const screenPoint = worldToScreen(point.x, point.y, state);
+        
+        // Kontrol noktasını çiz
+        ctx.beginPath();
+        ctx.arc(screenPoint.x, screenPoint.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#FF4500";
+        ctx.fill();
+      }
     }
   } else if (shape.type === 'rectangle') {
     const topLeft = worldToScreen(shape.x, shape.y, state);

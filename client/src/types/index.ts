@@ -11,7 +11,7 @@ export interface Size {
 }
 
 // Tool types
-export type Tool = 'selection' | 'point' | 'line' | 'text';
+export type Tool = 'selection' | 'point' | 'line' | 'polyline' | 'text';
 
 // Canvas state
 export interface CanvasState {
@@ -22,7 +22,7 @@ export interface CanvasState {
 }
 
 // Shape types
-export type ShapeType = 'point' | 'line' | 'text';
+export type ShapeType = 'point' | 'line' | 'polyline' | 'text';
 
 // Base shape interface
 export interface BaseShape {

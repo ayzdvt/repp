@@ -40,6 +40,23 @@ export function createLine(startX: number, startY: number, endX: number, endY: n
 
 // Rectangle ve circle primitives kaldırıldı
 
+// Polyline primitive
+export interface PolylineShape {
+  type: 'polyline';
+  points: Point[];  // bir dizi nokta - (x,y) koordinat çiftleri
+  thickness: number;
+  closed: boolean;   // kapalı/açık polyline (son noktayı ilk noktaya bağlama)
+}
+
+export function createPolyline(points: Point[] = [], thickness: number = 1, closed: boolean = false): PolylineShape {
+  return {
+    type: 'polyline',
+    points: [...points],  // orijinal array'i modifiye etmemek için kopya oluştur
+    thickness,
+    closed
+  };
+}
+
 // Text primitive
 export interface TextShape {
   type: 'text';
@@ -123,6 +140,80 @@ export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 
 }
 
 // Verilen noktaya en yakın yakalama noktasını bulur (tüm şekilleri kontrol eder)
+// Bir noktanın polyline'a yakın olup olmadığını kontrol et
+export function pointNearPolyline(point: Point, polyline: PolylineShape, tolerance: number = 5): boolean {
+  const points = polyline.points;
+  
+  // En az 2 nokta yoksa, polyline oluşturulamaz
+  if (points.length < 2) return false;
+  
+  // Polyline'ın her bir parçasını (çizgi segment'i) kontrol et
+  for (let i = 0; i < points.length - 1; i++) {
+    // Geçici bir LineShape oluştur ve normal çizgi kontrolünü kullan
+    const lineSegment = {
+      type: 'line',
+      startX: points[i].x,
+      startY: points[i].y,
+      endX: points[i + 1].x,
+      endY: points[i + 1].y,
+      thickness: polyline.thickness
+    } as LineShape;
+    
+    if (pointNearLine(point, lineSegment, tolerance)) {
+      return true;
+    }
+  }
+  
+  // Kapalı polyline ise (son noktayı ilk noktaya bağla), son segment'i de kontrol et
+  if (polyline.closed && points.length > 2) {
+    const lastSegment = {
+      type: 'line',
+      startX: points[points.length - 1].x,
+      startY: points[points.length - 1].y,
+      endX: points[0].x,
+      endY: points[0].y,
+      thickness: polyline.thickness
+    } as LineShape;
+    
+    if (pointNearLine(point, lastSegment, tolerance)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Polyline için snap noktalarını elde et (her köşe noktası snap noktasıdır)
+export function getPolylineSnapPoints(polyline: PolylineShape): Point[] {
+  // Tüm köşe noktaları snap noktalarıdır
+  const snapPoints = [...polyline.points];
+  
+  // Her segment'in orta noktası da snap noktasıdır
+  for (let i = 0; i < polyline.points.length - 1; i++) {
+    const p1 = polyline.points[i];
+    const p2 = polyline.points[i + 1];
+    
+    // Orta noktayı ekle
+    snapPoints.push({
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2
+    });
+  }
+  
+  // Kapalı polyline için, son segment'in orta noktasını da ekle
+  if (polyline.closed && polyline.points.length > 2) {
+    const p1 = polyline.points[polyline.points.length - 1];
+    const p2 = polyline.points[0];
+    
+    snapPoints.push({
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2
+    });
+  }
+  
+  return snapPoints;
+}
+
 export function findNearestSnapPoint(
   point: Point, 
   shapes: any[], 
@@ -138,20 +229,31 @@ export function findNearestSnapPoint(
       continue;
     }
     
-    let snapPoint: Point | null = null;
+    let snapPoints: Point[] = [];
     
     if (shape.type === 'point') {
       // Nokta şekli
       if (distance(point, { x: shape.x, y: shape.y }) <= tolerance) {
-        snapPoint = { x: shape.x, y: shape.y };
+        snapPoints.push({ x: shape.x, y: shape.y });
       }
     } else if (shape.type === 'line') {
       // Çizgi şekli - başlangıç, orta ve bitiş noktalarını kontrol et
-      snapPoint = getSnapPoint(point, shape, tolerance);
+      const snapPoint = getSnapPoint(point, shape, tolerance);
+      if (snapPoint) snapPoints.push(snapPoint);
+    } else if (shape.type === 'polyline') {
+      // Polyline şekli - tüm snap noktalarını al
+      const polylineSnapPoints = getPolylineSnapPoints(shape);
+      
+      // Her bir snap noktasını kontrol et
+      for (const sp of polylineSnapPoints) {
+        if (distance(point, sp) <= tolerance) {
+          snapPoints.push(sp);
+        }
+      }
     }
     
     // En yakın yakalama noktasını güncelle
-    if (snapPoint) {
+    for (const snapPoint of snapPoints) {
       const dist = distance(point, snapPoint);
       if (dist < minDistance) {
         minDistance = dist;

@@ -30,6 +30,13 @@ export default function DrawingApp() {
   const [location] = useLocation();
   const source = location.includes('source=cad') ? 'cad' : null;
   
+  // CAD dosyasını yükleme
+  useEffect(() => {
+    if (source === 'cad') {
+      loadCadFile();
+    }
+  }, [source, loadCadFile]);
+  
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
     
@@ -371,7 +378,26 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
-          <div id="drawing-canvas">
+          <div id="drawing-canvas" className="relative">
+            {isLoadingCad && (
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-700">CAD dosyası yükleniyor...</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {cadError && (
+              <Alert variant="destructive" className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 w-96">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Hata</AlertTitle>
+                <AlertDescription>{cadError}</AlertDescription>
+              </Alert>
+            )}
+            
             <DrawingCanvas 
               canvasState={canvasState}
               activeTool={activeTool}

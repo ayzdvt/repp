@@ -717,6 +717,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
+
+  
   const handleMouseUp = () => {
     isDraggingRef.current = false;
     setIsDragging(false); // UI için
@@ -797,11 +799,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // Özel şekil güncelleme olayını dinleme
+  // Özel event'ler için Ref'ler
   const updateEventRef = useRef<(e: any) => void>();
+  const boundsEventRef = useRef<(e: any) => void>();
   
   useEffect(() => {
-    // Özel olayları işleme fonksiyonu
+    // Şekil güncelleme
     const handleShapeUpdate = (e: any) => {
       const { detail } = e;
       if (detail?.type === 'update' && detail?.shape) {
@@ -813,8 +816,71 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    // Referansı sakla
+    // Şekil sınırları hesaplama
+    const handleGetShapesBounds = (e: any) => {
+      const { detail } = e;
+      if (detail?.callback && typeof detail.callback === 'function') {
+        // Eğer hiç şekil yoksa null dön
+        if (shapesRef.current.length === 0) {
+          detail.callback(null);
+          return;
+        }
+        
+        // Tüm şekillerin minimum ve maximum koordinatlarını bul
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        
+        // Her şekil için sınırları hesapla
+        shapesRef.current.forEach(shape => {
+          switch (shape.type) {
+            case 'point':
+              minX = Math.min(minX, shape.x);
+              minY = Math.min(minY, shape.y);
+              maxX = Math.max(maxX, shape.x);
+              maxY = Math.max(maxY, shape.y);
+              break;
+              
+            case 'line':
+              minX = Math.min(minX, shape.startX, shape.endX);
+              minY = Math.min(minY, shape.startY, shape.endY);
+              maxX = Math.max(maxX, shape.startX, shape.endX);
+              maxY = Math.max(maxY, shape.startY, shape.endY);
+              break;
+              
+            case 'polyline':
+              if (shape.points && shape.points.length > 0) {
+                shape.points.forEach(point => {
+                  minX = Math.min(minX, point.x);
+                  minY = Math.min(minY, point.y);
+                  maxX = Math.max(maxX, point.x);
+                  maxY = Math.max(maxY, point.y);
+                });
+              }
+              break;
+              
+            case 'text':
+              minX = Math.min(minX, shape.x);
+              minY = Math.min(minY, shape.y - shape.fontSize);
+              maxX = Math.max(maxX, shape.x + shape.text.length * shape.fontSize * 0.6);
+              maxY = Math.max(maxY, shape.y + shape.fontSize * 0.2);
+              break;
+          }
+        });
+        
+        // Sınırları callback ile döndür
+        if (minX !== Infinity && minY !== Infinity && maxX !== -Infinity && maxY !== -Infinity) {
+          detail.callback({ minX, minY, maxX, maxY });
+        } else {
+          detail.callback(null); // Hiç geçerli koordinat bulunamadıysa null döndür
+        }
+      }
+    };
+    
+    // Referansları sakla
     updateEventRef.current = handleShapeUpdate;
+    boundsEventRef.current = handleGetShapesBounds;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -822,19 +888,27 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const containerElement = containerRef.current;
     if (!containerElement) return;
     
-    // Event fonksiyonunu referanstan al
-    const handler = (e: any) => {
+    // Event fonksiyonlarını referanstan al
+    const updateHandler = (e: any) => {
       if (updateEventRef.current) {
         updateEventRef.current(e);
       }
     };
     
-    // Olay dinleyiciyi container'a ekle
-    containerElement.addEventListener('shapeupdate', handler);
+    const boundsHandler = (e: any) => {
+      if (boundsEventRef.current) {
+        boundsEventRef.current(e);
+      }
+    };
+    
+    // Olay dinleyicileri container'a ekle
+    containerElement.addEventListener('shapeupdate', updateHandler);
+    containerElement.addEventListener('getShapesBounds', boundsHandler);
     
     // Cleanup
     return () => {
-      containerElement.removeEventListener('shapeupdate', handler);
+      containerElement.removeEventListener('shapeupdate', updateHandler);
+      containerElement.removeEventListener('getShapesBounds', boundsHandler);
     };
   }, []);
   
@@ -950,8 +1024,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // Sağ tıklama işlemleri
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault(); // Sağ tık menüsünü engelle
+    
+    // Line aracı aktifken ve ilk nokta seçilmişse
+    if (activeTool === 'line' && drawingLine && lineFirstPointRef.current) {
+      // Çizim modunu kapat ve referansları temizle (ama line aracından çıkma)
+      lineFirstPointRef.current = null;
+      currentShapeRef.current = null;
+      setDrawingLine(false);
+      console.log("Çizgi çizimi iptal edildi, line aracı hala aktif");
+    }
     // Polyline çizimi sırasında sağ tıklama ile polyline'ı tamamla
-    if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
+    else if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
       // Polyline'ı tamamla ve shapesRef'e ekle
       const newPolyline = {
         id: nextIdRef.current++,
@@ -969,8 +1053,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       setDrawingPolyline(false);
     }
     
-    e.preventDefault();
-    return false;
+    return false; // Event'i engelle
   };
 
   // Çift tıklama ile polyline'ı tamamlamak için

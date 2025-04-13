@@ -188,21 +188,23 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // viewPort'un merkezi olacak dünya koordinatını hesapla
-    // ekranın ortasını merkez noktasına kaydırma işlemi
-    const panX = canvasWidth / 2;
-    const panY = canvasHeight / 2;
+    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
     
-    // Nihai dünya sisteminden ekran sistemine dönüşümü hesapla
-    // screenX = (worldX - centerX) * zoom + panX;
-    // screenY = panY - (worldY - centerY) * zoom; // Y ekseni ters
+    // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
+    // Orijinal worldToScreen formülünden:
+    // screenX = worldX * zoom + width / 2 + panOffset.x;
+    // screenY = height / 2 - worldY * zoom + panOffset.y;
     
-    // Yani:
-    // panOffset.x = panX - centerX * zoom
-    // panOffset.y = panY + centerY * zoom
+    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
+    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
+    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
     
-    const panOffsetX = panX - centerX * newZoom;
-    const panOffsetY = panY + centerY * newZoom;
+    // Bu denklemleri çözersek:
+    // panOffset.x = -centerX * zoom
+    // panOffset.y = centerY * zoom
+    
+    const panOffsetX = -centerX * newZoom;
+    const panOffsetY = centerY * newZoom;
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     

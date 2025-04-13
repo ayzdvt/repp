@@ -197,7 +197,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   useEffect(() => {
     // Animasyon frame'i yönet
     const animate = () => {
-      renderCanvas();
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+          // Clear canvas
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          
+          // Draw grid
+          drawGrid(ctx, canvasState);
+          
+          // Draw all shapes
+          shapesRef.current.forEach(shape => {
+            const isSelected = shape.id === selectedShapeId;
+            drawShape(ctx, shape, canvasState, isSelected);
+          });
+          
+          // Draw current shape (if drawing)
+          if (currentShapeRef.current) {
+            drawShape(ctx, currentShapeRef.current, canvasState, false);
+          }
+          
+          // Draw snap indicators if snapping is enabled
+          if (snapEnabled) {
+            drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState);
+          }
+        }
+      }
       requestRef.current = requestAnimationFrame(animate);
     };
     
@@ -211,7 +236,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         requestRef.current = null;
       }
     };
-  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
+  }, [canvasState, selectedShapeId, activeTool, snapEnabled]); // renderCanvas bağımlılığı kaldırıldı
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -235,21 +260,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Snap kontrolü
       const snapTolerance = 10 / canvasState.zoom;
       
-      // Şu an çizdiğimiz polyline için de snap noktaları oluştur (işlem devam ederken)
-      const currentPolylineSnapPoints = polylinePointsRef.current.map(point => ({
-        type: 'point',
-        x: point.x,
-        y: point.y,
-        id: -99, // Geçici bir ID
-        style: 'default'
-      }));
-      
-      // Geçici snap noktalarını da dahil et
-      const allSnapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
-      
       // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+      // Burada sadece mevcut şekilleri kullanıyoruz, ekstra snap noktaları eklemiyoruz
       const snapPoint = snapEnabled
-        ? findNearestSnapPoint(worldPos, allSnapPoints, snapTolerance)
+        ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
         : null;
       
       // Fare pozisyonu veya snap noktası
@@ -363,21 +377,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
           
-          // Şu an çizdiğimiz polyline için de snap noktaları oluştur (işlem devam ederken)
-          const currentPolylineSnapPoints = polylinePointsRef.current.map(point => ({
-            type: 'point',
-            x: point.x,
-            y: point.y,
-            id: -99, // Geçici bir ID
-            style: 'default'
-          }));
-          
-          // Geçici snap noktalarını da dahil et
-          const allSnapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
-          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          // Var olan noktaları kullanarak snap yapıyoruz
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, allSnapPoints, snapTolerance)
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
@@ -661,27 +664,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
           
-          // Çizilen polyline'ın noktalarını da snap için kullan
-          let snapPoints = [...shapesRef.current];
-          
-          // Eğer polyline çizimi devam ediyorsa, mevcut noktaları da snap kaynağı olarak ekle
-          if (drawingPolyline && polylinePointsRef.current.length > 1) {
-            // Mevcut polyline noktalarını snap noktaları olarak ekle
-            const currentPolylineSnapPoints = polylinePointsRef.current.map((point, index) => ({
-              type: 'point',
-              x: point.x,
-              y: point.y,
-              id: -99 - index, // Benzersiz negatif ID'ler
-              style: 'default'
-            }));
-            
-            // Tüm snap noktalarını birleştir
-            snapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
-          }
-          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          // Normal şekilde shapesRef içindeki noktaları kullanıyoruz
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, snapPoints, snapTolerance)
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan

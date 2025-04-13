@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CanvasState, Tool, Point } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
-import { pointNearLine, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
+import { pointNearLine, pointNearPolyline, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -41,12 +41,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const draggingLineEndpointRef = useRef<'start' | 'end' | null>(null); // Hangi çizgi ucunun sürüklendiği
   const originalLineRef = useRef<any | null>(null); // Sürükleme başladığında çizginin orijinal hali
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
+  const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
   const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null); // Seçilen şeklin ID'si
   const [isDraggingEndpoint, setIsDraggingEndpoint] = useState<boolean>(false); // Çizgi uç noktası sürükleme durumu
+  const [drawingPolyline, setDrawingPolyline] = useState<boolean>(false); // Polyline çizim durumu
   
   // Handle canvas resize
   useEffect(() => {
@@ -121,6 +123,33 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             x: (shape.startX + shape.endX) / 2,
             y: (shape.startY + shape.endY) / 2
           });
+        } else if (shape.type === 'polyline') {
+          // Polyline için tüm noktalar yakalanabilir
+          for (const point of shape.points) {
+            snapPoints.push({ x: point.x, y: point.y });
+          }
+          
+          // Segment orta noktaları da ekleyelim
+          if (shape.points.length >= 2) {
+            for (let i = 0; i < shape.points.length - 1; i++) {
+              const p1 = shape.points[i];
+              const p2 = shape.points[i + 1];
+              snapPoints.push({
+                x: (p1.x + p2.x) / 2,
+                y: (p1.y + p2.y) / 2
+              });
+            }
+            
+            // Eğer kapalı polyline ise, son nokta ile ilk nokta arasındaki orta nokta
+            if (shape.closed && shape.points.length > 2) {
+              const p1 = shape.points[shape.points.length - 1];
+              const p2 = shape.points[0];
+              snapPoints.push({
+                x: (p1.x + p2.x) / 2,
+                y: (p1.y + p2.y) / 2
+              });
+            }
+          }
         }
       });
       
@@ -368,6 +397,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         case 'line':
           // For a line, check if the click is near the line
           if (pointNearLine(point, shape, tolerance)) {
+            return shape;
+          }
+          break;
+          
+        case 'polyline':
+          // For a polyline, check if the click is near any segment
+          if (pointNearPolyline(point, shape, tolerance)) {
             return shape;
           }
           break;

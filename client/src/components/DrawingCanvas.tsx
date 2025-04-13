@@ -957,7 +957,46 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Event listener ekle
     window.addEventListener('keydown', handleKeyDown);
     
-    // Cleanup
+    // Özel eventleri dinle - DrawingApp'ten gelen istekler için
+    if (containerRef.current) {
+      const containerElement = containerRef.current;
+      
+      // Fit View için şekilleri alma olayını dinle
+      const getAllShapesHandler = ((e: any) => {
+        // Tüm şekilleri al ve callback'e gönder
+        if (e.detail && typeof e.detail.callback === 'function') {
+          e.detail.callback(shapesRef.current);
+        }
+      }) as EventListener;
+      
+      // Şekil güncelleme olayını dinle
+      const shapeUpdateHandler = ((e: any) => {
+        if (e.detail && e.detail.type === 'update' && e.detail.shape) {
+          // Güncellenecek şekli bul
+          const shapeIndex = shapesRef.current.findIndex(
+            (s: any) => s.id === e.detail.shape.id
+          );
+          
+          if (shapeIndex !== -1) {
+            // Şekli güncelle
+            shapesRef.current[shapeIndex] = { ...e.detail.shape };
+          }
+        }
+      }) as EventListener;
+      
+      // Event listener'ları ekle
+      containerElement.addEventListener('getAllShapes', getAllShapesHandler);
+      containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
+      
+      // Cleanup function
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
+        containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
+      };
+    }
+    
+    // Eğer containerRef.current yoksa sadece keyboard event'i temizle
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };

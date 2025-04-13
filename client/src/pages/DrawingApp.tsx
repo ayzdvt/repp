@@ -61,28 +61,25 @@ export default function DrawingApp() {
     const canvasWidth = canvasState.canvasSize.width;
     const canvasHeight = canvasState.canvasSize.height;
     
-    // Boş çizim listesi başlat
+    // Şekilleri almak için bir dummy referans oluştur
     let shapeList: any[] = [];
     
-    // DrawingCanvas bileşeninden çizimleri al
-    // Bu yapıyı kullanarak async olarak çizimleri alıyoruz
-    const getAllShapesPromise = new Promise<any[]>((resolve) => {
-      // Custom event ile şekilleri al
-      absoluteDiv.dispatchEvent(new CustomEvent('getAllShapes', {
+    try {
+      // Event oluştur ve gönder
+      const customEvent = new CustomEvent('getAllShapes', {
         detail: { 
           callback: (shapes: any[]) => {
-            resolve(shapes || []);
+            // Callback çağrıldığında şekilleri listeye atayacak
+            shapeList = shapes || [];
           }
         }
-      }));
-    });
+      });
+      absoluteDiv.dispatchEvent(customEvent);
+    } catch (error) {
+      console.error('Shapes retrieval error:', error);
+    }
     
-    // Sonucu senkron olarak bekle (zaten hazır olacağı için)
-    getAllShapesPromise.then(shapes => {
-      shapeList = shapes;
-    });
-    
-    // Şekilleri al 
+    // Şekilleri al (callback tarafından doldurulacak)
     const shapes = shapeList;
     
     // Tüm şekillerin sınırlarını bulma
@@ -117,7 +114,7 @@ export default function DrawingApp() {
         maxY = Math.max(maxY, shape.startY, shape.endY);
       }
       else if (shape.type === 'polyline' && Array.isArray(shape.points)) {
-        shape.points.forEach(point => {
+        shape.points.forEach((point: {x: number, y: number}) => {
           if (point && typeof point.x === 'number' && typeof point.y === 'number') {
             minX = Math.min(minX, point.x);
             minY = Math.min(minY, point.y);

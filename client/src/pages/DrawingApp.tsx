@@ -83,6 +83,9 @@ export default function DrawingApp() {
     // Şekilleri al (callback tarafından doldurulacak)
     const shapes = shapeList;
     
+    // Debug: Şekilleri konsola yazdır
+    console.log("Fit View - Tüm şekiller:", shapes);
+    
     // Tüm şekillerin sınırlarını bulma
     let minX = Infinity;
     let minY = Infinity;
@@ -91,6 +94,7 @@ export default function DrawingApp() {
     
     // Çizim yoksa, varsayılan görünüme geri dön
     if (!shapes || shapes.length === 0) {
+      console.log("Fit View - Çizim bulunamadı, varsayılan görünüme dönülüyor");
       setZoom(1);
       setCanvasState(prev => ({
         ...prev,
@@ -176,18 +180,28 @@ export default function DrawingApp() {
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
+    // Debug: Bulunan sınırları ve merkezi konsola yazdır
+    console.log("Fit View - Bulunan sınırlar:", { minX, minY, maxX, maxY });
+    console.log("Fit View - Hesaplanan merkez:", { centerX, centerY });
+    console.log("Fit View - Hesaplanan zoom:", { zoomX, zoomY, selectedZoom: newZoom });
+    
     // Zoom'u ayarla
     setZoom(newZoom);
     
     // Canvas'ı ortala
     // Dünya koordinatlarındaki merkezi ekranın ortasına getirmeliyiz
     // worldToScreen mantığına göre dönüşüm yapıyoruz
+    const newPanX = canvasWidth / 2 - centerX * newZoom;
+    const newPanY = canvasHeight / 2 + centerY * newZoom; // Y ekseni yukarı pozitif
+    
+    console.log("Fit View - Hesaplanan pan değerleri:", { newPanX, newPanY });
+    
     setCanvasState(prev => ({
       ...prev,
       zoom: newZoom,
       panOffset: {
-        x: canvasWidth / 2 - centerX * newZoom,
-        y: canvasHeight / 2 + centerY * newZoom // Y ekseni yukarı pozitif olduğu için işaretler bu şekilde olmalı
+        x: newPanX,
+        y: newPanY
       }
     }));
   };

@@ -219,13 +219,7 @@ export default function DrawingApp() {
     });
   }, [canvasState]);
   
-  // handleResetView fonksiyonunu kullanabilmek için referans oluştur
-  const handleResetViewRef = useRef<() => void>(() => {});
-  
-  // Referansı güncelleyelim
-  useEffect(() => {
-    handleResetViewRef.current = handleResetView;
-  }, [handleResetView]);
+  // No longer needed
   
   const handleMousePositionChange = (position: Point) => {
     setMousePosition(position);
@@ -244,6 +238,144 @@ export default function DrawingApp() {
   
   // CAD dosyasını işleyen fonksiyon
   const loadCadFile = useCallback(async () => {
+    // resetViewRef ve handleResetView'i direkt kullanmak yerine bağlı olduğumuz değerleri kullanalım
+    const resetViewSafe = () => {
+      // Canvas'ı al
+      const drawingContainer = document.getElementById('drawing-container');
+      if (!drawingContainer) return;
+      
+      // Absolute div'i bul
+      const absoluteDiv = drawingContainer.querySelector('div.absolute');
+      if (!absoluteDiv) return;
+      
+      // Canvas boyutları
+      const width = canvasState.canvasSize.width;
+      const height = canvasState.canvasSize.height;
+      
+      // Şekilleri almak için bir dummy referans oluştur
+      let shapeList: any[] = [];
+      
+      try {
+        // Event oluştur ve gönder
+        const customEvent = new CustomEvent('getAllShapes', {
+          detail: { 
+            callback: (shapes: any[]) => {
+              // Callback çağrıldığında şekilleri listeye atayacak
+              shapeList = shapes || [];
+            }
+          }
+        });
+        absoluteDiv.dispatchEvent(customEvent);
+      } catch (error) {
+        console.error('Shapes retrieval error:', error);
+      }
+      
+      // Şekilleri al (callback tarafından doldurulacak)
+      const shapes = shapeList;
+      
+      console.log("Fit View - Tüm şekiller:", shapes);
+      
+      // Çizim yoksa, varsayılan görünüme geri dön
+      if (!shapes || shapes.length === 0) {
+        console.log("Fit View - Çizim bulunamadı, varsayılan görünüme dönülüyor");
+        setZoom(1);
+        setCanvasState(prev => ({
+          ...prev,
+          zoom: 1,
+          panOffset: { x: 0, y: 0 }
+        }));
+        return;
+      }
+      
+      // Tüm şekillerin sınırlarını bul
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      
+      shapes.forEach(shape => {
+        if (shape.type === 'point') {
+          minX = Math.min(minX, shape.x);
+          minY = Math.min(minY, shape.y);
+          maxX = Math.max(maxX, shape.x);
+          maxY = Math.max(maxY, shape.y);
+        } 
+        else if (shape.type === 'line') {
+          minX = Math.min(minX, shape.startX, shape.endX);
+          minY = Math.min(minY, shape.startY, shape.endY);
+          maxX = Math.max(maxX, shape.startX, shape.endX);
+          maxY = Math.max(maxY, shape.startY, shape.endY);
+        }
+        else if (shape.type === 'polyline' && Array.isArray(shape.points)) {
+          shape.points.forEach((point: {x: number, y: number}) => {
+            if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+              minX = Math.min(minX, point.x);
+              minY = Math.min(minY, point.y);
+              maxX = Math.max(maxX, point.x);
+              maxY = Math.max(maxY, point.y);
+            }
+          });
+        }
+        else if (shape.type === 'text') {
+          minX = Math.min(minX, shape.x);
+          minY = Math.min(minY, shape.y);
+          maxX = Math.max(maxX, shape.x + 20); 
+          maxY = Math.max(maxY, shape.y + 20); 
+        }
+      });
+      
+      // Geçerli sınırlar yoksa, varsayılan görünüme dön
+      if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
+        setZoom(1);
+        setCanvasState(prev => ({
+          ...prev,
+          zoom: 1,
+          panOffset: { x: 0, y: 0 }
+        }));
+        return;
+      }
+      
+      // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
+      const margin = 50;
+      minX -= margin;
+      minY -= margin;
+      maxX += margin;
+      maxY += margin;
+      
+      // Objelerin boyutları
+      const objWidth = maxX - minX;
+      const objHeight = maxY - minY;
+      
+      // Zoom faktörlerini hesapla
+      const zoomX = width / objWidth;
+      const zoomY = height / objHeight;
+      
+      // Daha kısıtlayıcı olanı seç
+      const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+      
+      // Merkez noktayı hesapla
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      
+      // canvasUtils.ts'deki worldToScreen formülünden:
+      // screenX = worldX * zoom + width / 2 + panOffset.x;
+      // screenY = height / 2 - worldY * zoom + panOffset.y;
+      
+      // Bu denklemleri çözersek:
+      // panOffset.x = -centerX * zoom + width / 2
+      // panOffset.y = centerY * zoom + height / 2
+      const panOffsetX = -centerX * newZoom;
+      const panOffsetY = centerY * newZoom;
+      
+      // Yeni değerleri ayarla
+      setZoom(newZoom);
+      setCanvasState(prev => ({
+        ...prev,
+        zoom: newZoom,
+        panOffset: { x: panOffsetX, y: panOffsetY }
+      }));
+    };
+    
     try {
       // CAD dosyasını localStorage'dan al
       const fileName = localStorage.getItem('cadFileName');
@@ -292,7 +424,7 @@ export default function DrawingApp() {
           canvasElement.dispatchEvent(addShapesEvent);
           
           // Fit View fonksiyonunu çağırarak şekilleri ekrana sığdır
-          setTimeout(() => handleResetViewRef.current(), 100);
+          setTimeout(() => resetViewSafe(), 100);
         }
       }
       

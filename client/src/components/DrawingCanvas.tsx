@@ -234,8 +234,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
       // Snap kontrolü
       const snapTolerance = 10 / canvasState.zoom;
+      
+      // Şu an çizdiğimiz polyline için de snap noktaları oluştur (işlem devam ederken)
+      const currentPolylineSnapPoints = polylinePointsRef.current.map(point => ({
+        type: 'point',
+        x: point.x,
+        y: point.y,
+        id: -99, // Geçici bir ID
+        style: 'default'
+      }));
+      
+      // Geçici snap noktalarını da dahil et
+      const allSnapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
+      
+      // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
       const snapPoint = snapEnabled
-        ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+        ? findNearestSnapPoint(worldPos, allSnapPoints, snapTolerance)
         : null;
       
       // Fare pozisyonu veya snap noktası
@@ -348,9 +362,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         if (polylinePointsRef.current.length > 0) {
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          
+          // Şu an çizdiğimiz polyline için de snap noktaları oluştur (işlem devam ederken)
+          const currentPolylineSnapPoints = polylinePointsRef.current.map(point => ({
+            type: 'point',
+            x: point.x,
+            y: point.y,
+            id: -99, // Geçici bir ID
+            style: 'default'
+          }));
+          
+          // Geçici snap noktalarını da dahil et
+          const allSnapPoints = [...shapesRef.current, ...currentPolylineSnapPoints];
+          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            ? findNearestSnapPoint(worldPos, allSnapPoints, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan

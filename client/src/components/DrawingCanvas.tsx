@@ -246,13 +246,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Mevcut noktaları al
         const points = [...polylinePointsRef.current];
         
-        // Geçici önizleme oluştur - son noktayı fare pozisyonuyla değiştir
-        const tempPoints = [...points]; // Noktaları kopyala
-        
-        // Eğer fare hareket ediyorsa, son noktadan fareye bir çizgi göster
+        // Son noktadan fareye bir çizgi göster (önizleme)
         currentShapeRef.current = {
-          ...currentShapeRef.current,
-          points: tempPoints,
+          id: -1, // Geçici ID
+          type: 'polyline',
+          points: points,
+          thickness: 1,
+          closed: false,
           previewPoint: currentPoint, // Önizleme noktası ekle
           isSnapping: !!snapPoint
         };
@@ -627,6 +627,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             }
           }
         } else if (activeTool === 'polyline') {
+          // Sürükleme durumunu kaldır - polyline çizerken sürükleme kullanmıyoruz
+          isDraggingRef.current = false;
+          setIsDragging(false);
+          
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
@@ -643,27 +647,27 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             polylinePointsRef.current = [{ x: clickPoint.x, y: clickPoint.y }];
             setDrawingPolyline(true);
             
-            // Geçici gösterim için polyline oluştur
+            // Geçici gösterim için polyline oluştur (ilk nokta)
             currentShapeRef.current = {
+              id: -1, // Geçici ID
               type: 'polyline',
               points: [...polylinePointsRef.current],
               thickness: 1,
-              closed: false
+              closed: false,
+              previewPoint: clickPoint // İlk nokta için önizleme ekle
             };
           } else {
             // Polyline'a yeni nokta ekle
             polylinePointsRef.current.push({ x: clickPoint.x, y: clickPoint.y });
             
-            // Geçici gösterimi güncelle
+            // Geçici gösterimi güncelle - noktalar ve mevcut fare konumu
             if (currentShapeRef.current) {
               currentShapeRef.current = {
                 ...currentShapeRef.current,
-                points: [...polylinePointsRef.current]
+                points: [...polylinePointsRef.current],
+                previewPoint: clickPoint // Mevcut tıklama noktasına önizleme güncelle
               };
             }
-            
-            // Sağ tıklama ya da çift tıklama ile polyline'ı tamamlamak için 
-            // handleMouseUp ve handleDoubleClick eklenecek
           }
         // Rectangle ve circle araçları kaldırıldı
         }

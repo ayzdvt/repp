@@ -294,14 +294,40 @@ export function drawShape(
       ctx.lineTo(point.x, point.y);
     }
     
-    // Eğer kapalı bir polyline ise, ilk noktaya geri dön
-    if (shape.closed && shape.points.length > 2) {
-      ctx.lineTo(firstPoint.x, firstPoint.y);
+    // Eğer önizleme noktası varsa, son noktadan önizleme noktasına çizgi çiz (fare ile çizim yaparken)
+    if (shape.previewPoint) {
+      const lastPoint = shape.points[shape.points.length - 1];
+      const lastScreenPoint = worldToScreen(lastPoint.x, lastPoint.y, state);
+      const previewScreenPoint = worldToScreen(shape.previewPoint.x, shape.previewPoint.y, state);
+      
+      // Normal çizgiyi çiz
+      ctx.stroke();
+      
+      // Önizleme çizgisini kesikli çizgi olarak çiz
+      ctx.beginPath();
+      ctx.moveTo(lastScreenPoint.x, lastScreenPoint.y);
+      ctx.lineTo(previewScreenPoint.x, previewScreenPoint.y);
+      ctx.setLineDash([4, 4]); // Kesikli çizgi
+      ctx.stroke();
+      ctx.setLineDash([]); // Kesikli çizgiyi sıfırla
+      
+      // Snap varsa özel görünüm ekle
+      if (shape.isSnapping) {
+        ctx.beginPath();
+        ctx.arc(previewScreenPoint.x, previewScreenPoint.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#00C853"; // Yeşil renk
+        ctx.fill();
+      }
+    } else {
+      // Eğer kapalı bir polyline ise, ilk noktaya geri dön
+      if (shape.closed && shape.points.length > 2) {
+        ctx.lineTo(firstPoint.x, firstPoint.y);
+      }
+      
+      // Çizgiyi çiz
+      ctx.lineWidth = shape.thickness; // Sabit kalınlık
+      ctx.stroke();
     }
-    
-    // Çizgiyi çiz
-    ctx.lineWidth = shape.thickness; // Sabit kalınlık
-    ctx.stroke();
     
     // Eğer polyline seçiliyse, tüm köşe noktalarını göster
     if (isSelected) {

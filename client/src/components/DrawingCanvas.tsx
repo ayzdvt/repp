@@ -51,13 +51,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [drawingPolyline, setDrawingPolyline] = useState<boolean>(false); // Polyline çizim durumu
   
   // Handle canvas resize
+  // Resize handler - onCanvasSizeChange'i ref olarak tutuyoruz
+  const onCanvasSizeChangeRef = useRef(onCanvasSizeChange);
+
+  // onCanvasSizeChange değiştiğinde referansı güncelle
+  useEffect(() => {
+    onCanvasSizeChangeRef.current = onCanvasSizeChange;
+  }, [onCanvasSizeChange]);
+
+  // Resize işlemleri için ayrı, sabit referanslı bir useEffect
   useEffect(() => {
     const resizeCanvas = () => {
       if (containerRef.current && canvasRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect();
         canvasRef.current.width = width;
         canvasRef.current.height = height;
-        onCanvasSizeChange(width, height);
+        onCanvasSizeChangeRef.current(width, height);
       }
     };
     
@@ -67,7 +76,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, [onCanvasSizeChange]);
+  }, []); // Boş bağımlılık dizisi - component mount olduğunda bir kez çalışır
   
   // Seçilen şekil ID'sini doğrudan prop olarak kullanalım - daha güvenli bir yaklaşım
   const selectedId = selectedShapeId;

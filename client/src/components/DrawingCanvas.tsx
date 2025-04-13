@@ -74,6 +74,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
 
   // Render işlevi - render frame içinde kullanılacak
+  // İşlevi memoize ediyoruz (önceden hesaplayıp saklıyoruz), böylece her render'da yeniden oluşmaz
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -191,7 +192,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled, isDraggingEndpoint]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
+  }, [canvasState, selectedId, activeTool, snapEnabled, isDraggingEndpoint]); // isDragging'i kaldırdık, sadece gerçekten gerekli bağımlılıkları kaldık
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
@@ -911,53 +912,62 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, []);
   
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // Seçili şekli temizle
-        setSelectedShapeId(null);
-        
-        // Üst bileşene bildir
-        if (onSelectObject) {
-          onSelectObject(null);
-        }
-        
-        // Çizim durumunu sıfırla
-        const isDrawing = drawingLine || drawingPolyline || isDraggingEndpoint;
-        
-        // Çizgi çizme işlemini iptal et
-        if (drawingLine) {
-          lineFirstPointRef.current = null;
-          currentShapeRef.current = null;
-          setDrawingLine(false);
-        }
-        
-        // Polyline çizim işlemini iptal et
-        if (drawingPolyline) {
-          polylinePointsRef.current = [];
-          currentShapeRef.current = null;
-          setDrawingPolyline(false);
-        }
-        
-        // Çizgi uç noktası sürükleme işlemini iptal et
-        if (isDraggingEndpoint) {
-          draggingLineEndpointRef.current = null;
-          originalLineRef.current = null;
-          setIsDraggingEndpoint(false);
-        }
-        
-        // Eğer seçim aracında değilsek seçim aracına geç
-        // Çizim yaparken ya da aracımız 'selection' değilse selection aracına geç
-        if ((isDrawing || activeTool !== 'selection') && onToolChange) {
-          onToolChange('selection');
-        }
+  // Escape tuşu işlemini memoize ediyoruz - performans için
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      // Seçili şekli temizle
+      setSelectedShapeId(null);
+      
+      // Üst bileşene bildir
+      if (onSelectObject) {
+        onSelectObject(null);
       }
-    };
-    
+      
+      // Çizim durumunu sıfırla
+      const isDrawing = drawingLine || drawingPolyline || isDraggingEndpoint;
+      
+      // Çizgi çizme işlemini iptal et
+      if (drawingLine) {
+        lineFirstPointRef.current = null;
+        currentShapeRef.current = null;
+        setDrawingLine(false);
+      }
+      
+      // Polyline çizim işlemini iptal et
+      if (drawingPolyline) {
+        polylinePointsRef.current = [];
+        currentShapeRef.current = null;
+        setDrawingPolyline(false);
+      }
+      
+      // Çizgi uç noktası sürükleme işlemini iptal et
+      if (isDraggingEndpoint) {
+        draggingLineEndpointRef.current = null;
+        originalLineRef.current = null;
+        setIsDraggingEndpoint(false);
+      }
+      
+      // Eğer seçim aracında değilsek seçim aracına geç
+      // Çizim yaparken ya da aracımız 'selection' değilse selection aracına geç
+      if ((isDrawing || activeTool !== 'selection') && onToolChange) {
+        onToolChange('selection');
+      }
+    }
+  }, [activeTool, onSelectObject, onToolChange, drawingLine, drawingPolyline, isDraggingEndpoint]);
+  
+  // Keyboard eventleri için ayrı bir useEffect
+  useEffect(() => {
     // Event listener ekle
     window.addEventListener('keydown', handleKeyDown);
     
-    // Özel eventleri dinle - DrawingApp'ten gelen istekler için
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]); // Sadece handleKeyDown değiştiğinde bağla
+  
+  // Özel eventleri dinlemek için ayrı bir useEffect - bu sayede döngüsel bağımlılıkları önlüyoruz
+  useEffect(() => {
     if (containerRef.current) {
       const containerElement = containerRef.current;
       
@@ -990,17 +1000,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Cleanup function
       return () => {
-        window.removeEventListener('keydown', handleKeyDown);
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
       };
     }
     
-    // Eğer containerRef.current yoksa sadece keyboard event'i temizle
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeTool, onSelectObject, onToolChange, drawingLine, drawingPolyline, isDraggingEndpoint]);
+    // Cleanup gerekmez
+    return undefined;
+  }, []); // Component mount olduğunda sadece bir kez çalışsın
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak

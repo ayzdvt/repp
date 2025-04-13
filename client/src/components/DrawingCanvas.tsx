@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CanvasState, Point, Tool } from '@/types';
 import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
-import { pointNearLine, getSnapPoint, findNearestSnapPoint, getLineMidpoint } from '@/lib/drawingPrimitives';
+import { pointNearLine, findNearestSnapPoint, getLineMidpoint } from '@/lib/drawingPrimitives';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -90,46 +90,54 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, [canvasState, drawingLine, mousePosition, selectedShapeId, snapEnabled, activeTool]);
   
   // Ekran boyutları değiştiğinde veya ilk açılışta çalışacak
+  const updateCanvasSize = useCallback(() => {
+    if (canvasRef.current && containerRef.current) {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      canvasRef.current.width = width;
+      canvasRef.current.height = height;
+      
+      // Üst bileşene canvas boyutunu bildir
+      onCanvasSizeChange(width, height);
+      
+      // Yeniden düzenleniyor
+      // renderCanvas() burada çağırmıyoruz, sonsuz döngüden kaçınmak için
+    }
+  }, [onCanvasSizeChange]); // renderCanvas bağımlılıktan çıkarıldı
+
+  // Canvas boyutunu ayarla ve değişiklikleri dinle
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (canvasRef.current && containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        canvasRef.current.width = width;
-        canvasRef.current.height = height;
-        
-        // Üst bileşene canvas boyutunu bildir
-        onCanvasSizeChange(width, height);
-        
-        // Boyut değiştiğinde yeniden çiz
-        renderCanvas();
-      }
-    };
-    
-    // İlk yükleme ve boyut değişiminde
+    // İlk yükleme
     updateCanvasSize();
+    
+    // Boyut değişimini dinle
     window.addEventListener('resize', updateCanvasSize);
+    
+    // Canvas hazır olduğunda ilk çizimi yap
+    if (canvasRef.current) {
+      requestAnimationFrame(() => renderCanvas());
+    }
     
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
     };
-  }, [onCanvasSizeChange, renderCanvas]);
+  }, [updateCanvasSize]); // Sadece updateCanvasSize'ı izle
   
   // ShapeUpdate olayını dinle
-  useEffect(() => {
-    const handleShapeUpdate = (e: any) => {
-      if (e.detail && e.detail.type === 'update' && e.detail.shape) {
-        // Şekilleri güncelle
-        const shapeToUpdate = shapesRef.current.find(s => s.id === e.detail.shape.id);
-        if (shapeToUpdate) {
-          // Şeklin özelliklerini güncelle
-          Object.assign(shapeToUpdate, e.detail.shape);
-          
-          // Yeniden çiz
-          renderCanvas();
-        }
+  const handleShapeUpdate = useCallback((e: any) => {
+    if (e.detail && e.detail.type === 'update' && e.detail.shape) {
+      // Şekilleri güncelle
+      const shapeToUpdate = shapesRef.current.find(s => s.id === e.detail.shape.id);
+      if (shapeToUpdate) {
+        // Şeklin özelliklerini güncelle
+        Object.assign(shapeToUpdate, e.detail.shape);
+        
+        // Yeniden çiz - requestAnimationFrame kullanarak çağırıyoruz
+        requestAnimationFrame(() => renderCanvas());
       }
-    };
-    
+    }
+  }, []);
+  
+  useEffect(() => {
     if (containerRef.current) {
       containerRef.current.addEventListener('shapeupdate', handleShapeUpdate);
     }
@@ -139,7 +147,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         containerRef.current.removeEventListener('shapeupdate', handleShapeUpdate);
       }
     };
-  }, [renderCanvas]);
+  }, [handleShapeUpdate]);
   
   // Mouse hareketi
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

@@ -69,7 +69,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [onCanvasSizeChange]);
   
-  // selectedId referansını kaldırdık, doğrudan selectedShapeId kullanıyoruz
+  // Seçilen şekil ID'sini sabitlemek için useMemo kullanıyoruz
+  // Bu şekilde her render'da aynı referans olacak ve sonsuz döngü olmayacak
+  const selectedId = React.useMemo(() => selectedShapeId, [selectedShapeId]);
 
   // Render işlevi - render frame içinde kullanılacak
   const renderCanvas = useCallback(() => {
@@ -88,7 +90,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
       // Seçilen şekil ise farklı renkte çiz
-      drawShape(ctx, shape, canvasState, shape.id === selectedShapeId);
+      drawShape(ctx, shape, canvasState, shape.id === selectedId);
     });
     
     // Oluşturulmakta olan şekli çiz
@@ -104,7 +106,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Tüm şekillerden yakalama noktalarını topla
       shapesRef.current.forEach(shape => {
         // Çizgi uçlarını sürüklerken, sürüklenen çizginin snap noktalarını gösterme
-        if (isDraggingEndpoint && shape.id === selectedShapeId) {
+        if (isDraggingEndpoint && shape.id === selectedId) {
           return; // Bu çizgiyi atla
         }
         
@@ -189,39 +191,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.stroke();
       }
     }
-  }, [canvasState, selectedShapeId, activeTool, snapEnabled, isDraggingEndpoint]); // selectedId yerine selectedShapeId kullanıyoruz
+  }, [canvasState, selectedId, activeTool, isDragging, snapEnabled, isDraggingEndpoint]); // Araç değiştiğinde, sürükleme durumu veya snap durumu değiştiğinde de yeniden çiz
   
   // Bileşen takılı olduğunda animasyon loop'unu çalıştır, söküldüğünde temizle
   useEffect(() => {
     // Animasyon frame'i yönet
     const animate = () => {
-      if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) {
-          // Clear canvas
-          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-          
-          // Draw grid
-          drawGrid(ctx, canvasState);
-          
-          // Draw all shapes
-          shapesRef.current.forEach(shape => {
-            const isSelected = shape.id === selectedShapeId;
-            drawShape(ctx, shape, canvasState, isSelected);
-          });
-          
-          // Draw current shape (if drawing)
-          if (currentShapeRef.current) {
-            drawShape(ctx, currentShapeRef.current, canvasState, false);
-          }
-          
-          // Draw snap indicators if snapping is enabled
-          if (snapEnabled) {
-            const snapTolerance = 10 / canvasState.zoom;
-            drawSnapIndicators(ctx, shapesRef.current, currentMousePosRef.current, canvasState, snapTolerance, snapEnabled);
-          }
-        }
-      }
+      renderCanvas();
       requestRef.current = requestAnimationFrame(animate);
     };
     
@@ -235,7 +211,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         requestRef.current = null;
       }
     };
-  }, [canvasState, selectedShapeId, activeTool, snapEnabled]); // renderCanvas bağımlılığı kaldırıldı
+  }, [renderCanvas]); // Sadece renderCanvas fonksiyonu değişirse yeniden başlat
   
   // Mouse event handlers
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -258,9 +234,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
       // Snap kontrolü
       const snapTolerance = 10 / canvasState.zoom;
-      
-      // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
-      // Burada sadece mevcut şekilleri kullanıyoruz, ekstra snap noktaları eklemiyoruz
       const snapPoint = snapEnabled
         ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
         : null;
@@ -375,9 +348,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         if (polylinePointsRef.current.length > 0) {
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
-          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
-          // Var olan noktaları kullanarak snap yapıyoruz
           const snapPoint = snapEnabled
             ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
             : null;
@@ -662,9 +633,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           
           // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
-          
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
-          // Normal şekilde shapesRef içindeki noktaları kullanıyoruz
           const snapPoint = snapEnabled
             ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
             : null;

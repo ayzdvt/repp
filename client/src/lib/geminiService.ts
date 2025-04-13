@@ -115,6 +115,9 @@ async function retryWithExponentialBackoff<T>(
   throw lastError || new Error('Unknown error occurred during retry');
 }
 
+/**
+ * Tekli dosya analiziyi yapan fonksiyon
+ */
 export async function analyzeDocument(file: File): Promise<ProjectDetails> {
   try {
     // Input validation
@@ -263,5 +266,72 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
     const error = err as Error;
     console.error('Analiz hatası:', error);
     throw new Error(error.message || 'Belge analizi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+  }
+}
+
+/**
+ * Çoklu dosya analizi için yeni fonksiyon
+ */
+export async function analyzeMultipleDocuments(files: File[]): Promise<ProjectDetails> {
+  try {
+    if (!files || files.length === 0) {
+      throw new Error('Lütfen en az bir dosya seçin');
+    }
+
+    // Tüm sonuçları tutacak dizi
+    const results: ProjectDetails[] = [];
+    
+    // Dosyaları sırayla analiz et
+    for (const file of files) {
+      try {
+        const result = await analyzeDocument(file);
+        results.push(result);
+      } catch (err) {
+        console.warn(`${file.name} dosyası analiz edilemedi, diğer dosyalara devam ediliyor:`, err);
+        // Hata durumunda bile devam et
+      }
+    }
+
+    if (results.length === 0) {
+      throw new Error('Yüklenen dosyalardan hiçbiri analiz edilemedi');
+    }
+
+    // Sonuçları birleştir
+    const mergedResult: ProjectDetails = {};
+    
+    // Her bir alanı kontrol et ve ilk non-null değeri al
+    const fields: Array<keyof ProjectDetails> = [
+      'city', 'district', 'neighborhood', 'block', 'parcel', 'land_area', 
+      'owner', 'sheet_no', 'floor_count', 'front_setback', 'side_setback', 
+      'rear_setback', 'roof_type', 'roof_angle', 'building_order', 
+      'plan_position', 'ground_coverage_ratio', 'floor_area_ratio', 'parcel_coordinates'
+    ];
+    
+    for (const field of fields) {
+      for (const result of results) {
+        if (result[field] !== undefined && result[field] !== null) {
+          // @ts-ignore - tip hatasını geçici olarak görmezden gel
+          mergedResult[field] = result[field];
+          break; // İlk non-null değeri bulduk, sonraki sonuca geç
+        }
+      }
+    }
+    
+    // Birleştirilmiş sonucun en az temel alanlardan birini içerdiğinden emin ol
+    const requiredFields = ['city', 'district', 'block', 'parcel'];
+    const hasAnyRequiredField = requiredFields.some(field => 
+      mergedResult[field as keyof ProjectDetails] !== null && 
+      mergedResult[field as keyof ProjectDetails] !== undefined
+    );
+    
+    if (!hasAnyRequiredField) {
+      throw new Error('Belgelerden gerekli bilgiler çıkarılamadı');
+    }
+    
+    return mergedResult;
+  } catch (err) {
+    const error = err as Error;
+    console.error('Çoklu dosya analiz hatası:', error);
+    throw new Error(error.message || 'Dosyaların analizi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
   }
 }

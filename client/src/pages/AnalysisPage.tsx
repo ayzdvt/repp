@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { analyzeDocument, ProjectDetails } from '@/lib/geminiService';
+import { analyzeDocument, analyzeMultipleDocuments, ProjectDetails } from '@/lib/geminiService';
 import AnalysisResult from '@/components/AnalysisResult';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -53,8 +53,8 @@ export default function AnalysisPage() {
   };
 
   const handleUpload = async () => {
-    if (!currentFile) {
-      setError('Lütfen bir dosya seçin.');
+    if (files.length === 0) {
+      setError('Lütfen en az bir dosya seçin.');
       return;
     }
 
@@ -85,7 +85,15 @@ export default function AnalysisPage() {
         }, 500);
         
         try {
-          const data = await analyzeDocument(currentFile);
+          // Birden fazla dosya varsa analyzeMultipleDocuments fonksiyonunu kullan
+          // Tek dosya varsa analyzeDocument fonksiyonunu kullan
+          let data;
+          if (files.length > 1) {
+            data = await analyzeMultipleDocuments(files);
+          } else {
+            data = await analyzeDocument(files[0]);
+          }
+          
           setResult(data);
         } catch (err) {
           const error = err as Error;
@@ -261,7 +269,7 @@ export default function AnalysisPage() {
               <div className="flex justify-end">
                 <Button
                   onClick={handleUpload}
-                  disabled={!currentFile || isUploading || isAnalyzing}
+                  disabled={files.length === 0 || isUploading || isAnalyzing}
                 >
                   {isUploading ? 'Yükleniyor...' : isAnalyzing ? 'Analiz Ediliyor...' : 'Analiz Et'}
                 </Button>
@@ -295,7 +303,11 @@ export default function AnalysisPage() {
         <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Başarılı</AlertTitle>
-          <AlertDescription>İmar belgesi başarıyla analiz edildi.</AlertDescription>
+          <AlertDescription>
+            {files.length > 1 
+              ? `${files.length} adet imar belgesi başarıyla analiz edildi.` 
+              : 'İmar belgesi başarıyla analiz edildi.'}
+          </AlertDescription>
         </Alert>
         
         <AnalysisResult data={result} />

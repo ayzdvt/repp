@@ -22,7 +22,7 @@ export interface CanvasState {
 }
 
 // Shape types
-export type ShapeType = 'point' | 'line' | 'polyline' | 'text';
+export type ShapeType = 'point' | 'line' | 'text';
 
 // Base shape interface
 export interface BaseShape {

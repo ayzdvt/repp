@@ -9,10 +9,9 @@ export default function OptionsPage() {
   
   const handleAIFileUpload = (file: File) => {
     console.log('AI File uploaded:', file);
-    // Burada yüklenen dosya ile yapay zeka işlemlerini başlatabilirsiniz
+    // Yapay zeka analiz sayfasına yönlendirme
     setIsAIDialogOpen(false);
-    // İşlemden sonra drawing sayfasına yönlendirme
-    setLocation('/drawing');
+    setLocation('/analysis');
   };
   
   const handleCADFileUpload = (file: File) => {

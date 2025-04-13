@@ -47,7 +47,7 @@ export default function DrawingApp() {
     }));
   };
   
-  // Tüm çizimleri ekrana sığdırmak için fit view fonksiyonu
+  // Çizimlerin bulunduğu alana odaklanmak için fit view fonksiyonu
   const handleResetView = () => {
     // Canvas element referansını al
     const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
@@ -61,12 +61,12 @@ export default function DrawingApp() {
       detail: { 
         callback: (bounds: { minX: number, minY: number, maxX: number, maxY: number } | null) => {
           if (!bounds) {
-            // Hiç çizim yoksa merkeze odaklan ve varsayılan zoom'a dön
+            // Hiç çizim yoksa merkeze odaklan
             setZoom(1);
             setCanvasState(prev => ({
               ...prev,
               zoom: 1,
-              panOffset: { x: canvasState.canvasSize.width / 2, y: canvasState.canvasSize.height / 2 }
+              panOffset: { x: 0, y: 0 }
             }));
             return;
           }
@@ -82,7 +82,7 @@ export default function DrawingApp() {
             setCanvasState(prev => ({
               ...prev,
               zoom: 1,
-              panOffset: { x: canvasState.canvasSize.width / 2, y: canvasState.canvasSize.height / 2 }
+              panOffset: { x: 0, y: 0 }
             }));
             return;
           }
@@ -91,47 +91,27 @@ export default function DrawingApp() {
           const canvasWidth = canvasState.canvasSize.width;
           const canvasHeight = canvasState.canvasSize.height;
           
-          // Kenar boşluğu çok küçük olsun - sadece çizimlerin tam kenarında olmasın
-          const paddingPercent = 0.05; // %5 ekstra alan
-          
-          // Genişletilmiş sınırları hesapla (biraz ekstra alan)
-          const expandedWidth = width * (1 + paddingPercent * 2);
-          const expandedHeight = height * (1 + paddingPercent * 2);
-          const expandedMinX = minX - width * paddingPercent;
-          const expandedMaxX = maxX + width * paddingPercent;
-          const expandedMinY = minY - height * paddingPercent;
-          const expandedMaxY = maxY + height * paddingPercent;
-          
-          // En-boy oranlarını koruyarak, tüm çizimlerin tam sığacağı zoom seviyesini hesapla
-          const zoomX = canvasWidth / expandedWidth;
-          const zoomY = canvasHeight / expandedHeight;
-          
-          // En küçük zoom değerini kullan - böylece hem yatay hem dikey olarak tüm nesneler sığacak
+          // Zoom hesaplama (tüm çizimleri görebilmek için)
+          // Padding eklemek için 0.9 ile çarp
+          const zoomX = (canvasWidth / width) * 0.8;
+          const zoomY = (canvasHeight / height) * 0.8;
           const newZoom = Math.min(zoomX, zoomY);
           
-          // Genişletilmiş çizim alanının merkezi
-          const centerX = (expandedMinX + expandedMaxX) / 2;
-          const centerY = (expandedMinY + expandedMaxY) / 2;
+          // Merkez hesaplama
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
           
-          // Pan değerlerini, çizim alanının merkezi ekranın merkezine gelecek şekilde hesapla
-          // Y ekseni canvas'ta ters olduğu için - ekranın üstü düşük Y değerleri
+          // Pan hesaplama (çizimlerin merkezi canvasın merkezine gelecek şekilde)
           const panX = (canvasWidth / 2) - (centerX * newZoom);
-          const panY = (canvasHeight / 2) + (centerY * newZoom); 
+          const panY = (canvasHeight / 2) + (centerY * newZoom);
           
-          // Zoom ve pan değerlerini uygula
+          // Zoom ve pan güncelleme
           setZoom(newZoom);
           setCanvasState(prev => ({
             ...prev,
             zoom: newZoom,
             panOffset: { x: panX, y: panY }
           }));
-          
-          console.log("Fit View - Tüm objeler ekrana sığdırıldı", { 
-            objeSınırları: bounds, 
-            genişletilmiş: { minX: expandedMinX, minY: expandedMinY, maxX: expandedMaxX, maxY: expandedMaxY },
-            yeniZoom: newZoom, 
-            yeniPan: { x: panX, y: panY } 
-          });
         }
       } 
     });

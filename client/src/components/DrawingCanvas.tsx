@@ -820,17 +820,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const handleGetShapesBounds = (e: any) => {
       const { detail } = e;
       if (detail?.callback && typeof detail.callback === 'function') {
-        // Eğer hiç şekil yoksa null dön
-        if (shapesRef.current.length === 0) {
-          detail.callback(null);
-          return;
-        }
-        
-        // Tüm şekillerin minimum ve maximum koordinatlarını bul
+        // Sınırlar için başlangıç değerleri
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
         let maxY = -Infinity;
+        
+        // Önce mevcut çizimleri kontrol et
+        const hasShapes = shapesRef.current.length > 0;
         
         // Her şekil için sınırları hesapla
         shapesRef.current.forEach(shape => {
@@ -869,12 +866,53 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           }
         });
         
-        // Sınırları callback ile döndür
-        if (minX !== Infinity && minY !== Infinity && maxX !== -Infinity && maxY !== -Infinity) {
-          detail.callback({ minX, minY, maxX, maxY });
-        } else {
-          detail.callback(null); // Hiç geçerli koordinat bulunamadıysa null döndür
+        // Aktif çizim durumlarını da dikkate al - çizilmekte olan nesneleri de dahil et
+        
+        // Line aracı aktifse ve çizim yapılıyorsa, tamamlanmamış çizgiyi de dahil et
+        if (activeTool === 'line' && drawingLine && lineFirstPointRef.current && currentShapeRef.current) {
+          // İlk nokta
+          minX = Math.min(minX, lineFirstPointRef.current.x);
+          minY = Math.min(minY, lineFirstPointRef.current.y);
+          maxX = Math.max(maxX, lineFirstPointRef.current.x);
+          maxY = Math.max(maxY, lineFirstPointRef.current.y);
+          
+          // Önizleme noktası (fare konumu)
+          if (currentShapeRef.current.type === 'line') {
+            minX = Math.min(minX, currentShapeRef.current.endX);
+            minY = Math.min(minY, currentShapeRef.current.endY);
+            maxX = Math.max(maxX, currentShapeRef.current.endX);
+            maxY = Math.max(maxY, currentShapeRef.current.endY);
+          }
         }
+        
+        // Polyline aracı aktifse ve çizim yapılıyorsa, oluşturulmakta olan polyline'ı da dahil et
+        if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
+          // Tüm polyline noktalarını kontrol et
+          polylinePointsRef.current.forEach((point: Point) => {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+          });
+          
+          // Önizleme noktasını (fare konumu) da dahil et
+          if (currentShapeRef.current?.previewPoint) {
+            minX = Math.min(minX, currentShapeRef.current.previewPoint.x);
+            minY = Math.min(minY, currentShapeRef.current.previewPoint.y);
+            maxX = Math.max(maxX, currentShapeRef.current.previewPoint.x);
+            maxY = Math.max(maxY, currentShapeRef.current.previewPoint.y);
+          }
+        }
+        
+        // Hiç şekil yoksa ve aktif bir çizim de yoksa null dön
+        if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
+          detail.callback(null);
+          return;
+        }
+        
+        // Sınırları callback ile döndür
+        detail.callback({ minX, minY, maxX, maxY });
+        console.log("Hesaplanan sınırlar (çizim dahil):", { minX, minY, maxX, maxY });
       }
     };
     

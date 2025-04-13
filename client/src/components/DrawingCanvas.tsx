@@ -763,7 +763,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTool, drawingLine, drawingPolyline, onSelectObject, onToolChange]);
+  }, [activeTool, onSelectObject, onToolChange]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak
@@ -815,7 +815,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, drawingLine, drawingPolyline, onSelectObject]);  // Çizim durumlarını izleme
+  }, [activeTool, onSelectObject]);  // Sadece araç değişikliği ve nesne seçimini izleme
   
   // Sağ tıklama ile polyline'ı tamamlama
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

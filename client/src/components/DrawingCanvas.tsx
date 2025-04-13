@@ -314,6 +314,37 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           };
         }
       } 
+      // Polyline çizme özel durumu
+      else if (activeTool === 'polyline' && drawingPolyline) {
+        if (polylinePointsRef.current.length > 0) {
+          // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+          const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          const snapPoint = snapEnabled
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            : null;
+          
+          // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+          const currentPoint = snapPoint || worldPos;
+          
+          // Tüm noktaları koruyarak son noktayı fare pozisyonuyla güncelle (çizim önizlemesi için)
+          if (currentShapeRef.current) {
+            // Mevcut noktaları al ama son noktayı ekleme (o zaten tıklamayla ekleniyor)
+            const points = [...polylinePointsRef.current];
+            
+            // Şu anki fare pozisyonunu geçici olarak ekle (taslak gösterim için)
+            const tempPoints = [...points, { x: currentPoint.x, y: currentPoint.y }];
+            
+            // Güncel şekli güncelle
+            currentShapeRef.current = {
+              ...currentShapeRef.current,
+              points: tempPoints,
+              // Yakalama noktası varsa bunu görsel olarak belirt
+              isSnapping: !!snapPoint
+            };
+          }
+        }
+      }
       // Diğer şekil çizimleri için sürükle-bırak davranışı (fare basılı tutulduğunda)
       else if (isDraggingRef.current) {
         if (activeTool === 'point') {
@@ -566,6 +597,45 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               setDrawingLine(false);
             }
           }
+        } else if (activeTool === 'polyline') {
+          // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+          const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
+          // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
+          const snapPoint = snapEnabled
+            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            : null;
+          
+          // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
+          const clickPoint = snapPoint || worldPos;
+          
+          // Eğer polyline çizimi başlamadıysa, başlat
+          if (!drawingPolyline) {
+            // Yeni polyline başlat
+            polylinePointsRef.current = [{ x: clickPoint.x, y: clickPoint.y }];
+            setDrawingPolyline(true);
+            
+            // Geçici gösterim için polyline oluştur
+            currentShapeRef.current = {
+              type: 'polyline',
+              points: [...polylinePointsRef.current],
+              thickness: 1,
+              closed: false
+            };
+          } else {
+            // Polyline'a yeni nokta ekle
+            polylinePointsRef.current.push({ x: clickPoint.x, y: clickPoint.y });
+            
+            // Geçici gösterimi güncelle
+            if (currentShapeRef.current) {
+              currentShapeRef.current = {
+                ...currentShapeRef.current,
+                points: [...polylinePointsRef.current]
+              };
+            }
+            
+            // Sağ tıklama ya da çift tıklama ile polyline'ı tamamlamak için 
+            // handleMouseUp ve handleDoubleClick eklenecek
+          }
         // Rectangle ve circle araçları kaldırıldı
         }
       }
@@ -703,6 +773,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           currentShapeRef.current = null;
         }
         
+        // Polyline çizim işlemini iptal et
+        if (drawingPolyline) {
+          setDrawingPolyline(false);
+          polylinePointsRef.current = [];
+          currentShapeRef.current = null;
+        }
+        
         // Çizgi uç noktası sürükleme işlemini de iptal et
         if (isDraggingEndpoint) {
           setIsDraggingEndpoint(false);
@@ -724,7 +801,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTool, drawingLine, onSelectObject, onToolChange]);
+  }, [activeTool, drawingLine, drawingPolyline, onSelectObject, onToolChange]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak
@@ -754,6 +831,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       currentShapeRef.current = null;
     }
     
+    // Polyline çizim işlemini iptal et
+    if (drawingPolyline) {
+      setDrawingPolyline(false);
+      polylinePointsRef.current = [];
+      currentShapeRef.current = null;
+    }
+    
     // Çizgi uç noktası sürükleme işlemini de iptal et
     if (isDraggingEndpoint) {
       setIsDraggingEndpoint(false);
@@ -769,12 +853,54 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, onSelectObject]);  // drawingLine'ı izlemiyor, sadece activeTool değişimini izliyor
+  }, [activeTool, drawingLine, drawingPolyline, isDraggingEndpoint, onSelectObject]);  // Tüm çizim durum değişkenlerini izlemek gerekiyor
   
-  // Sağ tıklamayı engelle
+  // Sağ tıklama işlemleri
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    // Polyline çizimi sırasında sağ tıklama ile polyline'ı tamamla
+    if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
+      // Polyline'ı tamamla ve shapesRef'e ekle
+      const newPolyline = {
+        id: nextIdRef.current++,
+        type: 'polyline',
+        points: [...polylinePointsRef.current],
+        thickness: 1,
+        closed: false
+      };
+      
+      shapesRef.current.push(newPolyline);
+      
+      // Temizle
+      polylinePointsRef.current = [];
+      currentShapeRef.current = null;
+      setDrawingPolyline(false);
+    }
+    
     e.preventDefault();
     return false;
+  };
+
+  // Çift tıklama ile polyline'ı tamamlamak için
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
+      // Son tıklama noktasını eklemeye gerek yok, zaten ekledik
+
+      // Polyline'ı tamamla ve shapesRef'e ekle
+      const newPolyline = {
+        id: nextIdRef.current++,
+        type: 'polyline',
+        points: [...polylinePointsRef.current],
+        thickness: 1,
+        closed: false
+      };
+      
+      shapesRef.current.push(newPolyline);
+      
+      // Temizle
+      polylinePointsRef.current = [];
+      currentShapeRef.current = null;
+      setDrawingPolyline(false);
+    }
   };
 
   return (
@@ -790,6 +916,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
         onContextMenu={handleContextMenu}
+        onDoubleClick={handleDoubleClick}
       />
     </div>
   );

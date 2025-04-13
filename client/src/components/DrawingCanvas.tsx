@@ -801,19 +801,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTool, drawingLine, drawingPolyline, onSelectObject, onToolChange]);
+  }, [activeTool, onSelectObject, onToolChange]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak
   const prevToolRef = useRef(activeTool);
   useEffect(() => {
-    // İlk render'da çalıştırma
+    // Eğer aktiveTool değişmediyse hiçbir şey yapma
     if (prevToolRef.current === activeTool) {
-      prevToolRef.current = activeTool;
       return;
     }
     
-    // Araç değiştiğinde
+    // Araç değiştiğinde referansı güncelle
     prevToolRef.current = activeTool;
     
     // Seçili şekli temizle
@@ -853,7 +852,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, drawingLine, drawingPolyline, isDraggingEndpoint, onSelectObject]);  // Tüm çizim durum değişkenlerini izlemek gerekiyor
+  }, [activeTool, onSelectObject]);  // Sadece activeTool değiştiğinde çalışacak
   
   // Sağ tıklama işlemleri
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

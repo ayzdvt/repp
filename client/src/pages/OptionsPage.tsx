@@ -3,14 +3,11 @@ import { Link, useLocation } from 'wouter';
 import FileUploadDialog from '@/components/FileUploadDialog';
 
 export default function OptionsPage() {
-  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
   const [isCADDialogOpen, setIsCADDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
   
-  const handleAIFileUpload = (file: File) => {
-    console.log('AI File uploaded:', file);
-    // Yapay zeka analiz sayfasına yönlendirme
-    setIsAIDialogOpen(false);
+  // Dosya yükleme diyaloğu yerine doğrudan analiz sayfasına yönlendir
+  const handleAIOptionSelect = () => {
     setLocation('/analysis');
   };
   
@@ -24,17 +21,6 @@ export default function OptionsPage() {
   
   return (
     <>
-      {/* Yapay Zeka dosya yükleme dialog'u */}
-      <FileUploadDialog
-        isOpen={isAIDialogOpen}
-        onClose={() => setIsAIDialogOpen(false)}
-        onFileUpload={handleAIFileUpload}
-        title="Yapay Zeka ile Veri Çıkarma"
-        description="Veri çıkarılacak PDF veya görüntü dosyasını yükleyin."
-        acceptedFileTypes=".pdf,.jpg,.jpeg,.png"
-        fileTypeDescription="PDF, JPG veya PNG dosyaları (maks. 10MB)"
-      />
-      
       {/* AutoCAD dosya yükleme dialog'u */}
       <FileUploadDialog
         isOpen={isCADDialogOpen}
@@ -75,7 +61,7 @@ export default function OptionsPage() {
                 </div>
                 <div className="mt-auto">
                   <button 
-                    onClick={() => setIsAIDialogOpen(true)}
+                    onClick={handleAIOptionSelect}
                     className="block text-center w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
                   >
                     Seç

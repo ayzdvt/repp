@@ -95,12 +95,12 @@ export default function DrawingApp() {
       setCanvasState(prev => ({
         ...prev,
         zoom: 1,
-        panOffset: { x: canvasWidth / 2, y: canvasHeight / 2 }
+        panOffset: { x: 0, y: 0 }
       }));
       return;
     }
     
-    // Tüm şekilleri değerlendir
+    // Tüm şekillerin sınırlarını bul
     shapes.forEach(shape => {
       if (shape.type === 'point') {
         minX = Math.min(minX, shape.x);
@@ -124,6 +124,12 @@ export default function DrawingApp() {
           }
         });
       }
+      else if (shape.type === 'text') {
+        minX = Math.min(minX, shape.x);
+        minY = Math.min(minY, shape.y);
+        maxX = Math.max(maxX, shape.x + 20); // Yaklaşık metin genişliği
+        maxY = Math.max(maxY, shape.y + 20); // Yaklaşık metin yüksekliği
+      }
     });
     
     // Geçerli sınırlar yoksa, varsayılan görünüme dön
@@ -132,52 +138,56 @@ export default function DrawingApp() {
       setCanvasState(prev => ({
         ...prev,
         zoom: 1,
-        panOffset: { x: canvasWidth / 2, y: canvasHeight / 2 }
+        panOffset: { x: 0, y: 0 }
       }));
       return;
     }
     
-    // Tek nokta veya küçük çizimler için marj ekle
-    if (Math.abs(maxX - minX) < 1) {
-      minX -= 20;
-      maxX += 20;
+    // Çizimlerin çevresine kenar boşluğu ekle
+    const padding = 50; // Çizimlerin etrafındaki boşluk miktarı
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+    
+    // Tek nokta veya çok küçük çizimler için daha fazla boşluk ekle
+    if (Math.abs(maxX - minX) < 10) {
+      minX -= 50;
+      maxX += 50;
     }
     
-    if (Math.abs(maxY - minY) < 1) {
-      minY -= 20;
-      maxY += 20;
+    if (Math.abs(maxY - minY) < 10) {
+      minY -= 50;
+      maxY += 50;
     }
     
-    // Marj ekle
-    const margin = 40;
-    minX -= margin;
-    minY -= margin;
-    maxX += margin;
-    maxY += margin;
+    // Tüm şekillerin boyutlarını hesapla
+    const objectsWidth = maxX - minX;
+    const objectsHeight = maxY - minY;
     
-    // Çizimlerin toplam boyutunu hesapla
-    const objWidth = maxX - minX;
-    const objHeight = maxY - minY;
+    // X ve Y eksenleri için zoom oranlarını hesapla
+    const zoomX = canvasWidth / objectsWidth;
+    const zoomY = canvasHeight / objectsHeight;
     
-    // Ölçek faktörünü hesapla: Hem yatay hem dikey için, daha küçük olanı seç
-    const scaleX = canvasWidth / objWidth;
-    const scaleY = canvasHeight / objHeight;
-    const newZoom = Math.min(scaleX, scaleY) * 0.9; // %90 ölçek (marj için)
+    // Her iki eksendeki sınırlamalara göre daha küçük zoom değerini seç
+    const newZoom = Math.min(zoomX, zoomY) * 0.95; // %95 ölçek (ekstra marj için)
     
-    // Çizimlerin merkezi 
+    // Orta noktayı hesapla
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
-    // Pan değerlerini hesapla
-    const panX = canvasWidth / 2 - centerX * newZoom;
-    const panY = canvasHeight / 2 + centerY * newZoom; // Y ekseni ters
-    
-    // Canvas'ı güncelle
+    // Zoom'u ayarla
     setZoom(newZoom);
+    
+    // Canvas'ı ortala - koordinat sisteminin ortada olduğunu unutma
+    // x ve y değerleri, canvas'ın ortası ile dünyadaki orta nokta arasındaki ilişkiyi belirler
     setCanvasState(prev => ({
       ...prev,
       zoom: newZoom,
-      panOffset: { x: panX, y: panY }
+      panOffset: {
+        x: centerX * newZoom, 
+        y: -centerY * newZoom // Y ekseni ters olduğu için negatif işaret
+      }
     }));
   };
   

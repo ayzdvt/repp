@@ -232,10 +232,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Polyline çizimi sırasında önizleme çizgisini göster
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
-      // Snap kontrolü
+      // Mevcut çizilen polyline noktalarını geçici şekil olarak oluştur
+      // Böylece bunlar da snap noktaları olarak kullanılabilir
+      const temporaryPolylinePoints = [...polylinePointsRef.current];
+      const temporaryPolyline = {
+        id: -999, // Geçici bir ID
+        type: 'polyline',
+        points: temporaryPolylinePoints,
+        thickness: 1,
+        closed: false
+      };
+      
+      // Geçici şekli snap kontrolleri için ekle, ama asıl şekiller listesini değiştirme
+      const shapesWithTempPolyline = [...shapesRef.current, temporaryPolyline];
+      
+      // Snap kontrolü (şimdi geçici polyline da dahil)
       const snapTolerance = 10 / canvasState.zoom;
       const snapPoint = snapEnabled
-        ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+        ? findNearestSnapPoint(worldPos, shapesWithTempPolyline, snapTolerance)
         : null;
       
       // Fare pozisyonu veya snap noktası
@@ -346,11 +360,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Polyline çizme özel durumu
       else if (activeTool === 'polyline' && drawingPolyline) {
         if (polylinePointsRef.current.length > 0) {
-          // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+          // Geçici polyline oluştur - şu ana kadar eklenen noktaları içerir
+          const tempPolyline = {
+            id: -999, // Geçici ID
+            type: 'polyline',
+            points: [...polylinePointsRef.current],
+            thickness: 1,
+            closed: false
+          };
+          
+          // Geçici şekli snap kontrolleri için ekle, ama orijinal listeyi değiştirme
+          const shapesWithTempPolyline = [...shapesRef.current, tempPolyline];
+          
+          // Snap (yakalama) noktası kontrolü - güncel şekil listesi ile
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            ? findNearestSnapPoint(worldPos, shapesWithTempPolyline, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
@@ -367,7 +393,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             // Güncel şekli güncelle
             currentShapeRef.current = {
               ...currentShapeRef.current,
-              points: tempPoints,
+              points: points, // Önizleme noktasını dahil etme, bunu previewPoint ile yapıyoruz
+              previewPoint: currentPoint, // Önizleme noktası olarak kullan
               // Yakalama noktası varsa bunu görsel olarak belirt
               isSnapping: !!snapPoint
             };
@@ -631,11 +658,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           isDraggingRef.current = false;
           setIsDragging(false);
           
-          // Snap (yakalama) noktası kontrolü - en yakın yakalama noktasını bul
+          // Eğer devam eden bir polyline çizimi varsa, mevcut noktaları dikkate al
+          let shapesWithTempPolyline = [...shapesRef.current];
+          if (drawingPolyline && polylinePointsRef.current.length > 0) {
+            // Şu anda çizilmekte olan polyline noktalarını da dikkate al
+            const tempPolyline = {
+              id: -999, // Geçici ID
+              type: 'polyline',
+              points: [...polylinePointsRef.current],
+              thickness: 1,
+              closed: false
+            };
+            shapesWithTempPolyline.push(tempPolyline);
+          }
+          
+          // Snap (yakalama) noktası kontrolü - güncellenmiş şekil listemizi kullanalım
           const snapTolerance = 10 / canvasState.zoom; // Zoom'a göre ayarlanmış tolerans
           // Snap özelliği kapalıysa null, açıksa en yakın snap noktasını kullan
           const snapPoint = snapEnabled
-            ? findNearestSnapPoint(worldPos, shapesRef.current, snapTolerance)
+            ? findNearestSnapPoint(worldPos, shapesWithTempPolyline, snapTolerance)
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan

@@ -40,6 +40,23 @@ export function createLine(startX: number, startY: number, endX: number, endY: n
 
 // Rectangle ve circle primitives kaldırıldı
 
+// Polyline primitive
+export interface PolylineShape {
+  type: 'polyline';
+  points: Point[];
+  thickness: number;
+  closed: boolean; // Kapalı mı (son nokta ilk noktaya bağlanacak mı)
+}
+
+export function createPolyline(points: Point[] = [], thickness: number = 1, closed: boolean = false): PolylineShape {
+  return {
+    type: 'polyline',
+    points,
+    thickness,
+    closed
+  };
+}
+
 // Text primitive
 export interface TextShape {
   type: 'text';
@@ -92,6 +109,54 @@ export function pointNearLine(point: Point, line: LineShape, tolerance: number =
 }
 
 // Circle fonksiyonu kaldırıldı
+
+// Bir noktanın polyline'a yakın olup olmadığını kontrol eder
+export function pointNearPolyline(point: Point, polyline: PolylineShape, tolerance: number = 5): boolean {
+  // Polyline'da yeterli nokta yoksa false döndür
+  if (polyline.points.length < 2) return false;
+  
+  // Her bir çizgi segmenti için kontrol et
+  for (let i = 0; i < polyline.points.length - 1; i++) {
+    const start = polyline.points[i];
+    const end = polyline.points[i + 1];
+    
+    // Geçici bir çizgi nesnesi oluştur
+    const lineSegment: LineShape = {
+      type: 'line',
+      startX: start.x,
+      startY: start.y,
+      endX: end.x,
+      endY: end.y,
+      thickness: polyline.thickness
+    };
+    
+    // Bu segmente yakın mı diye kontrol et
+    if (pointNearLine(point, lineSegment, tolerance)) {
+      return true;
+    }
+  }
+  
+  // Kapalı polyline ise, son nokta ile ilk nokta arasındaki segmenti de kontrol et
+  if (polyline.closed && polyline.points.length > 2) {
+    const start = polyline.points[polyline.points.length - 1];
+    const end = polyline.points[0];
+    
+    const lineSegment: LineShape = {
+      type: 'line',
+      startX: start.x,
+      startY: start.y,
+      endX: end.x,
+      endY: end.y,
+      thickness: polyline.thickness
+    };
+    
+    if (pointNearLine(point, lineSegment, tolerance)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
 
 // Çizginin orta noktasını hesaplar
 export function getLineMidpoint(line: LineShape): Point {
@@ -148,6 +213,29 @@ export function findNearestSnapPoint(
     } else if (shape.type === 'line') {
       // Çizgi şekli - başlangıç, orta ve bitiş noktalarını kontrol et
       snapPoint = getSnapPoint(point, shape, tolerance);
+    } else if (shape.type === 'polyline') {
+      // Polyline için tüm noktaları kontrol et
+      for (let i = 0; i < shape.points.length; i++) {
+        const polyPoint = shape.points[i];
+        if (distance(point, polyPoint) <= tolerance) {
+          snapPoint = { x: polyPoint.x, y: polyPoint.y };
+          break;
+        }
+        
+        // Ardışık noktalar arasındaki orta nokta da yakalanabilir
+        if (i < shape.points.length - 1) {
+          const nextPoint = shape.points[i + 1];
+          const midpoint = {
+            x: (polyPoint.x + nextPoint.x) / 2,
+            y: (polyPoint.y + nextPoint.y) / 2
+          };
+          
+          if (distance(point, midpoint) <= tolerance) {
+            snapPoint = midpoint;
+            break;
+          }
+        }
+      }
     }
     
     // En yakın yakalama noktasını güncelle

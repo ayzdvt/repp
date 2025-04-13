@@ -50,6 +50,16 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         </button>
         
         <button 
+          className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'polyline' ? 'bg-[#D0D0D0]' : ''}`}
+          title="Polyline Tool" 
+          onClick={() => onToolChange('polyline')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <polyline points="5,19 10,12 15,17 19,5" strokeWidth="2" />
+          </svg>
+        </button>
+        
+        <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'text' ? 'bg-[#D0D0D0]' : ''}`}
           title="Text Tool" 
           onClick={() => onToolChange('text')}

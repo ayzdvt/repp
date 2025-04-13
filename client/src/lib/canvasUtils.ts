@@ -277,5 +277,41 @@ export function drawShape(
     ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
     ctx.lineWidth = 1;
     ctx.stroke();
+  } else if (shape.type === 'polyline') {
+    // Polyline'da hiç nokta yoksa çizme
+    if (shape.points.length < 1) return;
+    
+    // Polyline çizme işlemi
+    ctx.beginPath();
+    
+    // İlk noktayı al ve oradan başla
+    const firstPoint = worldToScreen(shape.points[0].x, shape.points[0].y, state);
+    ctx.moveTo(firstPoint.x, firstPoint.y);
+    
+    // Tüm noktaları dolaş ve birleştir
+    for (let i = 1; i < shape.points.length; i++) {
+      const point = worldToScreen(shape.points[i].x, shape.points[i].y, state);
+      ctx.lineTo(point.x, point.y);
+    }
+    
+    // Eğer kapalı bir polyline ise, ilk noktaya geri dön
+    if (shape.closed && shape.points.length > 2) {
+      ctx.lineTo(firstPoint.x, firstPoint.y);
+    }
+    
+    // Çizgiyi çiz
+    ctx.lineWidth = shape.thickness; // Sabit kalınlık
+    ctx.stroke();
+    
+    // Eğer polyline seçiliyse, tüm köşe noktalarını göster
+    if (isSelected) {
+      for (const point of shape.points) {
+        const screenPoint = worldToScreen(point.x, point.y, state);
+        ctx.beginPath();
+        ctx.arc(screenPoint.x, screenPoint.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#FF4500";
+        ctx.fill();
+      }
+    }
   }
 }

@@ -2,38 +2,48 @@ import { CanvasState, Point } from '@/types';
 
 // Transform screen coordinates to world coordinates
 export function screenToWorld(
-  screenX: number, 
-  screenY: number, 
+  screenPos: Point, 
   state: CanvasState
 ): Point {
+  if (!state.canvasSize) {
+    return { x: 0, y: 0 }; // Koruyucu kod - canvasSize henüz yok
+  }
+  
   const { width, height } = state.canvasSize;
-  const worldX = (screenX - width / 2 - state.panOffset.x) / state.zoom;
-  const worldY = (height / 2 - screenY + state.panOffset.y) / state.zoom;
+  const worldX = (screenPos.x - width / 2 - state.panOffset.x) / state.zoom;
+  const worldY = (height / 2 - screenPos.y + state.panOffset.y) / state.zoom;
+  
   return { x: worldX, y: worldY };
 }
 
 // Transform world coordinates to screen coordinates
 export function worldToScreen(
-  worldX: number, 
-  worldY: number, 
+  worldPos: Point, 
   state: CanvasState
 ): Point {
+  if (!state.canvasSize) {
+    return { x: 0, y: 0 }; // Koruyucu kod - canvasSize henüz yok
+  }
+  
   const { width, height } = state.canvasSize;
-  const screenX = worldX * state.zoom + width / 2 + state.panOffset.x;
-  const screenY = height / 2 - worldY * state.zoom + state.panOffset.y;
+  const screenX = worldPos.x * state.zoom + width / 2 + state.panOffset.x;
+  const screenY = height / 2 - worldPos.y * state.zoom + state.panOffset.y;
+  
   return { x: screenX, y: screenY };
 }
 
 // Draw the coordinate grid
 export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
+  if (!state.canvasSize) return;
+  
   const { width, height } = state.canvasSize;
   
   // Calculate grid spacing based on zoom level
   const gridSpacing = state.gridSize * state.zoom;
   
   // Calculate starting point for the grid lines
-  const startPoint = screenToWorld(0, height, state);
-  const endPoint = screenToWorld(width, 0, state);
+  const startPoint = screenToWorld({ x: 0, y: height }, state);
+  const endPoint = screenToWorld({ x: width, y: 0 }, state);
   
   // Round to nearest grid line
   const startX = Math.floor(startPoint.x / state.gridSize) * state.gridSize;
@@ -45,7 +55,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   
   // Draw vertical grid lines
   for (let x = startX; x <= endX; x += state.gridSize) {
-    const { x: screenX } = worldToScreen(x, 0, state);
+    const screenX = worldToScreen({ x, y: 0 }, state).x;
     ctx.beginPath();
     ctx.moveTo(screenX, 0);
     ctx.lineTo(screenX, height);
@@ -70,7 +80,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   
   // Draw horizontal grid lines
   for (let y = startY; y <= endY; y += state.gridSize) {
-    const { y: screenY } = worldToScreen(0, y, state);
+    const screenY = worldToScreen({ x: 0, y }, state).y;
     ctx.beginPath();
     ctx.moveTo(0, screenY);
     ctx.lineTo(width, screenY);
@@ -94,7 +104,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   }
   
   // Draw x and y axes
-  const origin = worldToScreen(0, 0, state);
+  const origin = worldToScreen({ x: 0, y: 0 }, state);
   
   // X-axis
   ctx.beginPath();
@@ -119,123 +129,45 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   ctx.fillText('0,0', origin.x + 4, origin.y - 4);
 }
 
-// Draw a shape based on its type
-/**
- * Yakınlaştırma özelliği noktalarını çizer.
- */
+// Draw snap indicators on the canvas
 export function drawSnapIndicators(
   ctx: CanvasRenderingContext2D,
-  shapes: any[],
-  currentMousePos: Point | null,
-  state: CanvasState,
-  snapTolerance: number,
-  snapEnabled: boolean = true,
-  selectedId?: number | null
-): void {
-  // Snap özelliği kapalıysa çıkış yap
-  if (!snapEnabled) return;
+  snapPoints: Point[],
+  nearestSnapPoint: Point | null,
+  state: CanvasState
+) {
+  if (!nearestSnapPoint || !state.canvasSize) return;
   
-  // Fare pozisyonu geçerli değilse çıkış yap
-  if (!currentMousePos) return;
+  // Convert world snap point to screen coordinates
+  const screenPoint = worldToScreen(nearestSnapPoint, state);
   
-  // Yakalama noktalarını topla
-  const snapPoints: Array<{x: number, y: number}> = [];
+  // Draw outer green circle
+  ctx.beginPath();
+  ctx.arc(screenPoint.x, screenPoint.y, 6, 0, Math.PI * 2);
+  ctx.strokeStyle = '#00C853';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
   
-  // Mevcut tüm şekillerden yakalama noktaları topla
-  shapes.forEach(shape => {
-    // Seçilen şeklin snap noktalarını gösterme (sürükleme sırasında)
-    if (selectedId !== undefined && shape.id === selectedId) {
-      return; // Bu şekli atla
-    }
-    
-    if (shape.type === 'point') {
-      snapPoints.push({ x: shape.x, y: shape.y });
-    } else if (shape.type === 'line') {
-      // Başlangıç noktası
-      snapPoints.push({ x: shape.startX, y: shape.startY });
-      // Bitiş noktası
-      snapPoints.push({ x: shape.endX, y: shape.endY });
-      // Orta nokta
-      snapPoints.push({ 
-        x: (shape.startX + shape.endX) / 2, 
-        y: (shape.startY + shape.endY) / 2
-      });
-    } else if (shape.type === 'polyline' && shape.points && shape.points.length > 0) {
-      // Polyline için tüm köşe noktaları
-      shape.points.forEach((point: Point) => {
-        snapPoints.push({ x: point.x, y: point.y });
-      });
-      
-      // Polyline segmentlerinin orta noktaları
-      for (let i = 0; i < shape.points.length - 1; i++) {
-        snapPoints.push({
-          x: (shape.points[i].x + shape.points[i+1].x) / 2,
-          y: (shape.points[i].y + shape.points[i+1].y) / 2
-        });
-      }
-      
-      // Kapalı polyline için son nokta ile ilk nokta arasındaki orta nokta
-      if (shape.closed && shape.points.length > 2) {
-        const first = shape.points[0];
-        const last = shape.points[shape.points.length - 1];
-        snapPoints.push({
-          x: (first.x + last.x) / 2,
-          y: (first.y + last.y) / 2
-        });
-      }
-    }
-  });
-  
-  // En yakın yakalama noktasını bul
-  let minDistance = snapTolerance;
-  let nearestPoint: {x: number, y: number} | null = null;
-  
-  for (const point of snapPoints) {
-    const dx = point.x - currentMousePos.x;
-    const dy = point.y - currentMousePos.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestPoint = point;
-    }
-  }
-  
-  // En yakın yakalama noktası varsa göster
-  if (nearestPoint) {
-    try {
-      // Dünya koordinatlarını ekran koordinatlarına dönüştür
-      const screenX = nearestPoint.x * state.zoom + state.canvasSize.width / 2 + state.panOffset.x;
-      const screenY = state.canvasSize.height / 2 - nearestPoint.y * state.zoom + state.panOffset.y;
-      
-      // Dış yeşil daire çiz
-      ctx.beginPath();
-      ctx.arc(screenX, screenY, 6, 0, Math.PI * 2);
-      ctx.strokeStyle = '#00C853';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      
-      // İç beyaz daire çiz
-      ctx.beginPath();
-      ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = '#00C853';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    } catch (err) {
-      console.error('Error drawing snap indicator:', err);
-    }
-  }
+  // Draw inner white circle
+  ctx.beginPath();
+  ctx.arc(screenPoint.x, screenPoint.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.strokeStyle = '#00C853';
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
 
+// Draw a shape based on its type
 export function drawShape(
   ctx: CanvasRenderingContext2D, 
   shape: any, 
   state: CanvasState,
   isSelected: boolean = false
 ) {
-  // Seçilen şekiller için farklı renk kullan
+  if (!state.canvasSize) return;
+  
+  // Set colors based on selection state
   if (isSelected) {
     ctx.strokeStyle = '#FF4500'; // Turuncu-kırmızı renk
     ctx.fillStyle = '#FF4500';
@@ -245,103 +177,53 @@ export function drawShape(
   }
   
   if (shape.type === 'point') {
-    const { x: screenX, y: screenY } = worldToScreen(shape.x, shape.y, state);
+    const screenPoint = worldToScreen({ x: shape.x, y: shape.y }, state);
     
     ctx.beginPath();
     if (shape.style === 'square') {
-      ctx.rect(screenX - 3, screenY - 3, 6, 6);
+      ctx.rect(screenPoint.x - 3, screenPoint.y - 3, 6, 6);
       ctx.fill();
     } else if (shape.style === 'cross') {
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(screenX - 3, screenY - 3);
-      ctx.lineTo(screenX + 3, screenY + 3);
-      ctx.moveTo(screenX + 3, screenY - 3);
-      ctx.lineTo(screenX - 3, screenY + 3);
+      ctx.moveTo(screenPoint.x - 3, screenPoint.y - 3);
+      ctx.lineTo(screenPoint.x + 3, screenPoint.y + 3);
+      ctx.moveTo(screenPoint.x + 3, screenPoint.y - 3);
+      ctx.lineTo(screenPoint.x - 3, screenPoint.y + 3);
       ctx.stroke();
     } else {
       // Default style: circle
-      ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
+      ctx.arc(screenPoint.x, screenPoint.y, 3, 0, Math.PI * 2);
       ctx.fill();
     }
   } else if (shape.type === 'line') {
-    const start = worldToScreen(shape.startX, shape.startY, state);
-    const end = worldToScreen(shape.endX, shape.endY, state);
+    const start = worldToScreen({ x: shape.startX, y: shape.startY }, state);
+    const end = worldToScreen({ x: shape.endX, y: shape.endY }, state);
     
-    // Çizgiyi çiz
+    // Draw the line
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
-    ctx.lineWidth = shape.thickness; // Sabit kalınlık - zoom'dan etkilenmesin
+    ctx.lineWidth = shape.thickness || 1; // Constant thickness regardless of zoom
     ctx.stroke();
     
-    // Eğer çizgi seçiliyse uç noktaları göster
+    // Show endpoints if selected
     if (isSelected) {
-      // Başlangıç noktasını çiz
+      // Start point
       ctx.beginPath();
       ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
       ctx.fillStyle = "#FF4500";
       ctx.fill();
       
-      // Bitiş noktasını çiz
+      // End point
       ctx.beginPath();
       ctx.arc(end.x, end.y, 4, 0, Math.PI * 2);
       ctx.fillStyle = "#FF4500";
       ctx.fill();
     }
-  } else if (shape.type === 'polyline') {
-    // Polyline'ı çiz (birbirine bağlı çizgiler serisi)
-    if (!shape.points || shape.points.length < 2) return; // En az 2 nokta gerekli
-    
-    ctx.beginPath();
-    
-    // İlk noktadan başla
-    const firstPoint = worldToScreen(shape.points[0].x, shape.points[0].y, state);
-    ctx.moveTo(firstPoint.x, firstPoint.y);
-    
-    // Tüm noktaları birleştir
-    for (let i = 1; i < shape.points.length; i++) {
-      const point = worldToScreen(shape.points[i].x, shape.points[i].y, state);
-      ctx.lineTo(point.x, point.y);
-    }
-    
-    // Eğer kapalı poliçizgi ise, son noktayı ilk noktaya bağla
-    if (shape.closed && shape.points.length > 2) {
-      ctx.closePath();
-    }
-    
-    ctx.lineWidth = shape.thickness || 1; // Sabit kalınlık
-    ctx.stroke();
-    
-    // Eğer seçiliyse kontrol noktalarını göster
-    if (isSelected) {
-      // Tüm köşe noktalarını göster
-      for (const point of shape.points) {
-        const screenPoint = worldToScreen(point.x, point.y, state);
-        
-        // Kontrol noktasını çiz
-        ctx.beginPath();
-        ctx.arc(screenPoint.x, screenPoint.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#FF4500";
-        ctx.fill();
-      }
-    }
-  } else if (shape.type === 'rectangle') {
-    const topLeft = worldToScreen(shape.x, shape.y, state);
-    const width = shape.width * state.zoom;
-    const height = -shape.height * state.zoom; // Negative because Y-axis is inverted in canvas
-    
-    ctx.beginPath();
-    ctx.rect(topLeft.x, topLeft.y, width, height);
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  } else if (shape.type === 'circle') {
-    const center = worldToScreen(shape.x, shape.y, state);
-    const radius = shape.radius * state.zoom;
-    
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  } else if (shape.type === 'text') {
+    const screenPoint = worldToScreen({ x: shape.x, y: shape.y }, state);
+    ctx.font = `${shape.fontSize}px Arial`;
+    ctx.fillText(shape.text, screenPoint.x, screenPoint.y);
   }
 }

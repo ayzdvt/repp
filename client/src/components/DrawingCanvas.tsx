@@ -49,7 +49,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const snapPointsRef = useRef<Point[]>([]);
   const nearestSnapRef = useRef<Point | null>(null);
   
-  // Canvas içeriğini çizme
+  // Canvas içeriğini çizme - useCallback ile sarıyoruz sonsuz döngü olmaması için
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -81,34 +81,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         thickness: 1
       };
       drawShape(ctx, line, canvasState, false);
-    }
-    
-    // Seçili bir şekil varsa ve o şekil bir çizgi ise başlangıç ve bitiş noktalarını göster
-    if (selectedShapeId !== null) {
-      const selectedShape = shapesRef.current.find(shape => shape.id === selectedShapeId);
-      if (selectedShape && selectedShape.type === 'line') {
-        // Çizgi başlangıç noktası
-        const startPoint = worldToScreen({x: selectedShape.startX, y: selectedShape.startY}, canvasState);
-        ctx.fillStyle = 'rgba(0, 100, 255, 0.7)';
-        ctx.beginPath();
-        ctx.arc(startPoint.x, startPoint.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Çizgi bitiş noktası
-        const endPoint = worldToScreen({x: selectedShape.endX, y: selectedShape.endY}, canvasState);
-        ctx.fillStyle = 'rgba(0, 100, 255, 0.7)';
-        ctx.beginPath();
-        ctx.arc(endPoint.x, endPoint.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Çizgi orta noktası
-        const midPoint = getLineMidpoint(selectedShape);
-        const screenMidPoint = worldToScreen(midPoint, canvasState);
-        ctx.fillStyle = 'rgba(0, 200, 100, 0.7)';
-        ctx.beginPath();
-        ctx.arc(screenMidPoint.x, screenMidPoint.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
     }
     
     // Snap etkinse ve snap noktaları varsa göster
@@ -144,7 +116,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // ShapeUpdate olayını dinle
   useEffect(() => {
-    const handleShapeUpdate = (e: CustomEvent) => {
+    const handleShapeUpdate = (e: any) => {
       if (e.detail && e.detail.type === 'update' && e.detail.shape) {
         // Şekilleri güncelle
         const shapeToUpdate = shapesRef.current.find(s => s.id === e.detail.shape.id);
@@ -159,12 +131,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
     
     if (containerRef.current) {
-      containerRef.current.addEventListener('shapeupdate', handleShapeUpdate as EventListener);
+      containerRef.current.addEventListener('shapeupdate', handleShapeUpdate);
     }
     
     return () => {
       if (containerRef.current) {
-        containerRef.current.removeEventListener('shapeupdate', handleShapeUpdate as EventListener);
+        containerRef.current.removeEventListener('shapeupdate', handleShapeUpdate);
       }
     };
   }, [renderCanvas]);
@@ -556,7 +528,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
   }, [drawingLine, onSelectObject, onToolChange]);
   
-  // Araç değiştiğinde seçimi iptal et ve imleci güncelle
+  // Araç değiştiğinde seçimi iptal et ve imleci güncelle - sonsuz döngüyü önlemek için bağımlılıkları limitliyoruz
   const prevToolRef = useRef(activeTool);
   useEffect(() => {
     // İlk render'da çalıştırma
@@ -598,7 +570,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         canvasRef.current.style.cursor = 'crosshair';
       }
     }
-  }, [activeTool, drawingLine, isDraggingEndpoint, onSelectObject]);
+  }, [activeTool, onSelectObject]); // Sadece aktiveTool ve onSelectObject değiştiğinde çalıştır
   
   return (
     <div 

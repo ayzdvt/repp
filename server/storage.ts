@@ -1,4 +1,4 @@
-import { users, drawings, shapes, type User, type InsertUser, type Drawing, type InsertDrawing, type Shape, type InsertShape } from "@shared/schema";
+import { users, drawings, shapes, projectAnalyses, type User, type InsertUser, type Drawing, type InsertDrawing, type Shape, type InsertShape, type ProjectAnalysis, type InsertProjectAnalysis } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
@@ -22,6 +22,13 @@ export interface IStorage {
   createShape(shape: InsertShape): Promise<Shape>;
   updateShape(id: number, shape: Partial<InsertShape>): Promise<Shape | undefined>;
   deleteShape(id: number): Promise<boolean>;
+  
+  // ProjectAnalysis methods
+  getProjectAnalysis(id: number): Promise<ProjectAnalysis | undefined>;
+  getUserProjectAnalyses(userId: number): Promise<ProjectAnalysis[]>;
+  createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis>;
+  updateProjectAnalysis(id: number, analysis: Partial<InsertProjectAnalysis>): Promise<ProjectAnalysis | undefined>;
+  deleteProjectAnalysis(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -96,6 +103,35 @@ export class DatabaseStorage implements IStorage {
   
   async deleteShape(id: number): Promise<boolean> {
     const result = await db.delete(shapes).where(eq(shapes.id, id)).returning({ id: shapes.id });
+    return result.length > 0;
+  }
+  
+  // ProjectAnalysis methods
+  async getProjectAnalysis(id: number): Promise<ProjectAnalysis | undefined> {
+    const [analysis] = await db.select().from(projectAnalyses).where(eq(projectAnalyses.id, id));
+    return analysis;
+  }
+  
+  async getUserProjectAnalyses(userId: number): Promise<ProjectAnalysis[]> {
+    return await db.select().from(projectAnalyses).where(eq(projectAnalyses.userId, userId));
+  }
+  
+  async createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis> {
+    const [newAnalysis] = await db.insert(projectAnalyses).values(analysis).returning();
+    return newAnalysis;
+  }
+  
+  async updateProjectAnalysis(id: number, analysis: Partial<InsertProjectAnalysis>): Promise<ProjectAnalysis | undefined> {
+    const [updatedAnalysis] = await db
+      .update(projectAnalyses)
+      .set(analysis)
+      .where(eq(projectAnalyses.id, id))
+      .returning();
+    return updatedAnalysis;
+  }
+  
+  async deleteProjectAnalysis(id: number): Promise<boolean> {
+    const result = await db.delete(projectAnalyses).where(eq(projectAnalyses.id, id)).returning({ id: projectAnalyses.id });
     return result.length > 0;
   }
 }

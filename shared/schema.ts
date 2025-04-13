@@ -71,6 +71,51 @@ export const insertShapeSchema = createInsertSchema(shapes).pick({
   properties: true,
 });
 
+// Project Analysis Table
+export const projectAnalyses = pgTable("project_analyses", {
+  id: serial("id").primaryKey(),
+  city: text("city"),
+  district: text("district"),
+  neighborhood: text("neighborhood"),
+  block: text("block"),
+  parcel: text("parcel"),
+  land_area: numeric("land_area"),
+  owner: text("owner"),
+  sheet_no: text("sheet_no"),
+  floor_count: text("floor_count"),
+  front_setback: numeric("front_setback"),
+  side_setback: numeric("side_setback"),
+  rear_setback: numeric("rear_setback"),
+  roof_type: text("roof_type"),
+  roof_angle: numeric("roof_angle"),
+  building_order: text("building_order"),
+  plan_position: text("plan_position"),
+  ground_coverage_ratio: numeric("ground_coverage_ratio"),
+  floor_area_ratio: numeric("floor_area_ratio"),
+  parcel_coordinates: json("parcel_coordinates").notNull().default('[]'), // JSON array of coordinates
+  drawingId: integer("drawing_id").references(() => drawings.id),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Setup relations for projectAnalyses to users and drawings (many-to-one)
+export const projectAnalysesRelations = relations(projectAnalyses, ({ one }) => ({
+  user: one(users, {
+    fields: [projectAnalyses.userId],
+    references: [users.id],
+  }),
+  drawing: one(drawings, {
+    fields: [projectAnalyses.drawingId],
+    references: [drawings.id],
+  }),
+}));
+
+// Insert Schema for projectAnalyses
+export const insertProjectAnalysisSchema = createInsertSchema(projectAnalyses).omit({
+  id: true,
+  createdAt: true
+});
+
 // Type definitions
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -80,3 +125,6 @@ export type Drawing = typeof drawings.$inferSelect;
 
 export type InsertShape = z.infer<typeof insertShapeSchema>;
 export type Shape = typeof shapes.$inferSelect;
+
+export type InsertProjectAnalysis = z.infer<typeof insertProjectAnalysisSchema>;
+export type ProjectAnalysis = typeof projectAnalyses.$inferSelect;

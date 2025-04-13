@@ -16,9 +16,9 @@ export default function HomePage() {
             Nokta, çizgi, polyline araçlarıyla istediğiniz geometrileri oluşturun.
           </p>
           <div className="mt-10">
-            <Link href="/drawing">
+            <Link href="/options">
               <Button size="lg" className="px-8 py-6 text-lg">
-                Çizim Uygulamasını Başlat
+                Hemen Dene
               </Button>
             </Link>
           </div>

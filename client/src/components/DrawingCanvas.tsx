@@ -795,29 +795,33 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           onSelectObject(null);
         }
         
-        // Çizgi çizme işlemini de iptal et
+        // Çizim durumunu sıfırla
+        const isDrawing = drawingLine || drawingPolyline || isDraggingEndpoint;
+        
+        // Çizgi çizme işlemini iptal et
         if (drawingLine) {
-          setDrawingLine(false);
           lineFirstPointRef.current = null;
           currentShapeRef.current = null;
+          setDrawingLine(false);
         }
         
         // Polyline çizim işlemini iptal et
         if (drawingPolyline) {
-          setDrawingPolyline(false);
           polylinePointsRef.current = [];
           currentShapeRef.current = null;
+          setDrawingPolyline(false);
         }
         
-        // Çizgi uç noktası sürükleme işlemini de iptal et
+        // Çizgi uç noktası sürükleme işlemini iptal et
         if (isDraggingEndpoint) {
-          setIsDraggingEndpoint(false);
           draggingLineEndpointRef.current = null;
           originalLineRef.current = null;
+          setIsDraggingEndpoint(false);
         }
         
         // Eğer seçim aracında değilsek seçim aracına geç
-        if (activeTool !== 'selection' && onToolChange) {
+        // Çizim yaparken ya da aracımız 'selection' değilse selection aracına geç
+        if ((isDrawing || activeTool !== 'selection') && onToolChange) {
           onToolChange('selection');
         }
       }
@@ -830,7 +834,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTool, onSelectObject, onToolChange]);
+  }, [activeTool, onSelectObject, onToolChange, drawingLine, drawingPolyline, isDraggingEndpoint]);
   
   // Araç değiştiğinde seçimi iptal et ve imleci güncelle
   // activeTool değiştikçe çalışacak
@@ -852,26 +856,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       onSelectObject(null);
     }
     
-    // Çizgi çizme işlemini de iptal et
-    if (drawingLine) {
-      setDrawingLine(false);
-      lineFirstPointRef.current = null;
-      currentShapeRef.current = null;
-    }
+    // Çizim durumlarını sıfırla
+    const resetDrawingStates = () => {
+      // Çizgi çizme işlemini iptal et
+      if (drawingLine) {
+        lineFirstPointRef.current = null;
+        currentShapeRef.current = null;
+        setDrawingLine(false);
+      }
+      
+      // Polyline çizim işlemini iptal et
+      if (drawingPolyline) {
+        polylinePointsRef.current = [];
+        currentShapeRef.current = null;
+        setDrawingPolyline(false);
+      }
+      
+      // Çizgi uç noktası sürükleme işlemini iptal et
+      if (isDraggingEndpoint) {
+        draggingLineEndpointRef.current = null;
+        originalLineRef.current = null;
+        setIsDraggingEndpoint(false);
+      }
+    };
     
-    // Polyline çizim işlemini iptal et
-    if (drawingPolyline) {
-      setDrawingPolyline(false);
-      polylinePointsRef.current = [];
-      currentShapeRef.current = null;
-    }
-    
-    // Çizgi uç noktası sürükleme işlemini de iptal et
-    if (isDraggingEndpoint) {
-      setIsDraggingEndpoint(false);
-      draggingLineEndpointRef.current = null;
-      originalLineRef.current = null;
-    }
+    // Çizim durumlarını sıfırla
+    resetDrawingStates();
     
     // İmleç stilini güncelle
     if (canvasRef.current) {

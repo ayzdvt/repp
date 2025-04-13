@@ -36,6 +36,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const dragStartRef = useRef<Point>({ x: 0, y: 0 });
   const isDraggingRef = useRef<boolean>(false);
   const lineFirstPointRef = useRef<Point | null>(null); // Çizgi ilk noktası referansı
+  const polylinePointsRef = useRef<Point[]>([]); // Polyline noktaları referansı
   const requestRef = useRef<number | null>(null); // AnimationFrame request ID
   const nextIdRef = useRef<number>(1); // Şekiller için benzersiz ID'ler
   const draggingLineEndpointRef = useRef<'start' | 'end' | null>(null); // Hangi çizgi ucunun sürüklendiği

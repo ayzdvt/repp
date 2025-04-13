@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tool, Point } from '@/types';
+import { Tool, Point, CanvasState } from '@/types';
 
 interface StatusBarProps {
   activeTool: Tool;
@@ -8,6 +8,7 @@ interface StatusBarProps {
   mousePosition: Point;
   snapEnabled: boolean;
   onToggleSnap: () => void;
+  canvasState: CanvasState; // Görülebilir koordinat aralığını hesaplamak için canvasState'i alıyoruz
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({ 
@@ -16,11 +17,43 @@ const StatusBar: React.FC<StatusBarProps> = ({
   zoom, 
   mousePosition,
   snapEnabled,
-  onToggleSnap
+  onToggleSnap,
+  canvasState
 }) => {
   // Format the mouse position to display exactly 2 decimal places
   const formattedX = mousePosition.x.toFixed(2);
   const formattedY = mousePosition.y.toFixed(2);
+  
+  // Görülebilir koordinat aralığını hesapla
+  const calculateVisibleBounds = () => {
+    if (!canvasState.canvasSize.width || !canvasState.canvasSize.height) {
+      return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    }
+    
+    // Ekran köşelerinin dünya koordinatlarını hesapla
+    const screenToWorld = (x: number, y: number) => {
+      const worldX = (x - canvasState.panOffset.x) / canvasState.zoom;
+      const worldY = -(y - canvasState.panOffset.y) / canvasState.zoom; // Y ekseni ters
+      return { x: worldX, y: worldY };
+    };
+    
+    // Sol üst köşe
+    const topLeft = screenToWorld(0, 0);
+    // Sağ alt köşe
+    const bottomRight = screenToWorld(
+      canvasState.canvasSize.width,
+      canvasState.canvasSize.height
+    );
+    
+    return {
+      minX: Math.min(topLeft.x, bottomRight.x).toFixed(0),
+      minY: Math.min(topLeft.y, bottomRight.y).toFixed(0),
+      maxX: Math.max(topLeft.x, bottomRight.x).toFixed(0),
+      maxY: Math.max(topLeft.y, bottomRight.y).toFixed(0)
+    };
+  };
+  
+  const bounds = calculateVisibleBounds();
   
   return (
     <div className="h-8 bg-[#EEEEEE] border-t border-gray-300 flex items-center justify-between px-4 text-sm">
@@ -36,6 +69,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
         <div>
           <span className="text-gray-500">Zoom:</span>
           <span id="zoom-level" className="ml-1">{Math.round(zoom * 100)}%</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Visible:</span>
+          <span id="visible-bounds" className="ml-1 font-mono">X: {bounds.minX} to {bounds.maxX}, Y: {bounds.minY} to {bounds.maxY}</span>
         </div>
       </div>
       <div className="flex items-center space-x-4">

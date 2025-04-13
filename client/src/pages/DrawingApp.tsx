@@ -280,6 +280,7 @@ export default function DrawingApp() {
         mousePosition={mousePosition}
         snapEnabled={snapEnabled}
         onToggleSnap={toggleSnap}
+        canvasState={canvasState}
       />
     </div>
   );

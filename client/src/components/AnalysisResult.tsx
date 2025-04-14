@@ -110,7 +110,11 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
         <button 
           className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors mr-4"
           onClick={() => {
-            // Çizim sayfasına yönlendir - localStorage kullanımını kaldırdık
+            // Çizim sayfasına yönlendir ve localStorage'a koordinat bilgisini ekle
+            localStorage.setItem('addPoint', JSON.stringify({
+              x: 4540345.97,
+              y: 438538.46
+            }));
             window.location.href = '/drawing';
           }}
         >

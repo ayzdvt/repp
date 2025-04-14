@@ -23,7 +23,52 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // LocalStorage'dan koordinat okuma kodunu kaldırdık
+  // LocalStorage'dan nokta bilgisini kontrol et
+  useEffect(() => {
+    // Sayfa yüklendiğinde localStorage'dan koordinat bilgisini kontrol et
+    const pointString = localStorage.getItem('addPoint');
+    if (!pointString) return;
+    
+    try {
+      const point = JSON.parse(pointString);
+      
+      if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+        // Canvas'a erişim
+        setTimeout(() => {
+          const canvasContainer = document.getElementById('drawing-container');
+          if (!canvasContainer) return;
+          
+          const canvasElement = canvasContainer.querySelector('div.absolute');
+          if (!canvasElement) return;
+          
+          // Nokta oluştur
+          const testPoint = {
+            id: Date.now(),
+            type: 'point',
+            x: point.x,
+            y: point.y,
+            style: 'default'
+          };
+          
+          // CustomEvent gönder
+          const addEvent = new CustomEvent('shapeupdate', {
+            detail: {
+              type: 'add',
+              shape: testPoint
+            }
+          });
+          
+          // Olayı gönder
+          canvasElement.dispatchEvent(addEvent);
+          
+          // LocalStorage'ı temizle
+          localStorage.removeItem('addPoint');
+        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+      }
+    } catch (error) {
+      console.error("Nokta bilgisi işlenirken hata:", error);
+    }
+  }, []);
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -281,13 +326,13 @@ export default function DrawingApp() {
   
   // Test noktası eklemek için kullanılacak fonksiyon
   const addTestPoint = () => {
-    console.log("Nokta ekleniyor: (100, 100)");
-    // Test için (100, 100) koordinatında bir nokta oluştur
+    console.log("Nokta ekleniyor: (4540345.97, 438538.46)");
+    // Test için belirtilen koordinatlarda bir nokta oluştur
     const testPoint = {
       id: Date.now(), // Benzersiz bir ID
       type: 'point',
-      x: 100,
-      y: 100,
+      x: 4540345.97,
+      y: 438538.46,
       style: 'default'
     };
     
@@ -333,7 +378,7 @@ export default function DrawingApp() {
             className="absolute top-4 right-4 z-10 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
             onClick={addTestPoint}
           >
-            Test Nokta Ekle (100,100)
+            Test Nokta Ekle (4540345.97, 438538.46)
           </button>
           
           <div id="drawing-canvas">

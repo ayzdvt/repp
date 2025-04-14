@@ -280,8 +280,14 @@ export default function DrawingApp() {
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
     
-    // Daha kısıtlayıcı olanı seç
-    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    // Daha kısıtlayıcı olanı seç, ancak sıfır veya çok küçük değerlere karşı koruma ekle
+    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    
+    // Eğer hesaplanan zoom değeri geçersizse (0 veya negatif) varsayılan bir değer kullan
+    if (newZoom <= 0 || !isFinite(newZoom)) {
+      console.log("Uyarı: Geçersiz zoom değeri hesaplandı, varsayılan değer kullanılıyor.");
+      newZoom = 0.001; // Çok düşük (yüksek çözünürlük) ama sıfır olmayan bir değer
+    }
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     

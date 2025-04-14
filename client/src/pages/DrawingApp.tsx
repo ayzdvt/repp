@@ -288,26 +288,32 @@ export default function DrawingApp() {
       if (width > 0 && height > 0) {
         console.log("Koordinat alanı:", width, height);
         
-        // Çok düşük bir zoom değeri hesapla
-        const fixedZoom = 0.0000005;
+        // Daha yüksek bir zoom değeri hesapla (noktaları görmek için)
+        const fixedZoom = 0.000001;
         
-        // panOffset değerleri
-        const panOffsetX = -centerX * fixedZoom;
-        const panOffsetY = centerY * fixedZoom;
+        // Parsel büyüklüğüne göre zoom oranını hesapla
+        const maxBounds = Math.max(width, height);
+        // Ortadaki parsel büyüklüğüne göre optimize edilmiş zoom - daha yüksek zoom faktörü
+        const adjustedZoom = (500 / maxBounds) * 0.001;
+        console.log("Hesaplanan adjustedZoom:", adjustedZoom, "maxBounds:", maxBounds);
+        
+        // panOffset değerleri - konumu ekranın ortasına getir
+        const panOffsetX = -centerX * adjustedZoom;
+        const panOffsetY = centerY * adjustedZoom;
         
         console.log("Büyük koordinatlar için hesaplanan değerler:", {
-          zoom: fixedZoom,
+          zoom: adjustedZoom,
           panOffsetX,
           panOffsetY,
           centerX,
           centerY
         });
         
-        // Ayarla
-        setZoom(fixedZoom);
+        // Ayarla - adjustedZoom kullanarak
+        setZoom(adjustedZoom);
         setCanvasState({
           gridSize: 10,
-          zoom: fixedZoom,
+          zoom: adjustedZoom,
           panOffset: { x: panOffsetX, y: panOffsetY },
           canvasSize: canvasState.canvasSize
         });

@@ -44,11 +44,17 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
+          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+          const cleanedCoordinates = coordinates.map(coord => ({
+            x: coord.x,
+            y: coord.y
+          }));
+          
           // Polyline oluşturmak için event gönder
           const createEvent = new CustomEvent('createshape', { 
             detail: { 
               type: 'polyline',
-              points: coordinates,
+              points: cleanedCoordinates,
               thickness: 2,
               closed: true
             } 

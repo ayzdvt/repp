@@ -23,7 +23,7 @@ export interface ProjectDetails {
   plan_position?: string;
   ground_coverage_ratio?: number;
   floor_area_ratio?: number;
-  parcel_coordinates?: Array<{x: number, y: number}>;
+  parcel_coordinates?: Array<{No?: number, x: number, y: number}>;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -155,12 +155,10 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
 
     const prompt = `Sen bir mimari proje belgelerini analiz eden uzmansın. 
     Belge türüne göre (İnşaat İstikamet Rölevesi, İmar Durumu veya Plan Notları) aşağıdaki bilgileri çıkarman gerekiyor.
-
     Öncelik sırası:
     1. İnşaat İstikamet Rölevesi
     2. İmar Durumu
     3. Plan Notları
-
     Çıkarılacak bilgiler:
     - İl (city)
     - İlçe (district)
@@ -170,7 +168,7 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
     - Arsa Alanı (land_area) - sayısal değer olarak m²
     - Malik/Maliki (owner)
     - Pafta No (sheet_no)
-    - Kat Adedi (floor_count) - "En fazla X kat yapılabilir" formatında metin
+    - Kat Adedi (floor_count) 
     - Ön Bahçe Mesafesi (front_setback) - metre cinsinden sayısal değer
     - Yan Bahçe Mesafesi (side_setback) - metre cinsinden sayısal değer
     - Arka Bahçe Mesafesi (rear_setback) - metre cinsinden sayısal değer
@@ -182,18 +180,16 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
     - Emsal (floor_area_ratio) - ondalık sayı (örn: 2.07)
     - Parsel Köşe Koordinatları (parcel_coordinates) - SADECE İnşaat İstikamet Rölevesi veya Aplikasyon Krokisinde belirtilen ITRF96/TM30 (EPSG:5254) koordinatlarını al. Poligon noktalarını veya başka koordinat sistemlerindeki değerleri ALMA! Örnek format:
       [
-        {"x": 528145.123, "y": 4532678.456},
-        {"x": 528167.789, "y": 4532678.456},
-        {"x": 528167.789, "y": 4532698.123},
-        {"x": 528145.123, "y": 4532698.123}
+        {"No": 5, "x": 528145.12, "y": 4532678.45},
+        {"No": 9, "x": 528167.78, "y": 4532678.45},
+        {"No": 15, "x": 528167.78, "y": 4532698.12},
+        {"No": 17, "x": 528145.12, "y": 4532698.12}
       ]
       Koordinatlar saat yönünde veya saatin tersi yönünde sıralı olmalı.
       X koordinatı doğu-batı yönünü (Easting), Y koordinatı kuzey-güney yönünü (Northing) temsil eder.
-      Koordinatlar metre cinsinden ve en az 3 ondalık basamak hassasiyetinde olmalı.
+      Koordinatlar metre cinsinden ve 2 ondalık basamak hassasiyetinde olmalı.
       ÖNEMLİ: Sadece ITRF96/TM30 koordinatlarını al, poligon noktalarını veya başka koordinat sistemlerindeki değerleri ALMA!
-
     Yanıtını sadece JSON formatında ver. Bulamadığın değerleri null olarak işaretle.
-    Parsel köşe koordinatlarını sadece ITRF96/TM30 koordinatları varsa çıkar, yoksa null olarak bırak.
     Koordinatlar imar çapında veya aplikasyon krokisinde genellikle tablo halinde veya köşe noktaları olarak belirtilir.`;
 
     const result = await retryWithExponentialBackoff(async () => {
@@ -251,6 +247,10 @@ export async function analyzeDocument(file: File): Promise<ProjectDetails> {
         parsedResult.parcel_coordinates = parsedResult.parcel_coordinates.map((point: any) => {
           if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
             throw new Error('Geçersiz koordinat noktası');
+          }
+          // No değeri varsa dahil et
+          if (point.No !== undefined) {
+            return { No: point.No, x: point.x, y: point.y };
           }
           return { x: point.x, y: point.y };
         });

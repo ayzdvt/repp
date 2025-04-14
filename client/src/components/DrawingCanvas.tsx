@@ -918,33 +918,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
-  useEffect(() => {
-    const containerElement = containerRef.current;
-    if (!containerElement) return;
-    
-    // Event fonksiyonlarını referanstan al
-    const updateHandler = (e: any) => {
-      if (updateEventRef.current) {
-        updateEventRef.current(e);
-      }
-    };
-    
-    const getAllShapesHandler = (e: any) => {
-      if (getAllShapesRef.current) {
-        getAllShapesRef.current(e);
-      }
-    };
-    
-    // Olay dinleyicileri container'a ekle
-    containerElement.addEventListener('shapeupdate', updateHandler);
-    containerElement.addEventListener('getAllShapes', getAllShapesHandler);
-    
-    // Cleanup
-    return () => {
-      containerElement.removeEventListener('shapeupdate', updateHandler);
-      containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
-    };
-  }, []);
+  // NOT: Bu useEffect kaldırıldı, çünkü alt tarafta başka bir useEffect içinde aynı event listener'lar kuruluyordu.
+  // Bu çift event listener'lar nedeniyle aynı şekil iki kez ekleniyordu.
+  // Yeni implementasyon aşağıdaki useEffect içinde bulunuyor (Line 1005).
   
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   // Escape tuşu işlemini memoize ediyoruz - performans için

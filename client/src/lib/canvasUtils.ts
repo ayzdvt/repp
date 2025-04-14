@@ -234,19 +234,19 @@ export function drawSnapIndicators(
   if (nearestPoint) {
     try {
       // Dünya koordinatlarını ekran koordinatlarına dönüştür
-      const screenX = nearestPoint.x * state.zoom + state.canvasSize.width / 2 + state.panOffset.x;
-      const screenY = state.canvasSize.height / 2 - nearestPoint.y * state.zoom + state.panOffset.y;
+      // Yeni koordinat sistemiyle uyumlu olacak şekilde worldToScreen kullan
+      const screenPoint = worldToScreen(nearestPoint.x, nearestPoint.y, state);
       
       // Dış yeşil daire çiz
       ctx.beginPath();
-      ctx.arc(screenX, screenY, 6, 0, Math.PI * 2);
+      ctx.arc(screenPoint.x, screenPoint.y, 6, 0, Math.PI * 2);
       ctx.strokeStyle = '#00C853';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       
       // İç beyaz daire çiz
       ctx.beginPath();
-      ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
+      ctx.arc(screenPoint.x, screenPoint.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
       ctx.strokeStyle = '#00C853';
@@ -385,7 +385,7 @@ export function drawShape(
         
         // Snap varsa özel görünüm ekle
         if (shape.isSnapping) {
-          // Dünya koordinatlarını ekran koordinatlarına dönüştür
+          // Ekran koordinatları zaten dönüştürülmüş durumda
           const screenX = previewScreenPoint.x;
           const screenY = previewScreenPoint.y;
           

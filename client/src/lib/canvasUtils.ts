@@ -35,23 +35,42 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   const startPoint = screenToWorld(0, height, state);
   const endPoint = screenToWorld(width, 0, state);
   
+  // Calculate step size based on zoom level
+  // Zoom değerine göre grid adımlarını ayarla
+  let gridStep = state.gridSize;
+  let labelMultiplier = 10; // Ana grid çizgilerini ne kadar aralıklarla göstereceğimiz
+  
+  if (state.zoom < 0.0001) {
+    gridStep = state.gridSize * 10000;
+    labelMultiplier = 1;
+  } else if (state.zoom < 0.001) {
+    gridStep = state.gridSize * 1000;
+    labelMultiplier = 1;
+  } else if (state.zoom < 0.01) {
+    gridStep = state.gridSize * 100;
+    labelMultiplier = 1;
+  } else if (state.zoom < 0.1) {
+    gridStep = state.gridSize * 10;
+    labelMultiplier = 1;
+  }
+  
   // Round to nearest grid line
-  const startX = Math.floor(startPoint.x / state.gridSize) * state.gridSize;
-  const startY = Math.floor(startPoint.y / state.gridSize) * state.gridSize;
-  const endX = Math.ceil(endPoint.x / state.gridSize) * state.gridSize;
-  const endY = Math.ceil(endPoint.y / state.gridSize) * state.gridSize;
+  const startX = Math.floor(startPoint.x / gridStep) * gridStep;
+  const startY = Math.floor(startPoint.y / gridStep) * gridStep;
+  const endX = Math.ceil(endPoint.x / gridStep) * gridStep;
+  const endY = Math.ceil(endPoint.y / gridStep) * gridStep;
   
   ctx.lineWidth = 0.5;
   
   // Draw vertical grid lines
-  for (let x = startX; x <= endX; x += state.gridSize) {
+  for (let x = startX; x <= endX; x += gridStep) {
     const { x: screenX } = worldToScreen(x, 0, state);
     ctx.beginPath();
     ctx.moveTo(screenX, 0);
     ctx.lineTo(screenX, height);
     
-    // Main grid lines (every 10 units) are darker
-    if (x % (state.gridSize * 10) === 0) {
+    // Main grid lines (every labelMultiplier units) are darker
+    if (x % (gridStep * labelMultiplier) === 0) {
       ctx.strokeStyle = '#AAAAAA';
     } else {
       ctx.strokeStyle = '#DDDDDD';
@@ -59,24 +78,24 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
     
     ctx.stroke();
     
-    // Add labels for the main grid lines
-    if (x % (state.gridSize * 10) === 0 && x !== 0) {
+    // Add labels for the main grid lines (cm cinsinden)
+    if (x % (gridStep * labelMultiplier) === 0 && x !== 0) {
       ctx.fillStyle = '#888888';
       ctx.font = '10px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(x.toString(), screenX, height - 2);
+      ctx.fillText(x.toString() + ' cm', screenX, height - 2);
     }
   }
   
   // Draw horizontal grid lines
-  for (let y = startY; y <= endY; y += state.gridSize) {
+  for (let y = startY; y <= endY; y += gridStep) {
     const { y: screenY } = worldToScreen(0, y, state);
     ctx.beginPath();
     ctx.moveTo(0, screenY);
     ctx.lineTo(width, screenY);
     
-    // Main grid lines (every 10 units) are darker
-    if (y % (state.gridSize * 10) === 0) {
+    // Main grid lines (every labelMultiplier units) are darker
+    if (y % (gridStep * labelMultiplier) === 0) {
       ctx.strokeStyle = '#AAAAAA';
     } else {
       ctx.strokeStyle = '#DDDDDD';
@@ -84,12 +103,12 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
     
     ctx.stroke();
     
-    // Add labels for the main grid lines
-    if (y % (state.gridSize * 10) === 0 && y !== 0) {
+    // Add labels for the main grid lines (cm cinsinden)
+    if (y % (gridStep * labelMultiplier) === 0 && y !== 0) {
       ctx.fillStyle = '#888888';
       ctx.font = '10px Arial';
       ctx.textAlign = 'right';
-      ctx.fillText(y.toString(), 10, screenY + 3);
+      ctx.fillText(y.toString() + ' cm', 14, screenY + 3);
     }
   }
   

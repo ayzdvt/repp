@@ -17,8 +17,8 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
   onFitView
 }) => {
   return (
-    <div className="bg-[#ECECEC] w-14 flex-shrink-0 border-r border-gray-300 flex flex-col">
-      <div className="flex flex-col items-center p-2 gap-4">
+    <div className="bg-[#ECECEC] w-12 flex-shrink-0 border-r border-gray-300 flex flex-col">
+      <div className="flex flex-col items-center p-1 gap-3">
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'selection' ? 'bg-[#D0D0D0]' : ''}`}
           title="Selection Tool" 

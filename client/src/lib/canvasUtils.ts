@@ -37,6 +37,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   let unit = 'cm'; // Varsayılan birim cm
   let divider = 1; // Değer gösterirken bölme faktörü
   
+  // Zoom değerine göre farklı ölçek ve birimler - uzaklaştıkça daha büyük birimler
   if (state.zoom < 0.05) {
     gridStep = 10000; // Çok düşük zoom için 100 metre aralık
     unit = 'km';
@@ -57,10 +58,26 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
     gridStep = 100; // Zoom < %50 ise 100cm (1 metre) aralıklarla
     unit = 'cm';
     divider = 1;
-  } else {
-    gridStep = 50;  // Zoom >= %50 ise 50cm aralıklarla
+  } else if (state.zoom < 1.0) {
+    gridStep = 50;  // Zoom < 1.0 ise 50cm aralıklarla
     unit = 'cm';
     divider = 1;
+  } else if (state.zoom < 2.0) {
+    gridStep = 10;  // Zoom < 2.0 ise 10cm aralıklarla
+    unit = 'cm';
+    divider = 1;
+  } else if (state.zoom < 5.0) {
+    gridStep = 5;   // Zoom < 5.0 ise 5cm aralıklarla
+    unit = 'cm';
+    divider = 1;
+  } else if (state.zoom < 10.0) {
+    gridStep = 1;   // Zoom < 10.0 ise 1cm aralıklarla
+    unit = 'cm';
+    divider = 1;
+  } else {
+    gridStep = 0.1; // Zoom >= 10.0 ise 1mm aralıklarla
+    unit = 'mm';
+    divider = 0.1;  // 0.1cm = 1mm
   }
   
   // Round to nearest grid line

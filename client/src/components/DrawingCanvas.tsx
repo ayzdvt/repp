@@ -872,6 +872,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Özel event'ler için Ref'ler
   const updateEventRef = useRef<(e: any) => void>();
   const getAllShapesRef = useRef<(e: any) => void>();
+  const createShapeRef = useRef<(e: any) => void>();
   
   useEffect(() => {
     // Şekil güncelleme
@@ -895,9 +896,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    // Şekil oluşturma eventi
+    const handleCreateShape = (e: any) => {
+      const { detail } = e;
+      if (detail) {
+        console.log("Şekil oluşturma isteği alındı:", detail);
+        
+        // Şekil türüne göre ID oluştur
+        const newShape = { 
+          ...detail, 
+          id: nextIdRef.current++ 
+        };
+        
+        // Şekiller listesine ekle
+        shapesRef.current.push(newShape);
+        console.log("Yeni şekil eklendi:", newShape);
+      }
+    };
+    
     // Referansları sakla
     updateEventRef.current = handleShapeUpdate;
     getAllShapesRef.current = handleGetAllShapes;
+    // Şekil oluşturma referansını ekle
+    createShapeRef.current = handleCreateShape;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla

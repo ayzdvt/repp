@@ -86,7 +86,7 @@ export function distance(p1: Point, p2: Point): number {
 // Rectangle fonksiyonu kaldırıldı
 
 // Check if a point is near a line (for selection)
-export function pointNearLine(point: Point, line: LineShape, tolerance: number = 5): boolean {
+export function pointNearLine(point: Point, line: LineShape, tolerance: number = 10): boolean {
   const lineLength = distance(
     { x: line.startX, y: line.startY }, 
     { x: line.endX, y: line.endY }
@@ -111,7 +111,7 @@ export function pointNearLine(point: Point, line: LineShape, tolerance: number =
 // Circle fonksiyonu kaldırıldı
 
 // Bir noktanın polyline'a yakın olup olmadığını kontrol eder
-export function pointNearPolyline(point: Point, polyline: PolylineShape, tolerance: number = 5): boolean {
+export function pointNearPolyline(point: Point, polyline: PolylineShape, tolerance: number = 10): boolean {
   // Polyline'da yeterli nokta yoksa false döndür
   if (polyline.points.length < 2) return false;
   

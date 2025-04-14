@@ -630,8 +630,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const selectedShape = findShapeAtPoint(worldPos);
         
         if (selectedShape && onSelectObject) {
+          // Seçili şeklin indeksini bul
+          const shapeIndex = shapesRef.current.findIndex(s => s.id === selectedShape.id);
+          
           // Seçili şeklin ID'sini ayarla
           setSelectedShapeId(selectedShape.id);
+          
+          // Canvas'ın yeniden çizilmesini sağlamak için referansı güncelle
+          if (shapeIndex !== -1) {
+            shapesRef.current[shapeIndex] = { ...selectedShape };
+          }
+          
           onSelectObject(selectedShape);
         } else {
           // Hiçbir şekil seçilmediyse seçimi temizle

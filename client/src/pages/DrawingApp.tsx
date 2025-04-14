@@ -18,10 +18,9 @@ export default function DrawingApp() {
     panOffset: { x: 0, y: 0 },
     canvasSize: { width: 0, height: 0 }
   });
-  const [selectedObject, setSelectedObject] = useState<any>(null);
   
-  // Canvas içindeki referans
-  // Removed canvasRef
+  // Seçili nesne (özellikler paneli tarafından kullanılacak)
+  const [selectedObject, setSelectedObject] = useState<any | null>(null);
   
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
@@ -46,45 +45,14 @@ export default function DrawingApp() {
           
           // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
           const cleanedCoordinates = coordinates.map(coord => ({
-            x: coord.x,
-            y: coord.y
+            x: Number(coord.x),
+            y: Number(coord.y)
           }));
-          
-          // Tüm koordinatlar için ayrı ayrı nokta oluştur
-          coordinates.forEach((coord, index) => {
-            // Koordinatları doğru formatta olduğundan emin olalım (sayı olarak)
-            const x = Number(coord.x);
-            const y = Number(coord.y);
-            
-            console.log(`Eklenen koordinat ${index+1}: x=${x}, y=${y}`);
-            
-            const createPointEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'point',
-                x: x,
-                y: y,
-                style: 'default'
-              } 
-            });
-            
-            // Event'i yayınla 
-            // Canvas container veya canvas elemanı üzerinden event'i yayınla
-            // Hem canvas container hem de canvas elemanı için deneyelim
-            canvasElement.dispatchEvent(createPointEvent);
-          
-            // Canvas elemanını da bulup dinleyici ekleyelim (her ihtimale karşı)
-            const canvasObj = document.querySelector('#drawing-canvas canvas');
-            if (canvasObj) {
-              console.log("Canvas elem found, dispatching event");
-              canvasObj.dispatchEvent(createPointEvent);
-            } else {
-              console.log("Canvas elem not found");
-            }
-          });
           
           // Koordinatlar büyük sayılar olabilir, normalleştirme gerekebilir (4540000 gibi)
           const doNormalize = true; // Koordinatları normalleştiriyoruz
           let normalizedCoordinates = [...cleanedCoordinates];
+          let xBase = 0, yBase = 0;
           
           if (doNormalize && coordinates.length > 0) {
             // Koordinatlar arasında çok yüksek değerler varsa (örneğin 4540000)
@@ -100,13 +68,9 @@ export default function DrawingApp() {
               baseY = Math.min(baseY, coord.y);
             }
             
-            // Basamak sayısını hesapla
-            const xDigits = Math.floor(Math.log10(baseX));
-            const yDigits = Math.floor(Math.log10(baseY));
-            
             // 100'ler basamağına yuvarla
-            const xBase = Math.floor(baseX / 100) * 100;
-            const yBase = Math.floor(baseY / 100) * 100;
+            xBase = Math.floor(baseX / 100) * 100;
+            yBase = Math.floor(baseY / 100) * 100;
             
             console.log(`Koordinat normalizasyonu: X-tabanı=${xBase}, Y-tabanı=${yBase}`);
             
@@ -118,6 +82,31 @@ export default function DrawingApp() {
             
             console.log("Normalize edilmiş koordinatlar:", normalizedCoordinates);
           }
+          
+          // Tüm koordinatlar için normalize edilmiş noktalar oluştur
+          normalizedCoordinates.forEach((coord, index) => {
+            console.log(`Eklenen koordinat ${index+1}: x=${coord.x}, y=${coord.y}`);
+            
+            const createPointEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'point',
+                x: coord.x,
+                y: coord.y,
+                style: 'default'
+              } 
+            });
+            
+            // Event'i yayınla 
+            canvasElement.dispatchEvent(createPointEvent);
+          
+            // Canvas elemanını da bulup dinleyici ekleyelim
+            const canvasObj = document.querySelector('#drawing-canvas canvas');
+            if (canvasObj) {
+              canvasObj.dispatchEvent(createPointEvent);
+            } else {
+              console.log("Canvas elem not found");
+            }
+          });
           
           // Aynı koordinatları kullanarak polyline oluştur
           if (coordinates.length > 2) {
@@ -357,8 +346,6 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
-    
     // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
     // Orijinal worldToScreen formülünden:
     // screenX = worldX * zoom + width / 2 + panOffset.x;
@@ -374,8 +361,8 @@ export default function DrawingApp() {
     // panOffset.x = -centerY * zoom
     // panOffset.y = centerX * zoom
     
-    const panOffsetX = -centerY * newZoom;
-    const panOffsetY = centerX * newZoom;
+    const panOffsetX = canvasWidth / 2 - centerY * newZoom;
+    const panOffsetY = canvasHeight / 2 + centerX * newZoom;
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     

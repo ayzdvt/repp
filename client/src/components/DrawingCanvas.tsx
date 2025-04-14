@@ -43,6 +43,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
   
+  // Olay dinleyicileri için ref'ler
+  const updateShapeEventRef = useRef<((e: any) => void) | null>(null);
+  
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
@@ -878,11 +881,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // Özel event'ler için Ref'ler
-  const updateEventRef = useRef<(e: any) => void>();
-  const getAllShapesRef = useRef<(e: any) => void>();
-  const createShapeEventRef = useRef<(e: any) => void>();
-  const createPolylineEventRef = useRef<(e: any) => void>();
+  // Özel event'ler için atama değişkenleri - callback'ler için
   
   useEffect(() => {
     // Şekil güncelleme

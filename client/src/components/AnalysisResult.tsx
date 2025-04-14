@@ -110,11 +110,7 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
         <button 
           className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors mr-4"
           onClick={() => {
-            // Koordinatları localStorage'a kaydet
-            if (data.parcel_coordinates && data.parcel_coordinates.length > 0) {
-              localStorage.setItem('parselCoordinates', JSON.stringify(data.parcel_coordinates));
-            }
-            // Çizim sayfasına yönlendir
+            // Çizim sayfasına yönlendir - localStorage kullanımını kaldırdık
             window.location.href = '/drawing';
           }}
         >

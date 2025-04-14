@@ -45,8 +45,23 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   let unit = 'cm'; // Varsayılan birim cm
   let divider = 1; // Değer gösterirken bölme faktörü
   
-  // Zoom değerine göre farklı ölçek ve birimler - uzaklaştıkça daha büyük birimler
-  if (state.zoom < 0.01) {
+  // Çok küçük zoom değerlerini tespit et (milyonluk koordinatlar için)
+  if (state.zoom < 0.000001) {
+    gridStep = 10000000; // 100 km aralık
+    unit = 'km';
+    divider = 100000; // cm -> km
+    console.log("Büyük koordinatlar için grid adımı:", gridStep, unit);
+  } else if (state.zoom < 0.00001) {
+    gridStep = 1000000; // 10 km aralık
+    unit = 'km';
+    divider = 100000;
+  } else if (state.zoom < 0.0001) {
+    gridStep = 100000; // 1 km aralık
+    unit = 'km';
+    divider = 100000;
+  } 
+  // Normal zoom değerleri için orijinal grid ayarları
+  else if (state.zoom < 0.01) {
     gridStep = 50000; // Çok düşük zoom için 500 metre aralık
     unit = 'km';
     divider = 100000; // 100000cm = 1 kilometre

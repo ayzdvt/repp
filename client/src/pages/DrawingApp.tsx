@@ -67,10 +67,27 @@ export default function DrawingApp() {
             const maxY = Math.max(...yValues);
             
             // Büyük değerleri normalize edelim - her koordinattan en küçük değeri çıkaralım
-            // Böylece koordinatlar 0'dan başlar
+            // Böylece koordinatlar 0'dan başlar ve en büyük X/Y değerine göre ölçeklendirme yapalım
+            
+            // X ve Y aralıklarını hesapla
+            const xRange = maxX - minX;
+            const yRange = maxY - minY;
+            
+            // X veya Y'nin çok büyük olduğu durumlar için (milyon gibi) ek ölçeklendirme 
+            // Standart çizim alanı için ideal max değer ~100 birim olsun
+            const idealRange = 100;
+            const scaleFactorX = xRange > idealRange ? idealRange / xRange : 1;
+            const scaleFactorY = yRange > idealRange ? idealRange / yRange : 1;
+            
+            // İki eksendeki ölçeklendirme faktörlerinden daha kısıtlayıcı olanı seçelim
+            // Böylece oranlar korunur
+            const scaleFactor = Math.min(scaleFactorX, scaleFactorY);
+            
             coordsToUse = coordinates.map(coord => ({
-              x: coord.x - minX, // X değerini normalize et
-              y: coord.y - minY, // Y değerini normalize et
+              // X değerini normalize et ve ölçeklendir
+              x: (coord.x - minX) * scaleFactor,
+              // Y değerini normalize et ve ölçeklendir
+              y: (coord.y - minY) * scaleFactor,
               No: coord.No
             }));
             

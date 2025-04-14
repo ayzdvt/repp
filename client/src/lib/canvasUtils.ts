@@ -1,30 +1,26 @@
 import { CanvasState, Point } from '@/types';
 
 // Transform screen coordinates to world coordinates
-// X ekseninin yukarı, Y ekseninin sağa doğru olmasına yönelik güncelleme
 export function screenToWorld(
   screenX: number, 
   screenY: number, 
   state: CanvasState
 ): Point {
   const { width, height } = state.canvasSize;
-  // Dönüşüm eksenleri değiştirildi: x -> y, y -> x
-  const worldY = (screenX - width / 2 - state.panOffset.x) / state.zoom; // Önceki worldX şimdi worldY
-  const worldX = (height / 2 - screenY + state.panOffset.y) / state.zoom; // Önceki worldY şimdi worldX
+  const worldX = (screenX - width / 2 - state.panOffset.x) / state.zoom;
+  const worldY = (height / 2 - screenY + state.panOffset.y) / state.zoom;
   return { x: worldX, y: worldY };
 }
 
 // Transform world coordinates to screen coordinates
-// X ekseninin yukarı, Y ekseninin sağa doğru olmasına yönelik güncelleme
 export function worldToScreen(
   worldX: number, 
   worldY: number, 
   state: CanvasState
 ): Point {
   const { width, height } = state.canvasSize;
-  // Dönüşüm eksenleri değiştirildi: x -> y, y -> x
-  const screenY = worldY * state.zoom + width / 2 + state.panOffset.x;  // Önceki screenX şimdi screenY
-  const screenX = height / 2 - worldX * state.zoom + state.panOffset.y; // Önceki screenY şimdi screenX
+  const screenX = worldX * state.zoom + width / 2 + state.panOffset.x;
+  const screenY = height / 2 - worldY * state.zoom + state.panOffset.y;
   return { x: screenX, y: screenY };
 }
 

@@ -32,7 +32,7 @@ export default function DrawingApp() {
     try {
       const coordinates = JSON.parse(coordsString);
       
-      if (Array.isArray(coordinates) && coordinates.length > 0) {
+      if (Array.isArray(coordinates) && coordinates.length > 2) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
@@ -44,103 +44,30 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          // AutoDraw bayrağını kontrol et
-          const autoDraw = localStorage.getItem('autoDrawPoints') === 'true';
-          
-          // Büyük koordinat değerlerini normalize etmek için hesaplamalar
-          console.log("Koordinatları normalize etmek için işleniyor...");
-          
-          // Koordinatların en küçük değerlerini bul (offset olarak kullanılacak)
-          let minX = Number.MAX_VALUE;
-          let minY = Number.MAX_VALUE;
-          coordinates.forEach(coord => {
-            minX = Math.min(minX, coord.x);
-            minY = Math.min(minY, coord.y);
-          });
-          
-          console.log(`Bulunan minimum değerler: X=${minX}, Y=${minY}`);
-          
-          // Her koordinattan minimum değerleri çıkar (normalize et)
-          const normalizedCoords = coordinates.map(coord => ({
-            ...coord,
-            x: coord.x - minX,
-            y: coord.y - minY
+          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+          const cleanedCoordinates = coordinates.map(coord => ({
+            x: coord.x,
+            y: coord.y
           }));
           
-          console.log("Normalize edilmiş koordinatlar:", normalizedCoords);
-          
-          // Her koşulda line segmentleri ile çizme yöntemini kullan (polyline kaldırıldı)
-          // Koordinatları nokta olarak ayrı ayrı çiz
-          normalizedCoords.forEach((coord, index) => {
-            // Koordinat değişimi: x -> y, y -> x (y eksenini değiştirdik)
-            // Her bir koordinat için nokta oluştur
-            const createPointEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'point',
-                x: coord.y, // Önceki y değeri şimdi x oldu 
-                y: coord.x, // Önceki x değeri şimdi y oldu
-                style: 'square', // noktaları daha belirgin yapmak için kare olarak çiz
-                text: coord.No ? `${coord.No}` : `${index + 1}` // Nokta numarası
-              } 
-            });
-            
-            // Event'i div.absolute üzerinden yayınla
-            canvasElement.dispatchEvent(createPointEvent);
-            
-            // Nokta numarasını metin olarak da ekle
-            const createTextEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'text',
-                x: coord.y + 3, // Koordinatlar yer değişti
-                y: coord.x + 3, // Koordinatlar yer değişti
-                text: coord.No ? `${coord.No}` : `${index + 1}`,
-                fontSize: 10
-              } 
-            });
-            
-            // Text olarak nokta numarasını ekle
-            canvasElement.dispatchEvent(createTextEvent);
+          // Polyline oluşturmak için event gönder
+          const createEvent = new CustomEvent('createshape', { 
+            detail: { 
+              type: 'polyline',
+              points: cleanedCoordinates,
+              thickness: 2,
+              closed: true
+            } 
           });
           
-          // Koordinatlar arasında çizgi çizelim (ayrı ayrı çizgiler)
-          if (normalizedCoords.length > 1) {
-            console.log("Normalize edilmiş koordinatlar arasında çizgiler çiziliyor...");
-            for (let i = 0; i < normalizedCoords.length; i++) {
-              const currentCoord = normalizedCoords[i];
-              // Son nokta ile ilk nokta arası da dahil olsun (kapalı şekil)
-              const nextCoord = i === normalizedCoords.length - 1 ? normalizedCoords[0] : normalizedCoords[i + 1];
-              
-              console.log(`Çizgi ${i}: (${currentCoord.y}, ${currentCoord.x}) -> (${nextCoord.y}, ${nextCoord.x})`);
-              
-              // Çizgi oluşturmak için event gönder
-              const createLineEvent = new CustomEvent('createshape', { 
-                detail: { 
-                  type: 'line',
-                  startX: currentCoord.y, // Koordinatlar yer değişti: eski y şimdi x
-                  startY: currentCoord.x, // Koordinatlar yer değişti: eski x şimdi y
-                  endX: nextCoord.y, // Koordinatlar yer değişti
-                  endY: nextCoord.x, // Koordinatlar yer değişti
-                  thickness: 1.5
-                } 
-              });
-              
-              // Event'i div.absolute üzerinden yayınla
-              canvasElement.dispatchEvent(createLineEvent);
-            }
-          }
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(createEvent);
           
-          // Bayrağı temizle
-          localStorage.removeItem('autoDrawPoints');
+          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
-          // Görünümü tam ekrana uyarla - çizimlerden sonra yapılmalı
-          setTimeout(() => {
-            handleResetView();
-          }, 200);
-          
-          // LocalStorage'ı temizle (tekrar yüklenince aynı koordinatları oluşturmamak için)
-          localStorage.removeItem('parselCoordinates');
-          
+          // Görünümü tam ekrana uyarla
+          handleResetView();
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {
@@ -302,14 +229,8 @@ export default function DrawingApp() {
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
     
-    // Daha kısıtlayıcı olanı seç, ancak sıfır veya çok küçük değerlere karşı koruma ekle
-    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-    
-    // Eğer hesaplanan zoom değeri geçersizse (0 veya negatif) varsayılan bir değer kullan
-    if (newZoom <= 0 || !isFinite(newZoom)) {
-      console.log("Uyarı: Geçersiz zoom değeri hesaplandı, varsayılan değer kullanılıyor.");
-      newZoom = 0.001; // Çok düşük (yüksek çözünürlük) ama sıfır olmayan bir değer
-    }
+    // Daha kısıtlayıcı olanı seç
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     
@@ -339,17 +260,11 @@ export default function DrawingApp() {
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     
-    // Yeni değerleri ayarla - daha büyük bir başlangıç değeri ile (normalize edilmiş koordinatlarda)
-    
-    // Eğer normalize edilmiş koordinatlarla çalışıyorsak, daha büyük bir zoom değeri kullan
-    const finalZoom = Math.max(newZoom, 1.0); // En az 1.0 değerini kullan
-    
-    console.log(`Son zoom değeri: ${finalZoom} (Orijinal: ${newZoom})`);
-    
-    setZoom(finalZoom);
+    // Yeni değerleri ayarla
+    setZoom(newZoom);
     setCanvasState({
       gridSize: 10, 
-      zoom: finalZoom,
+      zoom: newZoom,
       panOffset: { x: panOffsetX, y: panOffsetY },
       canvasSize: canvasState.canvasSize
     });

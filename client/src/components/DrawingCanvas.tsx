@@ -489,12 +489,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const findShapeAtPoint = (point: Point): any | null => {
     // Zoom seviyesine göre seçim toleransını hesapla
     // Zoom büyükse tolerans düşük, zoom küçükse tolerans yüksek olmalı
-    const baseTolerance = 10; // Baz tolerans değeri
+    const baseTolerance = 20; // Baz tolerans değeri artırıldı - daha kolay seçim için
     const zoomAdjustedTolerance = baseTolerance / canvasState.zoom;
     
     // En düşük ve en yüksek tolerans sınırları
-    const minTolerance = 2;  // Çok yakından bile en az bu kadar tolerans olsun
-    const maxTolerance = 15; // Çok uzaktan bile en fazla bu kadar tolerans olsun
+    const minTolerance = 5;  // Min değer artırıldı - düşük zoomlarda bile seçilebilir
+    const maxTolerance = 25; // Max değer artırıldı - yüksek zoomlarda bile seçilebilir
     
     // Toleransı sınırlar içinde tut
     const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);

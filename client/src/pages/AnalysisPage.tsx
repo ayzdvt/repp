@@ -13,6 +13,7 @@ export default function AnalysisPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -20,6 +21,42 @@ export default function AnalysisPage() {
   const [, setLocation] = useLocation();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Veritabanından örnek şablonu yükle
+  const loadSampleAnalysis = async () => {
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      // Veri tabanından son kaydedilen analizi al
+      const response = await fetch('/api/analyses?userId=1');
+      if (!response.ok) {
+        throw new Error('Örnek veri yüklenirken bir hata oluştu');
+      }
+      
+      const analyses = await response.json();
+      if (analyses.length === 0) {
+        throw new Error('Veri tabanında kayıtlı analiz bulunamadı');
+      }
+      
+      // En son kaydedilen analizi al (en yüksek ID'ye sahip olan)
+      const latestAnalysis = analyses.reduce((latest: any, current: any) => 
+        (current.id > latest.id) ? current : latest, analyses[0]);
+      
+      // Koordinatları JSON objesine dönüştür
+      if (latestAnalysis.parcel_coordinates && typeof latestAnalysis.parcel_coordinates === 'string') {
+        latestAnalysis.parcel_coordinates = JSON.parse(latestAnalysis.parcel_coordinates);
+      }
+      
+      setResult(latestAnalysis);
+      setSuccess('Örnek veri başarıyla yüklendi');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -203,6 +240,36 @@ export default function AnalysisPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            
+            {/* Örnek şablon kullanma butonu */}
+            <Button
+              className="w-full mb-6 bg-blue-600 hover:bg-blue-700"
+              onClick={loadSampleAnalysis}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Yükleniyor...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Örnek Şablonu Kullan
+                </>
+              )}
+            </Button>
+            
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Ya da belgenizi yükleyin</span>
+              </div>
+            </div>
             
             <div className="space-y-6">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">

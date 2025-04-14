@@ -881,7 +881,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // Özel event'ler için atama değişkenleri - callback'ler için
+  // Event callbacks ve referanslar için değişkenler
+  const createShapeEventFn = useRef<((e: any) => void) | null>(null);
+  const createPolylineEventFn = useRef<((e: any) => void) | null>(null);
+  const updateShapeEventFn = useRef<((e: any) => void) | null>(null);
+  const getAllShapesEventFn = useRef<((e: any) => void) | null>(null);
   
   useEffect(() => {
     // Şekil güncelleme
@@ -947,10 +951,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
     
     // Referansları sakla
-    updateEventRef.current = handleShapeUpdate;
-    getAllShapesRef.current = handleGetAllShapes;
-    createShapeEventRef.current = handleCreateShape;
-    createPolylineEventRef.current = handleCreatePolyline;
+    updateShapeEventFn.current = handleShapeUpdate;
+    getAllShapesEventFn.current = handleGetAllShapes;
+    createShapeEventFn.current = handleCreateShape;
+    createPolylineEventFn.current = handleCreatePolyline;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -960,26 +964,26 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Event fonksiyonlarını referanstan al
     const updateHandler = (e: any) => {
-      if (updateEventRef.current) {
-        updateEventRef.current(e);
+      if (updateShapeEventFn.current) {
+        updateShapeEventFn.current(e);
       }
     };
     
     const getAllShapesHandler = (e: any) => {
-      if (getAllShapesRef.current) {
-        getAllShapesRef.current(e);
+      if (getAllShapesEventFn.current) {
+        getAllShapesEventFn.current(e);
       }
     };
     
     const createShapeHandler = (e: any) => {
-      if (createShapeEventRef.current) {
-        createShapeEventRef.current(e);
+      if (createShapeEventFn.current) {
+        createShapeEventFn.current(e);
       }
     };
     
     const createPolylineHandler = (e: any) => {
-      if (createPolylineEventRef.current) {
-        createPolylineEventRef.current(e);
+      if (createPolylineEventFn.current) {
+        createPolylineEventFn.current(e);
       }
     };
     

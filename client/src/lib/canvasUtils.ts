@@ -38,44 +38,44 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   let divider = 1; // Değer gösterirken bölme faktörü
   
   // Zoom değerine göre farklı ölçek ve birimler - uzaklaştıkça daha büyük birimler
-  if (state.zoom < 0.05) {
-    gridStep = 10000; // Çok düşük zoom için 100 metre aralık
+  if (state.zoom < 0.01) {
+    gridStep = 50000; // Çok düşük zoom için 500 metre aralık
     unit = 'km';
     divider = 100000; // 100000cm = 1 kilometre
-  } else if (state.zoom < 0.1) {
-    gridStep = 5000; // Düşük zoom için 50 metre aralık
+  } else if (state.zoom < 0.05) {
+    gridStep = 20000; // Düşük zoom için 200 metre aralık
     unit = 'm';
     divider = 100; // 100cm = 1 metre
-  } else if (state.zoom < 0.2) {
-    gridStep = 1000; // Zoom < %20 ise 10 metre aralıklarla
+  } else if (state.zoom < 0.1) {
+    gridStep = 10000; // Zoom < %10 ise 100 metre aralıklarla
     unit = 'm';
     divider = 100; // 100cm = 1 metre
   } else if (state.zoom < 0.3) {
-    gridStep = 500; // Zoom < %30 ise 5 metre aralıklarla
+    gridStep = 2500; // Zoom < %30 ise 25 metre aralıklarla
     unit = 'm';
     divider = 100; // 100cm = 1 metre
   } else if (state.zoom < 0.5) {
-    gridStep = 100; // Zoom < %50 ise 100cm (1 metre) aralıklarla
-    unit = 'cm';
-    divider = 1;
+    gridStep = 500; // Zoom < %50 ise 5 metre aralıklarla
+    unit = 'm';
+    divider = 100;
   } else if (state.zoom < 1.0) {
-    gridStep = 50;  // Zoom < 1.0 ise 50cm aralıklarla
+    gridStep = 200;  // Zoom < 1.0 ise 200cm aralıklarla
     unit = 'cm';
     divider = 1;
-  } else if (state.zoom < 2.0) {
-    gridStep = 10;  // Zoom < 2.0 ise 10cm aralıklarla
+  } else if (state.zoom < 3.0) {
+    gridStep = 50;  // Zoom < 3.0 ise 50cm aralıklarla
     unit = 'cm';
     divider = 1;
-  } else if (state.zoom < 5.0) {
-    gridStep = 5;   // Zoom < 5.0 ise 5cm aralıklarla
+  } else if (state.zoom < 7.0) {
+    gridStep = 10;   // Zoom < 7.0 ise 10cm aralıklarla
     unit = 'cm';
     divider = 1;
-  } else if (state.zoom < 10.0) {
-    gridStep = 1;   // Zoom < 10.0 ise 1cm aralıklarla
+  } else if (state.zoom < 15.0) {
+    gridStep = 2;   // Zoom < 15.0 ise 2cm aralıklarla
     unit = 'cm';
     divider = 1;
   } else {
-    gridStep = 0.1; // Zoom >= 10.0 ise 1mm aralıklarla
+    gridStep = 0.5; // Zoom >= 15.0 ise 5mm aralıklarla
     unit = 'mm';
     divider = 0.1;  // 0.1cm = 1mm
   }

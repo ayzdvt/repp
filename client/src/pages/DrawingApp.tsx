@@ -208,6 +208,32 @@ export default function DrawingApp() {
     maxX += margin;
     maxY += margin;
     
+    // Çok büyük koordinatlar için özel kontrol
+    if (maxX > 1000000 || minX > 1000000 || maxY > 1000000 || minY > 1000000) {
+      console.log("Büyük koordinatlar için ayarlanan değerler:", {
+        zoom: 0.0000001,
+        panX: -(centerX * 0.0000001),
+        panY: (centerY * 0.0000001),
+        width: maxX - minX,
+        height: maxY - minY,
+        centerX: centerX,
+        centerY: centerY
+      });
+      
+      // Çok düşük zoom değeri kullan ve viewport'u merkeze getir
+      setZoom(0.0000001);
+      setCanvasState({
+        gridSize: 10,
+        zoom: 0.0000001,
+        panOffset: { 
+          x: -(centerX * 0.0000001), 
+          y: (centerY * 0.0000001) 
+        },
+        canvasSize: canvasState.canvasSize
+      });
+      return;
+    }
+    
     // Çok küçük nesneler veya tek nokta için ekstra marj
     if (maxX - minX < 20) {
       const center = (minX + maxX) / 2;

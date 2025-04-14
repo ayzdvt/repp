@@ -853,8 +853,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1; // Reduce zoom on scroll down, increase on scroll up
     const newZoom = canvasState.zoom * zoomDelta;
     
-    // Limit zoom range
-    if (newZoom > 0.000001 && newZoom < 100) {
+    // Limit zoom range - çok küçük zoom değerlerini destekle (büyük koordinatlar için)
+    if (newZoom > 0.0000000001 && newZoom < 1000) {
       // Update zoom first
       onZoomChange(newZoom);
       

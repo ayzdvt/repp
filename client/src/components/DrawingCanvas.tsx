@@ -845,7 +845,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const newZoom = canvasState.zoom * zoomDelta;
     
     // Limit zoom range
-    if (newZoom > 0.1 && newZoom < 10) {
+    if (newZoom > 0.000001 && newZoom < 100) {
       // Update zoom first
       onZoomChange(newZoom);
       

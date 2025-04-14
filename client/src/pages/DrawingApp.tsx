@@ -35,6 +35,15 @@ export default function DrawingApp() {
       if (Array.isArray(coordinates) && coordinates.length > 0) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
+        // Koordinat değerleri çok büyükse (1000'den fazla) normalizasyon yapalım
+        let shouldNormalize = false;
+        // Herhangi bir koordinat 1000'den büyükse normalize etmeye karar verelim
+        coordinates.forEach(coord => {
+          if (Math.abs(coord.x) > 1000 || Math.abs(coord.y) > 1000) {
+            shouldNormalize = true;
+          }
+        });
+        
         // Koordinatları çizim için hazırla
         setTimeout(() => {
           // Canvas'a erişim
@@ -44,8 +53,32 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
+          let coordsToUse = [...coordinates];
+          
+          // Eğer normalizasyon gerekiyorsa uygula
+          if (shouldNormalize) {
+            // Koordinatları normalize et
+            const xValues = coordinates.map(c => c.x);
+            const yValues = coordinates.map(c => c.y);
+            
+            const minX = Math.min(...xValues);
+            const maxX = Math.max(...xValues);
+            const minY = Math.min(...yValues);
+            const maxY = Math.max(...yValues);
+            
+            // Büyük değerleri normalize edelim - her koordinattan en küçük değeri çıkaralım
+            // Böylece koordinatlar 0'dan başlar
+            coordsToUse = coordinates.map(coord => ({
+              x: coord.x - minX, // X değerini normalize et
+              y: coord.y - minY, // Y değerini normalize et
+              No: coord.No
+            }));
+            
+            console.log("Normalize edilmiş koordinatlar:", coordsToUse);
+          }
+          
           // Koordinatları nokta olarak ekle
-          coordinates.forEach((coord, index) => {
+          coordsToUse.forEach((coord, index) => {
             // Her bir koordinat için bir nokta oluştur
             const createPointEvent = new CustomEvent('createshape', { 
               detail: { 
@@ -228,7 +261,13 @@ export default function DrawingApp() {
     const zoomY = canvasHeight / height;
     
     // Daha kısıtlayıcı olanı seç
-    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    
+    // Zoom değeri için güvenlik kontrolü
+    if (!isFinite(newZoom) || newZoom <= 0) {
+      console.log("Uyarı: Geçersiz zoom değeri, varsayılana ayarlanıyor");
+      newZoom = 0.5; // Varsayılan zoom değeri
+    }
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     

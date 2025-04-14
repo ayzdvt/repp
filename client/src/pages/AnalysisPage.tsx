@@ -120,30 +120,28 @@ export default function AnalysisPage() {
     setIsSaving(true);
     
     try {
-      // Koordinatları JSON formatına çevir
+      // Veritabanına gönderilecek veriyi hazırla
       const projectData = {
         ...result,
-        // Koordinatları JSON formatına çevir eğer varsa
-        parcel_coordinates: result.parcel_coordinates ? JSON.stringify(result.parcel_coordinates) : '[]'
+        // Geçici olarak userId'yi 1 olarak ayarlıyoruz (normalde oturum yönetiminden alınması gerekir)
+        userId: 1,
+        // Koordinatları olduğu gibi JSON nesnesi olarak bırak (model zaten json tipini kabul ediyor)
+        parcel_coordinates: result.parcel_coordinates || []
       };
       
       // API'ya veriyi gönder
-      const response = await fetch('/api/analyses', {
+      const response = await apiRequest('/api/analyses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(projectData),
+        body: projectData,
       });
       
-      if (!response.ok) {
-        throw new Error('Veri kaydedilirken bir hata oluştu');
-      }
-      
-      const savedData = await response.json();
-      setSuccess(`Analiz sonuçları başarıyla veritabanına kaydedildi (ID: ${savedData.id})`);
+      setSuccess(`Analiz sonuçları başarıyla veritabanına kaydedildi (ID: ${response.id})`);
     } catch (err) {
       const error = err as Error;
+      console.error('Veritabanına kaydetme hatası:', error);
       setError(error.message || 'Veri kaydedilirken bir hata oluştu');
     } finally {
       setIsSaving(false);

@@ -85,13 +85,13 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
                   {data.parcel_coordinates.map((coord, idx) => (
                     <tr key={idx}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {idx + 1}
+                        {coord.No !== undefined ? coord.No : idx + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {coord.x.toFixed(3)}
+                        {coord.x.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {coord.y.toFixed(3)}
+                        {coord.y.toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -142,7 +142,7 @@ function InfoItem({ label, value }: { label: string, value: string | null | unde
 }
 
 // Koordinat görselleştirme bileşeni
-function CoordinateVisualizer({ coordinates }: { coordinates: Array<{x: number, y: number}> }) {
+function CoordinateVisualizer({ coordinates }: { coordinates: Array<{No?: number, x: number, y: number}> }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   
   React.useEffect(() => {

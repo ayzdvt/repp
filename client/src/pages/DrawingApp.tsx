@@ -22,11 +22,18 @@ export default function DrawingApp() {
   
   // Test için nokta ekleme fonksiyonu
   const addTestPoint = useCallback((x: number, y: number) => {
+    console.log(`Nokta ekleniyor: (${x}, ${y})`);
     const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-    if (!canvasContainer) return;
+    if (!canvasContainer) {
+      console.error('drawing-container bulunamadı!');
+      return;
+    }
     
     const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-    if (!canvasElement) return;
+    if (!canvasElement) {
+      console.error('div.absolute bulunamadı!');
+      return;
+    }
     
     // Yeni bir test noktası oluştur
     const testPoint = {
@@ -37,6 +44,8 @@ export default function DrawingApp() {
       style: 'default'
     };
     
+    console.log('Hazırlanan test noktası:', testPoint);
+    
     // CustomEvent ile noktayı canvas'a ekle
     const addEvent = new CustomEvent('shapeupdate', { 
       detail: { 
@@ -45,10 +54,15 @@ export default function DrawingApp() {
       } 
     });
     
+    console.log('CustomEvent oluşturuldu, gönderiliyor...');
     canvasElement.dispatchEvent(addEvent);
+    console.log('CustomEvent gönderildi');
     
-    // Görünümü yeni eklenen noktaya uyarla
-    setTimeout(() => handleResetView(), 100);
+    // Görünümü yeni eklenen noktaya uyarla - daha uzun bir bekleme süresi verelim
+    setTimeout(() => {
+      console.log('Fit View çağrılıyor (addTestPoint)');
+      handleResetView();
+    }, 500); // 500ms bekle
   }, []);
   
   // Canvas içindeki referans

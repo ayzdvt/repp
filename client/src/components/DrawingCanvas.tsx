@@ -1050,15 +1050,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Fit View için şekilleri alma olayını dinle
       const getAllShapesHandler = ((e: any) => {
+        console.log("getAllShapes event yakalandı:", shapesRef.current);
         // Tüm şekilleri al ve callback'e gönder
         if (e.detail && typeof e.detail.callback === 'function') {
           e.detail.callback(shapesRef.current);
         }
       }) as EventListener;
       
-      // Şekil güncelleme olayını dinle
+      // Şekil güncelleme (veya ekleme) olayını dinle
       const shapeUpdateHandler = ((e: any) => {
-        if (e.detail && e.detail.type === 'update' && e.detail.shape) {
+        console.log("shapeupdate event yakalandı:", e.detail);
+        
+        if (e.detail && e.detail.type === 'add' && e.detail.shape) {
+          // Yeni şekil ekle
+          console.log('Şekil ekleniyor:', e.detail.shape);
+          shapesRef.current.push({ ...e.detail.shape });
+        }
+        else if (e.detail && e.detail.type === 'update' && e.detail.shape) {
           // Güncellenecek şekli bul
           const shapeIndex = shapesRef.current.findIndex(
             (s: any) => s.id === e.detail.shape.id
@@ -1069,16 +1077,56 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             shapesRef.current[shapeIndex] = { ...e.detail.shape };
           }
         }
+        else if (e.detail && e.detail.type === 'delete' && e.detail.shapeId) {
+          // Şekli sil
+          shapesRef.current = shapesRef.current.filter(
+            (s: any) => s.id !== e.detail.shapeId
+          );
+        }
+      }) as EventListener;
+      
+      // Özel şekil oluşturma olayını dinle
+      const createShapeHandler = ((e: any) => {
+        console.log("createshape event yakalandı:", e.detail);
+        
+        if (e.detail && e.detail.type === 'polyline' && Array.isArray(e.detail.points)) {
+          // Yeni polyline oluştur
+          const newPolyline = {
+            id: nextIdRef.current++,
+            type: 'polyline',
+            points: [...e.detail.points],
+            thickness: e.detail.thickness || 1,
+            closed: e.detail.closed || false
+          };
+          
+          // Şekiller listesine ekle
+          shapesRef.current.push(newPolyline);
+        }
+        else if (e.detail && e.detail.type === 'point') {
+          // Yeni nokta oluştur
+          const newPoint = {
+            id: nextIdRef.current++,
+            type: 'point',
+            x: e.detail.x || 0,
+            y: e.detail.y || 0,
+            style: e.detail.style || 'default'
+          };
+          
+          // Şekiller listesine ekle
+          shapesRef.current.push(newPoint);
+        }
       }) as EventListener;
       
       // Event listener'ları ekle
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
+      containerElement.addEventListener('createshape', createShapeHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
+        containerElement.removeEventListener('createshape', createShapeHandler);
       };
     }
     

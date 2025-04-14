@@ -82,6 +82,43 @@ export default function DrawingApp() {
             }
           });
           
+          // Koordinatlar büyük sayılar olabilir, normalleştirme gerekebilir (4540000 gibi)
+          const doNormalize = true; // Koordinatları normalleştiriyoruz
+          let normalizedCoordinates = [...cleanedCoordinates];
+          
+          if (doNormalize && coordinates.length > 0) {
+            // Koordinatlar arasında çok yüksek değerler varsa (örneğin 4540000)
+            // Daha iyi bir görünüm için koordinatları normalize edebiliriz
+            // Örn. 4540345 -> 345 gibi, daha kolay çalışmak için
+            
+            // Ortak tabanı bul (en küçük X ve Y)
+            let baseX = Infinity;
+            let baseY = Infinity;
+            
+            for (const coord of cleanedCoordinates) {
+              baseX = Math.min(baseX, coord.x);
+              baseY = Math.min(baseY, coord.y);
+            }
+            
+            // Basamak sayısını hesapla
+            const xDigits = Math.floor(Math.log10(baseX));
+            const yDigits = Math.floor(Math.log10(baseY));
+            
+            // 100'ler basamağına yuvarla
+            const xBase = Math.floor(baseX / 100) * 100;
+            const yBase = Math.floor(baseY / 100) * 100;
+            
+            console.log(`Koordinat normalizasyonu: X-tabanı=${xBase}, Y-tabanı=${yBase}`);
+            
+            // Koordinatları normalize et
+            normalizedCoordinates = cleanedCoordinates.map(coord => ({
+              x: coord.x - xBase,
+              y: coord.y - yBase
+            }));
+            
+            console.log("Normalize edilmiş koordinatlar:", normalizedCoordinates);
+          }
+          
           // Aynı koordinatları kullanarak polyline oluştur
           if (coordinates.length > 2) {
             console.log("Koordinatlardan polyline oluşturuluyor...");
@@ -90,7 +127,7 @@ export default function DrawingApp() {
             const createPolylineEvent = new CustomEvent('createpolyline', { 
               detail: { 
                 type: 'polyline',
-                points: cleanedCoordinates,
+                points: normalizedCoordinates, // Normalize koordinatlar
                 thickness: 1,
                 closed: true
               } 
@@ -294,9 +331,20 @@ export default function DrawingApp() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Zoom faktörlerini hesapla
-    const zoomX = canvasWidth / width;
-    const zoomY = canvasHeight / height;
+    // Zoom faktörlerini hesapla - çok büyük koordinat değerleriyle çalışırken taşma sorununu önlemek için
+    // Çok büyük koordinatlar (4540000 gibi) çok küçük zoom değerleri üretir (örn. 0.0002)
+    // Bu nedenle, koordinatları normalize ederek hesaplama yapmak daha güvenli
+    
+    // Genişlik ve yüksekliği al (çok büyük olsa bile)
+    let zoomX = canvasWidth / width;
+    let zoomY = canvasHeight / height;
+    
+    console.log("Ham zoom değerleri:", { width, height, canvasWidth, canvasHeight, rawZoomX: zoomX, rawZoomY: zoomY });
+    
+    // Eğer çok küçük zoom değerleri varsa (0'a çok yakın), minimum değeri ayarla
+    const MIN_ZOOM = 0.0001; // Minimum zoom değeri
+    zoomX = Math.max(MIN_ZOOM, zoomX);
+    zoomY = Math.max(MIN_ZOOM, zoomY);
     
     // Daha kısıtlayıcı olanı seç
     const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)

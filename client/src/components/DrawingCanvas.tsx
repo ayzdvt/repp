@@ -1006,17 +1006,26 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
-      // Şekil güncelleme olayını dinle
+      // Şekil güncelleme ve ekleme olayını dinle
       const shapeUpdateHandler = ((e: any) => {
-        if (e.detail && e.detail.type === 'update' && e.detail.shape) {
-          // Güncellenecek şekli bul
-          const shapeIndex = shapesRef.current.findIndex(
-            (s: any) => s.id === e.detail.shape.id
-          );
-          
-          if (shapeIndex !== -1) {
-            // Şekli güncelle
-            shapesRef.current[shapeIndex] = { ...e.detail.shape };
+        if (e.detail && e.detail.shape) {
+          // Güncelleme işlemi
+          if (e.detail.type === 'update') {
+            // Güncellenecek şekli bul
+            const shapeIndex = shapesRef.current.findIndex(
+              (s: any) => s.id === e.detail.shape.id
+            );
+            
+            if (shapeIndex !== -1) {
+              // Şekli güncelle
+              shapesRef.current[shapeIndex] = { ...e.detail.shape };
+            }
+          } 
+          // Ekleme işlemi
+          else if (e.detail.type === 'add') {
+            // Yeni şekli ekle
+            shapesRef.current.push({ ...e.detail.shape });
+            console.log("Şekil eklendi:", e.detail.shape);
           }
         }
       }) as EventListener;

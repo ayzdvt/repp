@@ -329,6 +329,41 @@ export default function DrawingApp() {
     }
   };
   
+  // Test noktası eklemek için kullanılacak fonksiyon
+  const addTestPoint = () => {
+    console.log("Nokta ekleniyor: (100, 100)");
+    // Test için (100, 100) koordinatında bir nokta oluştur
+    const testPoint = {
+      id: Date.now(), // Benzersiz bir ID
+      type: 'point',
+      x: 100,
+      y: 100,
+      style: 'default'
+    };
+    
+    console.log("Hazırlanan test noktası:", testPoint);
+    
+    // Canvas element'ini bul
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        console.log("CustomEvent oluşturuldu, gönderiliyor...");
+        // CustomEvent oluştur
+        const addEvent = new CustomEvent('shapeupdate', {
+          detail: {
+            type: 'add', // Ekleme işlemi
+            shape: testPoint
+          }
+        });
+        
+        // Olayı gönder
+        canvasElement.dispatchEvent(addEvent);
+        console.log("CustomEvent gönderildi");
+      }
+    }
+  };
+
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">
       <Header />
@@ -343,6 +378,14 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
+          {/* Test Nokta Ekle Düğmesi */}
+          <button 
+            className="absolute top-4 right-4 z-10 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+            onClick={addTestPoint}
+          >
+            Test Nokta Ekle (100,100)
+          </button>
+          
           <div id="drawing-canvas">
             <DrawingCanvas 
               canvasState={canvasState}

@@ -23,8 +23,9 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // Test için koordinatları ekleyecek fonksiyon
-  const addTestCoordinates = useCallback(() => {
+  // Test için koordinatları doğrudan ekleyen buton
+  const addTestCoordinates = () => {
+    console.log("Test koordinatları ekleniyor...");
     const testCoordinates = [
       { No: 8, x: 4540345.97, y: 438538.46 },
       { No: 9, x: 4540358.64, y: 438539.69 },
@@ -33,43 +34,41 @@ export default function DrawingApp() {
       { No: 31, x: 4540343.54, y: 438560.07 }
     ];
     
-    // Canvas'a erişim
-    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-    if (!canvasContainer) return;
-    
-    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-    if (!canvasElement) return;
-    
-    console.log("Parsel koordinatları bulundu:", testCoordinates);
-    
-    // Her koordinat için bir nokta oluştur
     let nextId = Date.now();
-    const points = testCoordinates.map(coord => ({
-      id: nextId++,
-      type: 'point',
-      x: coord.x,
-      y: coord.y,
-      style: 'default'
-    }));
     
-    // Noktaları canvas'a ekle
-    points.forEach(point => {
-      const updateEvent = new CustomEvent('shapeupdate', { 
-        detail: { 
-          type: 'update',
-          shape: point
-        } 
-      });
+    // Canvas elementine referansı al
+    if (!document.getElementById("drawing-canvas")) {
+      console.error("Canvas bulunamadı");
+      return;
+    }
+    
+    // Doğrudan shapesRef'e erişmek yerine, her noktayı çizmek için bir yaklaşım kullanalım
+    testCoordinates.forEach((coord, index) => {
+      // Point tool'u aktif et (geçici olarak)
+      setActiveTool("point");
       
-      // Event'i div.absolute üzerinden yayınla
-      canvasElement.dispatchEvent(updateEvent);
+      // Ekranın ortasına ekleyelim
+      const shape = {
+        id: nextId + index,
+        type: 'point',
+        x: coord.x,
+        y: coord.y,
+        style: 'default'
+      };
+      
+      // Shape'i ekle - DraftJS.tsx içinde kullanılan bir yaklaşım
+      shapesRef.current.push(shape);
     });
     
-    // Görünümü uyarla
+    // Shapesleri temizlemeden seçim aracını aktif et
+    setActiveTool("selection");
+    
+    // Yeni eklenen şekillerin görünür olması için görünümü sıfırla
     setTimeout(() => {
       handleResetView();
-    }, 500);
-  }, []);
+      console.log("Test koordinatları eklendi, görünüm ayarlandı");
+    }, 100);
+  };
 
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {

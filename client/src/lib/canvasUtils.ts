@@ -9,12 +9,9 @@ export function screenToWorld(
 ): Point {
   const { width, height } = state.canvasSize;
   
-  // Zoom 0 veya NaN ise varsayılan değer kullan
-  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
-  
   // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
-  const worldY = (screenX - width / 2 - state.panOffset.x) / safeZoom;
-  const worldX = (height / 2 - screenY + state.panOffset.y) / safeZoom;
+  const worldY = (screenX - width / 2 - state.panOffset.x) / state.zoom;
+  const worldX = (height / 2 - screenY + state.panOffset.y) / state.zoom;
   
   return { x: worldX, y: worldY };
 }
@@ -28,12 +25,9 @@ export function worldToScreen(
 ): Point {
   const { width, height } = state.canvasSize;
   
-  // Zoom 0 veya NaN ise varsayılan değer kullan
-  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
-  
   // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
-  const screenX = worldY * safeZoom + width / 2 + state.panOffset.x;
-  const screenY = height / 2 - worldX * safeZoom + state.panOffset.y;
+  const screenX = worldY * state.zoom + width / 2 + state.panOffset.x;
+  const screenY = height / 2 - worldX * state.zoom + state.panOffset.y;
   
   return { x: screenX, y: screenY };
 }
@@ -42,16 +36,9 @@ export function worldToScreen(
 export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   const { width, height } = state.canvasSize;
   
-  // Zoom değeri için güvenlik kontrolü
-  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
-  const safeState = {
-    ...state,
-    zoom: safeZoom
-  };
-  
   // Calculate starting point for the grid lines
-  const startPoint = screenToWorld(0, height, safeState);
-  const endPoint = screenToWorld(width, 0, safeState);
+  const startPoint = screenToWorld(0, height, state);
+  const endPoint = screenToWorld(width, 0, state);
   
   // Zoom seviyesine göre grid aralığını ve birim gösterimini belirle
   let gridStep = 50; // Varsayılan 50cm grid adımı (zoom 1.0)
@@ -113,7 +100,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   // Draw vertical grid lines (X axis lines)
   for (let x = startX; x <= endX; x += gridStep) {
     // X ekseni dikey olduğu için, sabit X değeri = sabit screenY değeri anlamına gelir
-    const { y: screenY } = worldToScreen(x, 0, safeState);
+    const { y: screenY } = worldToScreen(x, 0, state);
     
     // Ekranın dışına taşan çizgileri çizme
     if (screenY < 0 || screenY > height) continue;
@@ -140,7 +127,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   // Draw horizontal grid lines (Y axis lines)
   for (let y = startY; y <= endY; y += gridStep) {
     // Y ekseni yatay olduğu için, sabit Y değeri = sabit screenX değeri anlamına gelir
-    const { x: screenX } = worldToScreen(0, y, safeState);
+    const { x: screenX } = worldToScreen(0, y, state);
     
     // Ekranın dışına taşan çizgileri çizme
     if (screenX < 0 || screenX > width) continue;
@@ -165,7 +152,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   }
   
   // Draw x and y axes
-  const origin = worldToScreen(0, 0, safeState);
+  const origin = worldToScreen(0, 0, state);
   
   // X-axis (yatay çizgi)
   ctx.beginPath();
@@ -246,8 +233,9 @@ export function drawSnapIndicators(
   // En yakın yakalama noktası varsa göster
   if (nearestPoint) {
     try {
-      // Dünya koordinatlarını ekran koordinatlarına dönüştür - worldToScreen fonksiyonunu kullan
-      const { x: screenX, y: screenY } = worldToScreen(nearestPoint.x, nearestPoint.y, state);
+      // Dünya koordinatlarını ekran koordinatlarına dönüştür
+      const screenX = nearestPoint.x * state.zoom + state.canvasSize.width / 2 + state.panOffset.x;
+      const screenY = state.canvasSize.height / 2 - nearestPoint.y * state.zoom + state.panOffset.y;
       
       // Dış yeşil daire çiz
       ctx.beginPath();

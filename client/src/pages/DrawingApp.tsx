@@ -32,7 +32,7 @@ export default function DrawingApp() {
     try {
       const coordinates = JSON.parse(coordsString);
       
-      if (Array.isArray(coordinates) && coordinates.length > 0) {
+      if (Array.isArray(coordinates) && coordinates.length > 2) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
@@ -44,48 +44,27 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          // Koordinat aralığını bulalım
-          const xValues = coordinates.map(c => c.x);
-          const yValues = coordinates.map(c => c.y);
+          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+          const cleanedCoordinates = coordinates.map(coord => ({
+            x: coord.x,
+            y: coord.y
+          }));
           
-          const minX = Math.min(...xValues);
-          const maxX = Math.max(...xValues);
-          const minY = Math.min(...yValues);
-          const maxY = Math.max(...yValues);
-          
-          // Çok büyük değerlerin olup olmadığını kontrol edelim (milyon veya milyar gibi)
-          const isVeryLargeValues = Math.abs(maxX) > 10000 || Math.abs(minX) > 10000 || 
-                                   Math.abs(maxY) > 10000 || Math.abs(minY) > 10000;
-          
-          // Koordinatları oluştur - HAM DEĞERLERİ KULLAN, NORMALİZE ETME
-          coordinates.forEach((coord, index) => {
-            // Her bir koordinat için bir nokta oluştur
-            const createPointEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'point',
-                x: coord.x, // Orijinal ham X değeri
-                y: coord.y, // Orijinal ham Y değeri
-                style: 'default',
-                id: Date.now() + index // Benzersiz ID oluştur
-              } 
-            });
-            
-            // Event'i div.absolute üzerinden yayınla
-            canvasElement.dispatchEvent(createPointEvent);
+          // Polyline oluşturmak için event gönder
+          const createEvent = new CustomEvent('createshape', { 
+            detail: { 
+              type: 'polyline',
+              points: cleanedCoordinates,
+              thickness: 2,
+              closed: true
+            } 
           });
           
-          // LocalStorage'ı temizle (tekrar yüklenince aynı noktaları oluşturmamak için)
-          localStorage.removeItem('parselCoordinates');
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(createEvent);
           
-          // Çok büyük değerler için özel zoom ayarlaması
-          if (isVeryLargeValues) {
-            // Çok küçük bir zoom değeri ile başla
-            setZoom(0.00001);
-            setCanvasState(prev => ({
-              ...prev,
-              zoom: 0.00001
-            }));
-          }
+          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
+          localStorage.removeItem('parselCoordinates');
           
           // Görünümü tam ekrana uyarla
           handleResetView();
@@ -222,58 +201,6 @@ export default function DrawingApp() {
       return;
     }
     
-    // BÜYÜK SAYILAR İÇİN ÖZEL İŞLEM
-    const isBigCoordinates = Math.abs(minX) > 10000 || Math.abs(minY) > 10000 || 
-                            Math.abs(maxX) > 10000 || Math.abs(maxY) > 10000;
-    
-    if (isBigCoordinates) {
-      // Çok büyük değerler (milyon gibi) için özel işlem
-      const width = maxX - minX;
-      const height = maxY - minY;
-      
-      // Merkez noktayı hesapla
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-      
-      // Büyük koordinatlar için özel zoom seviyesi hesaplama
-      // Önce koordinat aralığının büyüklüğüne göre uygun bir zoom hesaplayalım
-      // Ekran boyutları düşünülerek skala belirle
-      const scaleX = canvasWidth / width;
-      const scaleY = canvasHeight / height;
-      
-      // Koordinat sisteminin ortasına odaklanacak uygun zoom
-      const appropriateZoom = Math.min(scaleX, scaleY) * 0.9; // %90 güvenlik faktörü
-      
-      // Çok küçük zoom değerlerini limitle
-      const safeZoom = Math.max(0.0000001, appropriateZoom);
-      
-      // Pan offset'i merkez koordinatına göre ayarla
-      const panX = -(centerX * safeZoom);
-      const panY = (centerY * safeZoom);
-      
-      // Apply the new zoom and pan
-      setZoom(safeZoom);
-      setCanvasState({
-        gridSize: 10, 
-        zoom: safeZoom,
-        panOffset: { x: panX, y: panY },
-        canvasSize: canvasState.canvasSize
-      });
-      
-      console.log("Büyük koordinatlar için ayarlanan değerler:", {
-        zoom: safeZoom,
-        panX,
-        panY,
-        width,
-        height,
-        centerX,
-        centerY
-      });
-      
-      return;
-    }
-    
-    // NORMAL DEĞERLER İÇİN STANDART İŞLEM
     // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
     const margin = 50;
     minX -= margin;
@@ -303,13 +230,7 @@ export default function DrawingApp() {
     const zoomY = canvasHeight / height;
     
     // Daha kısıtlayıcı olanı seç
-    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-    
-    // Zoom değeri için güvenlik kontrolü
-    if (!isFinite(newZoom) || newZoom <= 0) {
-      console.log("Uyarı: Geçersiz zoom değeri, varsayılana ayarlanıyor");
-      newZoom = 0.5; // Varsayılan zoom değeri
-    }
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     
@@ -319,7 +240,21 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // canvasUtils.ts'deki worldToScreen fonksiyonu mantığıyla pan offset hesaplama
+    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
+    
+    // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
+    // Orijinal worldToScreen formülünden:
+    // screenX = worldX * zoom + width / 2 + panOffset.x;
+    // screenY = height / 2 - worldY * zoom + panOffset.y;
+    
+    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
+    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
+    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
+    
+    // Bu denklemleri çözersek:
+    // panOffset.x = -centerX * zoom
+    // panOffset.y = centerY * zoom
+    
     const panOffsetX = -centerX * newZoom;
     const panOffsetY = centerY * newZoom;
     

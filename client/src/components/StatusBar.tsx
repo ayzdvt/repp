@@ -21,28 +21,8 @@ const StatusBar: React.FC<StatusBarProps> = ({
   canvasState
 }) => {
   // Format the mouse position to display exactly 2 decimal places
-  // Check for large coordinates and format accordingly
-  const formatLargeCoordinate = (value: number) => {
-    if (!isFinite(value)) return 'N/A';
-    
-    if (Math.abs(value) >= 1000000) {
-      // Display as millions (e.g., 4.54M)
-      return (value / 1000000).toFixed(2) + 'M';
-    } else if (Math.abs(value) >= 10000) {
-      // Display as thousands (e.g., 45.4K)
-      return (value / 1000).toFixed(1) + 'K';
-    } else {
-      // Regular display with 2 decimal places
-      return value.toFixed(2);
-    }
-  };
-  
-  const formattedX = typeof mousePosition.x === 'number' && isFinite(mousePosition.x) 
-    ? formatLargeCoordinate(mousePosition.x)
-    : 'N/A';
-  const formattedY = typeof mousePosition.y === 'number' && isFinite(mousePosition.y) 
-    ? formatLargeCoordinate(mousePosition.y)
-    : 'N/A';
+  const formattedX = mousePosition.x.toFixed(2);
+  const formattedY = mousePosition.y.toFixed(2);
   
   // Görülebilir koordinat aralığını hesapla
   const calculateVisibleBounds = () => {
@@ -67,31 +47,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
       canvasState.canvasSize.height
     );
     
-    // Sonuçların geçerli sayılar olduğundan emin ol ve büyük sayılar için formatlama yap
-    const minXVal = isFinite(Math.min(topLeft.x, bottomRight.x)) ? Math.min(topLeft.x, bottomRight.x) : 0;
-    const minYVal = isFinite(Math.min(topLeft.y, bottomRight.y)) ? Math.min(topLeft.y, bottomRight.y) : 0;
-    const maxXVal = isFinite(Math.max(topLeft.x, bottomRight.x)) ? Math.max(topLeft.x, bottomRight.x) : 0;
-    const maxYVal = isFinite(Math.max(topLeft.y, bottomRight.y)) ? Math.max(topLeft.y, bottomRight.y) : 0;
-    
-    // Koordinatlar büyük mü kontrol et
-    const hasBigCoordinates = Math.abs(minXVal) > 10000 || Math.abs(minYVal) > 10000 || 
-                             Math.abs(maxXVal) > 10000 || Math.abs(maxYVal) > 10000;
-    
-    if (hasBigCoordinates) {
-      // Büyük sayılar için kısaltılmış formatla göster
-      const minX = formatLargeCoordinate(minXVal);
-      const minY = formatLargeCoordinate(minYVal);
-      const maxX = formatLargeCoordinate(maxXVal);
-      const maxY = formatLargeCoordinate(maxYVal);
-      return { minX, minY, maxX, maxY };
-    } else {
-      // Normal değerler için standart gösterim
-      const minX = minXVal.toFixed(0);
-      const minY = minYVal.toFixed(0);
-      const maxX = maxXVal.toFixed(0);
-      const maxY = maxYVal.toFixed(0);
-      return { minX, minY, maxX, maxY };
-    }
+    return {
+      minX: Math.min(topLeft.x, bottomRight.x).toFixed(0),
+      minY: Math.min(topLeft.y, bottomRight.y).toFixed(0),
+      maxX: Math.max(topLeft.x, bottomRight.x).toFixed(0),
+      maxY: Math.max(topLeft.y, bottomRight.y).toFixed(0)
+    };
   };
   
   const bounds = calculateVisibleBounds();

@@ -895,6 +895,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    // Yeni şekil oluşturma - AnalysisResult'tan gelen koordinatlar için
+    const handleCreateShape = (e: any) => {
+      const { detail } = e;
+      if (detail && detail.type) {
+        // Yeni şekil ekle
+        shapesRef.current.push({
+          id: detail.id || nextIdRef.current++,
+          ...detail
+        });
+      }
+    };
+    
     // Tüm şekilleri döndürme - Fit View için
     const handleGetAllShapes = (e: any) => {
       const { detail } = e;
@@ -927,14 +939,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    // createShape event handler için
+    const createShapeHandler = (e: any) => {
+      const { detail } = e;
+      if (detail && detail.type) {
+        // Yeni şekil ekle
+        const newShape = {
+          id: detail.id || nextIdRef.current++,
+          ...detail
+        };
+        shapesRef.current.push(newShape);
+      }
+    };
+    
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
     containerElement.addEventListener('getAllShapes', getAllShapesHandler);
+    containerElement.addEventListener('createshape', createShapeHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
       containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
+      containerElement.removeEventListener('createshape', createShapeHandler);
     };
   }, []);
   

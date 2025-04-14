@@ -32,7 +32,7 @@ export default function DrawingApp() {
     try {
       const coordinates = JSON.parse(coordsString);
       
-      if (Array.isArray(coordinates) && coordinates.length > 2) {
+      if (Array.isArray(coordinates) && coordinates.length > 0) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
@@ -44,26 +44,24 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
-          const cleanedCoordinates = coordinates.map(coord => ({
-            x: coord.x,
-            y: coord.y
-          }));
-          
-          // Polyline oluşturmak için event gönder
-          const createEvent = new CustomEvent('createshape', { 
-            detail: { 
-              type: 'polyline',
-              points: cleanedCoordinates,
-              thickness: 2,
-              closed: true
-            } 
+          // Koordinatları nokta olarak ekle
+          coordinates.forEach((coord, index) => {
+            // Her bir koordinat için bir nokta oluştur
+            const createPointEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'point',
+                x: coord.x,
+                y: coord.y,
+                style: 'default',
+                id: Date.now() + index // Benzersiz ID oluştur
+              } 
+            });
+            
+            // Event'i div.absolute üzerinden yayınla
+            canvasElement.dispatchEvent(createPointEvent);
           });
           
-          // Event'i div.absolute üzerinden yayınla
-          canvasElement.dispatchEvent(createEvent);
-          
-          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
+          // LocalStorage'ı temizle (tekrar yüklenince aynı noktaları oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
           // Görünümü tam ekrana uyarla

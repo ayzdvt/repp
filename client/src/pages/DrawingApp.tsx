@@ -4,6 +4,7 @@ import ToolSidebar from "@/components/ToolSidebar";
 import PropertiesSidebar from "@/components/PropertiesSidebar";
 import StatusBar from "@/components/StatusBar";
 import DrawingCanvas from "@/components/DrawingCanvas";
+import PointCoordinateDialog from "@/components/PointCoordinateDialog";
 import { CanvasState, Tool, Point } from "@/types";
 
 export default function DrawingApp() {

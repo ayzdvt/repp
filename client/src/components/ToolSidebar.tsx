@@ -7,6 +7,7 @@ interface ToolSidebarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitView?: () => void; // Fit View butonu için
+  onOpenPointDialog?: () => void; // Koordinat girişi dialog'u için
 }
 
 const ToolSidebar: React.FC<ToolSidebarProps> = ({ 
@@ -14,7 +15,8 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
   onToolChange,
   onZoomIn,
   onZoomOut,
-  onFitView
+  onFitView,
+  onOpenPointDialog
 }) => {
   return (
     <div className="bg-[#ECECEC] w-12 flex-shrink-0 border-r border-gray-300 flex flex-col">
@@ -29,15 +31,31 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
           </svg>
         </button>
         
-        <button 
-          className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'point' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Point Tool" 
-          onClick={() => onToolChange('point')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle cx="12" cy="12" r="3" strokeWidth="2" />
-          </svg>
-        </button>
+        <div className="relative">
+          <button 
+            className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'point' ? 'bg-[#D0D0D0]' : ''}`}
+            title="Point Tool" 
+            onClick={() => onToolChange('point')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="12" cy="12" r="3" strokeWidth="2" />
+            </svg>
+          </button>
+          
+          {/* Point aracı seçiliyse, koordinat girişi düğmesi göster */}
+          {activeTool === 'point' && onOpenPointDialog && (
+            <button
+              className="absolute top-0 right-0 w-4 h-4 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 transform translate-x-1/2 -translate-y-1/2"
+              title="Koordinat Gir"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenPointDialog) onOpenPointDialog();
+              }}
+            >
+              +
+            </button>
+          )}
+        </div>
         
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'line' ? 'bg-[#D0D0D0]' : ''}`}

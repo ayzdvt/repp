@@ -52,24 +52,68 @@ export default function DrawingApp() {
           
           // Tüm koordinatlar için ayrı ayrı nokta oluştur
           coordinates.forEach((coord, index) => {
+            // Koordinatları doğru formatta olduğundan emin olalım (sayı olarak)
+            const x = Number(coord.x);
+            const y = Number(coord.y);
+            
+            console.log(`Eklenen koordinat ${index+1}: x=${x}, y=${y}`);
+            
             const createPointEvent = new CustomEvent('createshape', { 
               detail: { 
                 type: 'point',
-                x: coord.x,
-                y: coord.y,
+                x: x,
+                y: y,
                 style: 'default'
               } 
             });
             
-            // Her nokta için event'i yayınla
+            // Event'i yayınla 
+            // Canvas container veya canvas elemanı üzerinden event'i yayınla
+            // Hem canvas container hem de canvas elemanı için deneyelim
             canvasElement.dispatchEvent(createPointEvent);
+          
+            // Canvas elemanını da bulup dinleyici ekleyelim (her ihtimale karşı)
+            const canvasObj = document.querySelector('#drawing-canvas canvas');
+            if (canvasObj) {
+              console.log("Canvas elem found, dispatching event");
+              canvasObj.dispatchEvent(createPointEvent);
+            } else {
+              console.log("Canvas elem not found");
+            }
           });
+          
+          // Aynı koordinatları kullanarak polyline oluştur
+          if (coordinates.length > 2) {
+            console.log("Koordinatlardan polyline oluşturuluyor...");
+            
+            // Polyline oluşturmak için event hazırla
+            const createPolylineEvent = new CustomEvent('createpolyline', { 
+              detail: { 
+                type: 'polyline',
+                points: cleanedCoordinates,
+                thickness: 1,
+                closed: true
+              } 
+            });
+            
+            // Event'i yayınla
+            canvasElement.dispatchEvent(createPolylineEvent);
+            
+            const canvasObj = document.querySelector('#drawing-canvas canvas');
+            if (canvasObj) {
+              canvasObj.dispatchEvent(createPolylineEvent);
+            }
+          }
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
-          // Görünümü tam ekrana uyarla
-          handleResetView();
+          // Görünümü tam ekrana uyarla - ekstra gecikme ekle
+          // Noktaların tamamen oluşturulması ve canvas'a eklenmesi için bekleyelim
+          setTimeout(() => {
+            console.log("Koordinatları merkeze alma işlemi yapılıyor...");
+            handleResetView();
+          }, 2000); 
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {

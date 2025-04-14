@@ -20,6 +20,9 @@ export default function DrawingApp() {
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
+  // Canvas içindeki referans
+  // Removed canvasRef
+  
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
     // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
@@ -29,7 +32,7 @@ export default function DrawingApp() {
     try {
       const coordinates = JSON.parse(coordsString);
       
-      if (Array.isArray(coordinates) && coordinates.length > 0) {
+      if (Array.isArray(coordinates) && coordinates.length > 2) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
@@ -41,32 +44,34 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          // Her bir koordinat için ayrı bir nokta oluştur
-          coordinates.forEach(coord => {
-            // Nokta oluşturmak için event gönder
-            const createEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'point',
-                x: coord.x,
-                y: coord.y,
-                style: 'default'
-              } 
-            });
-            
-            canvasElement.dispatchEvent(createEvent);
+          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+          const cleanedCoordinates = coordinates.map(coord => ({
+            x: coord.x,
+            y: coord.y
+          }));
+          
+          // Polyline oluşturmak için event gönder
+          const createEvent = new CustomEvent('createshape', { 
+            detail: { 
+              type: 'polyline',
+              points: cleanedCoordinates,
+              thickness: 2,
+              closed: true
+            } 
           });
           
-          // Noktalar eklendikten sonra fit view yap
-          setTimeout(() => {
-            handleResetView();
-          }, 100);
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(createEvent);
           
-          // Kullanıldıktan sonra localStorage'ı temizle
+          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
-        }, 500); // Canvas hazır olması için kısa bir gecikme
+          
+          // Görünümü tam ekrana uyarla
+          handleResetView();
+        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {
-      console.error("Koordinat yükleme hatası:", error);
+      console.error("Parsel koordinatları yüklenirken hata:", error);
     }
   }, []);
   

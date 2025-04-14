@@ -121,26 +121,26 @@ export default function AnalysisPage() {
     
     try {
       // API'ya gönderilecek veriyi hazırla
-      // Eksik değerler için null değil undefined kullan
+      // Tüm değerleri metinsel olarak hazırla
       const projectData = {
         city: result.city || undefined,
         district: result.district || undefined,
         neighborhood: result.neighborhood || undefined,
-        block: result.block || undefined,
-        parcel: result.parcel || undefined,
-        land_area: result.land_area ? Number(result.land_area) : undefined,
+        block: result.block ? String(result.block) : undefined,
+        parcel: result.parcel ? String(result.parcel) : undefined,
+        land_area: result.land_area ? String(result.land_area) : undefined,
         owner: result.owner || undefined,
         sheet_no: result.sheet_no || undefined,
-        floor_count: result.floor_count || undefined,
-        front_setback: result.front_setback ? Number(result.front_setback) : undefined,
-        side_setback: result.side_setback ? Number(result.side_setback) : undefined,
-        rear_setback: result.rear_setback ? Number(result.rear_setback) : undefined,
+        floor_count: result.floor_count ? String(result.floor_count) : undefined,
+        front_setback: result.front_setback ? String(result.front_setback) : undefined,
+        side_setback: result.side_setback ? String(result.side_setback) : undefined,
+        rear_setback: result.rear_setback ? String(result.rear_setback) : undefined,
         roof_type: result.roof_type || undefined,
-        roof_angle: result.roof_angle ? Number(result.roof_angle) : undefined,
+        roof_angle: result.roof_angle ? String(result.roof_angle) : undefined,
         building_order: result.building_order || undefined,
         plan_position: result.plan_position || undefined,
-        ground_coverage_ratio: result.ground_coverage_ratio ? Number(result.ground_coverage_ratio) : undefined,
-        floor_area_ratio: result.floor_area_ratio ? Number(result.floor_area_ratio) : undefined,
+        ground_coverage_ratio: result.ground_coverage_ratio ? String(result.ground_coverage_ratio) : undefined,
+        floor_area_ratio: result.floor_area_ratio ? String(result.floor_area_ratio) : undefined,
         parcel_coordinates: result.parcel_coordinates ? JSON.stringify(result.parcel_coordinates) : '[]',
         userId: 1 // Geçici olarak userId'yi 1 olarak ayarlıyoruz
       };

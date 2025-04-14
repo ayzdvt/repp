@@ -50,18 +50,20 @@ export default function DrawingApp() {
             y: coord.y
           }));
           
-          // Polyline oluşturmak için event gönder
-          const createEvent = new CustomEvent('createshape', { 
-            detail: { 
-              type: 'polyline',
-              points: cleanedCoordinates,
-              thickness: 2,
-              closed: true
-            } 
+          // Tüm koordinatlar için ayrı ayrı nokta oluştur
+          coordinates.forEach((coord, index) => {
+            const createPointEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'point',
+                x: coord.x,
+                y: coord.y,
+                style: 'default'
+              } 
+            });
+            
+            // Her nokta için event'i yayınla
+            canvasElement.dispatchEvent(createPointEvent);
           });
-          
-          // Event'i div.absolute üzerinden yayınla
-          canvasElement.dispatchEvent(createEvent);
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');

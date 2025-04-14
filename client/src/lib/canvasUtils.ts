@@ -32,15 +32,35 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   const startPoint = screenToWorld(0, height, state);
   const endPoint = screenToWorld(width, 0, state);
   
-  // Zoom seviyesine göre grid aralığını belirle (kullanıcı isteğine göre)
+  // Zoom seviyesine göre grid aralığını ve birim gösterimini belirle
   let gridStep = 50; // Varsayılan 50cm grid adımı (zoom 1.0)
+  let unit = 'cm'; // Varsayılan birim cm
+  let divider = 1; // Değer gösterirken bölme faktörü
   
-  if (state.zoom < 0.3) {
-    gridStep = 200; // Zoom < %30 ise 200cm aralıklarla
+  if (state.zoom < 0.05) {
+    gridStep = 10000; // Çok düşük zoom için 100 metre aralık
+    unit = 'km';
+    divider = 100000; // 100000cm = 1 kilometre
+  } else if (state.zoom < 0.1) {
+    gridStep = 5000; // Düşük zoom için 50 metre aralık
+    unit = 'm';
+    divider = 100; // 100cm = 1 metre
+  } else if (state.zoom < 0.2) {
+    gridStep = 1000; // Zoom < %20 ise 10 metre aralıklarla
+    unit = 'm';
+    divider = 100; // 100cm = 1 metre
+  } else if (state.zoom < 0.3) {
+    gridStep = 500; // Zoom < %30 ise 5 metre aralıklarla
+    unit = 'm';
+    divider = 100; // 100cm = 1 metre
   } else if (state.zoom < 0.5) {
-    gridStep = 100; // Zoom < %50 ise 100cm aralıklarla
+    gridStep = 100; // Zoom < %50 ise 100cm (1 metre) aralıklarla
+    unit = 'cm';
+    divider = 1;
   } else {
     gridStep = 50;  // Zoom >= %50 ise 50cm aralıklarla
+    unit = 'cm';
+    divider = 1;
   }
   
   // Round to nearest grid line
@@ -70,7 +90,10 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
       ctx.fillStyle = '#666666';
       ctx.font = '10px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(x.toString() + ' cm', screenX, height - 5);
+      
+      // Ölçü birimini değiştir (cm, m veya km)
+      const displayValue = (x / divider);
+      ctx.fillText(displayValue.toString() + ' ' + unit, screenX, height - 5);
     }
   }
   
@@ -93,7 +116,10 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
       ctx.fillStyle = '#666666';
       ctx.font = '10px Arial';
       ctx.textAlign = 'right';
-      ctx.fillText(y.toString() + ' cm', 25, screenY + 4); // X pozisyonunu 25 yaptık ki toolbar'ın dışında olsun
+      
+      // Toolbar'ın üzerinde gösterdiğimizden emin olmak için X pozisyonunu 30px'e yükselttik
+      const displayValue = (y / divider);
+      ctx.fillText(displayValue.toString() + ' ' + unit, 30, screenY + 4);
     }
   }
   

@@ -28,30 +28,19 @@ export function worldToScreen(
 export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   const { width, height } = state.canvasSize;
   
-  // Calculate grid spacing based on zoom level
-  const gridSpacing = state.gridSize * state.zoom;
-  
   // Calculate starting point for the grid lines
   const startPoint = screenToWorld(0, height, state);
   const endPoint = screenToWorld(width, 0, state);
   
-  // Calculate step size based on zoom level
-  // Zoom değerine göre grid adımlarını ayarla
-  let gridStep = state.gridSize;
-  let labelMultiplier = 10; // Ana grid çizgilerini ne kadar aralıklarla göstereceğimiz
+  // Zoom seviyesine göre grid aralığını belirle (kullanıcı isteğine göre)
+  let gridStep = 50; // Varsayılan 50cm grid adımı (zoom 1.0)
   
-  if (state.zoom < 0.0001) {
-    gridStep = state.gridSize * 10000;
-    labelMultiplier = 1;
-  } else if (state.zoom < 0.001) {
-    gridStep = state.gridSize * 1000;
-    labelMultiplier = 1;
-  } else if (state.zoom < 0.01) {
-    gridStep = state.gridSize * 100;
-    labelMultiplier = 1;
-  } else if (state.zoom < 0.1) {
-    gridStep = state.gridSize * 10;
-    labelMultiplier = 1;
+  if (state.zoom < 0.3) {
+    gridStep = 200; // Zoom < %30 ise 200cm aralıklarla
+  } else if (state.zoom < 0.5) {
+    gridStep = 100; // Zoom < %50 ise 100cm aralıklarla
+  } else {
+    gridStep = 50;  // Zoom >= %50 ise 50cm aralıklarla
   }
   
   // Round to nearest grid line
@@ -65,50 +54,46 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   // Draw vertical grid lines
   for (let x = startX; x <= endX; x += gridStep) {
     const { x: screenX } = worldToScreen(x, 0, state);
+    
+    // Ekranın dışına taşan çizgileri çizme
+    if (screenX < 0 || screenX > width) continue;
+    
     ctx.beginPath();
     ctx.moveTo(screenX, 0);
     ctx.lineTo(screenX, height);
     
-    // Main grid lines (every labelMultiplier units) are darker
-    if (x % (gridStep * labelMultiplier) === 0) {
-      ctx.strokeStyle = '#AAAAAA';
-    } else {
-      ctx.strokeStyle = '#DDDDDD';
-    }
-    
+    ctx.strokeStyle = '#AAAAAA';
     ctx.stroke();
     
-    // Add labels for the main grid lines (cm cinsinden)
-    if (x % (gridStep * labelMultiplier) === 0 && x !== 0) {
-      ctx.fillStyle = '#888888';
+    // X ekseni etiketleri (alt kısımda)
+    if (x !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
+      ctx.fillStyle = '#666666';
       ctx.font = '10px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(x.toString() + ' cm', screenX, height - 2);
+      ctx.fillText(x.toString() + ' cm', screenX, height - 5);
     }
   }
   
   // Draw horizontal grid lines
   for (let y = startY; y <= endY; y += gridStep) {
     const { y: screenY } = worldToScreen(0, y, state);
+    
+    // Ekranın dışına taşan çizgileri çizme
+    if (screenY < 0 || screenY > height) continue;
+    
     ctx.beginPath();
     ctx.moveTo(0, screenY);
     ctx.lineTo(width, screenY);
     
-    // Main grid lines (every labelMultiplier units) are darker
-    if (y % (gridStep * labelMultiplier) === 0) {
-      ctx.strokeStyle = '#AAAAAA';
-    } else {
-      ctx.strokeStyle = '#DDDDDD';
-    }
-    
+    ctx.strokeStyle = '#AAAAAA';
     ctx.stroke();
     
-    // Add labels for the main grid lines (cm cinsinden)
-    if (y % (gridStep * labelMultiplier) === 0 && y !== 0) {
-      ctx.fillStyle = '#888888';
+    // Y ekseni etiketleri (sol kısımda) - toolbar'ın dışında kalacak şekilde
+    if (y !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
+      ctx.fillStyle = '#666666';
       ctx.font = '10px Arial';
       ctx.textAlign = 'right';
-      ctx.fillText(y.toString() + ' cm', 14, screenY + 3);
+      ctx.fillText(y.toString() + ' cm', 25, screenY + 4); // X pozisyonunu 25 yaptık ki toolbar'ın dışında olsun
     }
   }
   

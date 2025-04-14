@@ -23,8 +23,61 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
+  // Test için koordinatları ekleyecek fonksiyon
+  const addTestCoordinates = useCallback(() => {
+    const testCoordinates = [
+      { No: 8, x: 4540345.97, y: 438538.46 },
+      { No: 9, x: 4540358.64, y: 438539.69 },
+      { No: 10, x: 4540362.61, y: 438544.59 },
+      { No: 11, x: 4540359.53, y: 438561.74 },
+      { No: 31, x: 4540343.54, y: 438560.07 }
+    ];
+    
+    // Canvas'a erişim
+    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+    if (!canvasContainer) return;
+    
+    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+    if (!canvasElement) return;
+    
+    console.log("Parsel koordinatları bulundu:", testCoordinates);
+    
+    // Her koordinat için bir nokta oluştur
+    let nextId = Date.now();
+    const points = testCoordinates.map(coord => ({
+      id: nextId++,
+      type: 'point',
+      x: coord.x,
+      y: coord.y,
+      style: 'default'
+    }));
+    
+    // Noktaları canvas'a ekle
+    points.forEach(point => {
+      const updateEvent = new CustomEvent('shapeupdate', { 
+        detail: { 
+          type: 'update',
+          shape: point
+        } 
+      });
+      
+      // Event'i div.absolute üzerinden yayınla
+      canvasElement.dispatchEvent(updateEvent);
+    });
+    
+    // Görünümü uyarla
+    setTimeout(() => {
+      handleResetView();
+    }, 500);
+  }, []);
+
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
+    // Test için koordinatları ekle
+    setTimeout(() => {
+      addTestCoordinates();
+    }, 1000);
+    
     // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
     const coordsString = localStorage.getItem('parselCoordinates');
     if (!coordsString) return;
@@ -33,7 +86,7 @@ export default function DrawingApp() {
       const coordinates = JSON.parse(coordsString);
       
       if (Array.isArray(coordinates) && coordinates.length > 2) {
-        console.log("Parsel koordinatları bulundu:", coordinates);
+        console.log("LocalStorage'dan parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
         setTimeout(() => {
@@ -68,12 +121,12 @@ export default function DrawingApp() {
           
           // Görünümü tam ekrana uyarla
           handleResetView();
-        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+        }, 1500); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1.5 saniye bekle
       }
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);
     }
-  }, []);
+  }, [addTestCoordinates]);
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -208,14 +261,35 @@ export default function DrawingApp() {
     maxX += margin;
     maxY += margin;
     
+    // Çok küçük nesneler veya tek nokta için ekstra marj
+    if (maxX - minX < 20) {
+      const center = (minX + maxX) / 2;
+      minX = center - 50;
+      maxX = center + 50;
+    }
+    
+    if (maxY - minY < 20) {
+      const center = (minY + maxY) / 2;
+      minY = center - 50;
+      maxY = center + 50;
+    }
+    
+    // Objelerin boyutları
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // Merkez noktayı hesapla
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
     // Çok büyük koordinatlar için özel kontrol
     if (maxX > 1000000 || minX > 1000000 || maxY > 1000000 || minY > 1000000) {
       console.log("Büyük koordinatlar için ayarlanan değerler:", {
         zoom: 0.0000001,
         panX: -(centerX * 0.0000001),
         panY: (centerY * 0.0000001),
-        width: maxX - minX,
-        height: maxY - minY,
+        width: width,
+        height: height,
         centerX: centerX,
         centerY: centerY
       });
@@ -234,23 +308,6 @@ export default function DrawingApp() {
       return;
     }
     
-    // Çok küçük nesneler veya tek nokta için ekstra marj
-    if (maxX - minX < 20) {
-      const center = (minX + maxX) / 2;
-      minX = center - 50;
-      maxX = center + 50;
-    }
-    
-    if (maxY - minY < 20) {
-      const center = (minY + maxY) / 2;
-      minY = center - 50;
-      maxY = center + 50;
-    }
-    
-    // Objelerin boyutları
-    const width = maxX - minX;
-    const height = maxY - minY;
-    
     // Zoom faktörlerini hesapla
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
@@ -259,10 +316,6 @@ export default function DrawingApp() {
     const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
-    
-    // Merkez noktayı hesapla
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     

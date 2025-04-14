@@ -23,9 +23,9 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // LocalStorage'dan koordinatları al ve çizim alanına ekle
+  // Test amaçlı noktaları ekle ve çizim alanını ayarla
   useEffect(() => {
-    // Test için 100,100 ve 200,200 noktalarını çizmek için
+    // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
     setTimeout(() => {
       // Canvas'a erişim
       const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
@@ -34,31 +34,46 @@ export default function DrawingApp() {
       const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
       if (!canvasElement) return;
       
-      // Test noktaları
-      const testPoints = [
-        { x: 100, y: 100 },
-        { x: 200, y: 200 }
-      ];
+      // Test noktalarını oluştur - doğrudan şekil ekleme olayını kullan
+      const testPoint1 = {
+        id: 1,
+        type: 'point',
+        x: 100,
+        y: 100,
+        style: 'default'
+      };
       
-      // Noktaları oluştur
-      testPoints.forEach((point, index) => {
-        const createPointEvent = new CustomEvent('createshape', { 
-          detail: { 
-            type: 'point',
-            x: point.x,
-            y: point.y,
-            style: 'default'
-          } 
-        });
-        canvasElement.dispatchEvent(createPointEvent);
+      const testPoint2 = {
+        id: 2,
+        type: 'point',
+        x: 200,
+        y: 200,
+        style: 'default'
+      };
+      
+      // Noktaları ekle
+      const addEvent1 = new CustomEvent('shapeupdate', { 
+        detail: { 
+          type: 'add',
+          shape: testPoint1
+        } 
       });
+      canvasElement.dispatchEvent(addEvent1);
+      
+      const addEvent2 = new CustomEvent('shapeupdate', { 
+        detail: { 
+          type: 'add',
+          shape: testPoint2
+        } 
+      });
+      canvasElement.dispatchEvent(addEvent2);
       
       // Görünümü tam ekrana uyarla
       setTimeout(() => {
+        console.log("FitView çağrılıyor...");
         handleResetView();
       }, 500);
-      
-    }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+    }, 1000);
     
     // Parsel koordinatlarını da kontrol et
     const coordsString = localStorage.getItem('parselCoordinates');

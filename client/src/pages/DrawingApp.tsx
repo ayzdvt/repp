@@ -25,7 +25,42 @@ export default function DrawingApp() {
   
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
-    // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
+    // Test için 100,100 ve 200,200 noktalarını çizmek için
+    setTimeout(() => {
+      // Canvas'a erişim
+      const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+      if (!canvasContainer) return;
+      
+      const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+      if (!canvasElement) return;
+      
+      // Test noktaları
+      const testPoints = [
+        { x: 100, y: 100 },
+        { x: 200, y: 200 }
+      ];
+      
+      // Noktaları oluştur
+      testPoints.forEach((point, index) => {
+        const createPointEvent = new CustomEvent('createshape', { 
+          detail: { 
+            type: 'point',
+            x: point.x,
+            y: point.y,
+            style: 'default'
+          } 
+        });
+        canvasElement.dispatchEvent(createPointEvent);
+      });
+      
+      // Görünümü tam ekrana uyarla
+      setTimeout(() => {
+        handleResetView();
+      }, 500);
+      
+    }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+    
+    // Parsel koordinatlarını da kontrol et
     const coordsString = localStorage.getItem('parselCoordinates');
     if (!coordsString) return;
     
@@ -68,7 +103,7 @@ export default function DrawingApp() {
           
           // Görünümü tam ekrana uyarla
           handleResetView();
-        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
+        }, 1500); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1.5 saniye bekle
       }
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);

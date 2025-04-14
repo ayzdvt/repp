@@ -120,25 +120,55 @@ export default function AnalysisPage() {
     setIsSaving(true);
     
     try {
-      // Veritabanına gönderilecek veriyi hazırla
+      // API'ya gönderilecek veriyi hazırla
+      // Eksik değerler için null değil undefined kullan
       const projectData = {
-        ...result,
-        // Geçici olarak userId'yi 1 olarak ayarlıyoruz (normalde oturum yönetiminden alınması gerekir)
-        userId: 1,
-        // Koordinatları olduğu gibi JSON nesnesi olarak bırak (model zaten json tipini kabul ediyor)
-        parcel_coordinates: result.parcel_coordinates || []
+        city: result.city || undefined,
+        district: result.district || undefined,
+        neighborhood: result.neighborhood || undefined,
+        block: result.block || undefined,
+        parcel: result.parcel || undefined,
+        land_area: result.land_area ? Number(result.land_area) : undefined,
+        owner: result.owner || undefined,
+        sheet_no: result.sheet_no || undefined,
+        floor_count: result.floor_count || undefined,
+        front_setback: result.front_setback ? Number(result.front_setback) : undefined,
+        side_setback: result.side_setback ? Number(result.side_setback) : undefined,
+        rear_setback: result.rear_setback ? Number(result.rear_setback) : undefined,
+        roof_type: result.roof_type || undefined,
+        roof_angle: result.roof_angle ? Number(result.roof_angle) : undefined,
+        building_order: result.building_order || undefined,
+        plan_position: result.plan_position || undefined,
+        ground_coverage_ratio: result.ground_coverage_ratio ? Number(result.ground_coverage_ratio) : undefined,
+        floor_area_ratio: result.floor_area_ratio ? Number(result.floor_area_ratio) : undefined,
+        parcel_coordinates: result.parcel_coordinates ? JSON.stringify(result.parcel_coordinates) : '[]',
+        userId: 1 // Geçici olarak userId'yi 1 olarak ayarlıyoruz
       };
       
-      // API'ya veriyi gönder
-      const response = await apiRequest('/api/analyses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: projectData,
-      });
-      
-      setSuccess(`Analiz sonuçları başarıyla veritabanına kaydedildi (ID: ${response.id})`);
+      try {
+        const response = await fetch('/api/analyses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(projectData),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Sunucu hatası: ${response.status} ${errorText}`);
+        }
+        
+        const savedData = await response.json();
+        setSuccess(`Analiz sonuçları başarıyla veritabanına kaydedildi (ID: ${savedData.id})`);
+      } catch (error) {
+        console.error('Fetch hatası:', error);
+        if (error instanceof Error) {
+          throw new Error(`API isteği başarısız: ${error.message}`);
+        } else {
+          throw new Error('API isteği başarısız: Bilinmeyen hata');
+        }
+      }
     } catch (err) {
       const error = err as Error;
       console.error('Veritabanına kaydetme hatası:', error);
@@ -333,7 +363,14 @@ export default function AnalysisPage() {
           <Button 
             variant="outline" 
             className="flex items-center space-x-2"
-            onClick={() => window.location.href = '/drawing'}
+            onClick={() => {
+              if (result?.parcel_coordinates && result.parcel_coordinates.length > 0) {
+                // Koordinatları localStorage'a kaydet
+                localStorage.setItem('parselCoordinates', JSON.stringify(result.parcel_coordinates));
+              }
+              // Çizim sayfasına yönlendir
+              window.location.href = '/drawing';
+            }}
           >
             <span>Çizime Başla</span>
           </Button>

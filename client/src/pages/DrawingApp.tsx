@@ -47,9 +47,31 @@ export default function DrawingApp() {
           // AutoDraw bayrağını kontrol et
           const autoDraw = localStorage.getItem('autoDrawPoints') === 'true';
           
+          // Büyük koordinat değerlerini normalize etmek için hesaplamalar
+          console.log("Koordinatları normalize etmek için işleniyor...");
+          
+          // Koordinatların en küçük değerlerini bul (offset olarak kullanılacak)
+          let minX = Number.MAX_VALUE;
+          let minY = Number.MAX_VALUE;
+          coordinates.forEach(coord => {
+            minX = Math.min(minX, coord.x);
+            minY = Math.min(minY, coord.y);
+          });
+          
+          console.log(`Bulunan minimum değerler: X=${minX}, Y=${minY}`);
+          
+          // Her koordinattan minimum değerleri çıkar (normalize et)
+          const normalizedCoords = coordinates.map(coord => ({
+            ...coord,
+            x: coord.x - minX,
+            y: coord.y - minY
+          }));
+          
+          console.log("Normalize edilmiş koordinatlar:", normalizedCoords);
+          
           // Her koşulda line segmentleri ile çizme yöntemini kullan (polyline kaldırıldı)
           // Koordinatları nokta olarak ayrı ayrı çiz
-          coordinates.forEach((coord, index) => {
+          normalizedCoords.forEach((coord, index) => {
             // Koordinat değişimi: x -> y, y -> x (y eksenini değiştirdik)
             // Her bir koordinat için nokta oluştur
             const createPointEvent = new CustomEvent('createshape', { 
@@ -81,12 +103,12 @@ export default function DrawingApp() {
           });
           
           // Koordinatlar arasında çizgi çizelim (ayrı ayrı çizgiler)
-          if (coordinates.length > 1) {
-            console.log("Koordinatlar arasında çizgiler çiziliyor...");
-            for (let i = 0; i < coordinates.length; i++) {
-              const currentCoord = coordinates[i];
+          if (normalizedCoords.length > 1) {
+            console.log("Normalize edilmiş koordinatlar arasında çizgiler çiziliyor...");
+            for (let i = 0; i < normalizedCoords.length; i++) {
+              const currentCoord = normalizedCoords[i];
               // Son nokta ile ilk nokta arası da dahil olsun (kapalı şekil)
-              const nextCoord = i === coordinates.length - 1 ? coordinates[0] : coordinates[i + 1];
+              const nextCoord = i === normalizedCoords.length - 1 ? normalizedCoords[0] : normalizedCoords[i + 1];
               
               console.log(`Çizgi ${i}: (${currentCoord.y}, ${currentCoord.x}) -> (${nextCoord.y}, ${nextCoord.x})`);
               
@@ -317,11 +339,17 @@ export default function DrawingApp() {
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     
-    // Yeni değerleri ayarla
-    setZoom(newZoom);
+    // Yeni değerleri ayarla - daha büyük bir başlangıç değeri ile (normalize edilmiş koordinatlarda)
+    
+    // Eğer normalize edilmiş koordinatlarla çalışıyorsak, daha büyük bir zoom değeri kullan
+    const finalZoom = Math.max(newZoom, 1.0); // En az 1.0 değerini kullan
+    
+    console.log(`Son zoom değeri: ${finalZoom} (Orijinal: ${newZoom})`);
+    
+    setZoom(finalZoom);
     setCanvasState({
       gridSize: 10, 
-      zoom: newZoom,
+      zoom: finalZoom,
       panOffset: { x: panOffsetX, y: panOffsetY },
       canvasSize: canvasState.canvasSize
     });

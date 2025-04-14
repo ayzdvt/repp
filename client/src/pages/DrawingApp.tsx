@@ -222,6 +222,58 @@ export default function DrawingApp() {
       return;
     }
     
+    // BÜYÜK SAYILAR İÇİN ÖZEL İŞLEM
+    const isBigCoordinates = Math.abs(minX) > 10000 || Math.abs(minY) > 10000 || 
+                            Math.abs(maxX) > 10000 || Math.abs(maxY) > 10000;
+    
+    if (isBigCoordinates) {
+      // Çok büyük değerler (milyon gibi) için özel işlem
+      const width = maxX - minX;
+      const height = maxY - minY;
+      
+      // Merkez noktayı hesapla
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      
+      // Büyük koordinatlar için özel zoom seviyesi hesaplama
+      // Önce koordinat aralığının büyüklüğüne göre uygun bir zoom hesaplayalım
+      // Ekran boyutları düşünülerek skala belirle
+      const scaleX = canvasWidth / width;
+      const scaleY = canvasHeight / height;
+      
+      // Koordinat sisteminin ortasına odaklanacak uygun zoom
+      const appropriateZoom = Math.min(scaleX, scaleY) * 0.9; // %90 güvenlik faktörü
+      
+      // Çok küçük zoom değerlerini limitle
+      const safeZoom = Math.max(0.0000001, appropriateZoom);
+      
+      // Pan offset'i merkez koordinatına göre ayarla
+      const panX = -(centerX * safeZoom);
+      const panY = (centerY * safeZoom);
+      
+      // Apply the new zoom and pan
+      setZoom(safeZoom);
+      setCanvasState({
+        gridSize: 10, 
+        zoom: safeZoom,
+        panOffset: { x: panX, y: panY },
+        canvasSize: canvasState.canvasSize
+      });
+      
+      console.log("Büyük koordinatlar için ayarlanan değerler:", {
+        zoom: safeZoom,
+        panX,
+        panY,
+        width,
+        height,
+        centerX,
+        centerY
+      });
+      
+      return;
+    }
+    
+    // NORMAL DEĞERLER İÇİN STANDART İŞLEM
     // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
     const margin = 50;
     minX -= margin;
@@ -267,21 +319,7 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
-    
-    // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
-    // Orijinal worldToScreen formülünden:
-    // screenX = worldX * zoom + width / 2 + panOffset.x;
-    // screenY = height / 2 - worldY * zoom + panOffset.y;
-    
-    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
-    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
-    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
-    
-    // Bu denklemleri çözersek:
-    // panOffset.x = -centerX * zoom
-    // panOffset.y = centerY * zoom
-    
+    // canvasUtils.ts'deki worldToScreen fonksiyonu mantığıyla pan offset hesaplama
     const panOffsetX = -centerX * newZoom;
     const panOffsetY = centerY * newZoom;
     

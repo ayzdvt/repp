@@ -432,8 +432,8 @@ export default function AnalysisPage() {
             className="flex items-center space-x-2"
             onClick={() => {
               if (result?.parcel_coordinates && result.parcel_coordinates.length > 0) {
-                // Koordinatları localStorage'a kaydet
-                localStorage.setItem('parselCoordinates', JSON.stringify(result.parcel_coordinates));
+                // Koordinatları localStorage'a kaydet - 'addPoints' anahtarını kullanıyoruz
+                localStorage.setItem('addPoints', JSON.stringify(result.parcel_coordinates));
               }
               // Çizim sayfasına yönlendir
               window.location.href = '/drawing';

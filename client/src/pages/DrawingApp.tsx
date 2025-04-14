@@ -175,9 +175,16 @@ export default function DrawingApp() {
       return;
     }
     
-    // Canvas boyutları
-    const canvasWidth = canvasState.canvasSize.width;
-    const canvasHeight = canvasState.canvasSize.height;
+    // Canvas boyutları - eğer 0 ise pencere boyutlarını kullan
+    let canvasWidth = canvasState.canvasSize.width;
+    let canvasHeight = canvasState.canvasSize.height;
+    
+    // Canvas boyutlarının geçerli olduğundan emin ol
+    if (canvasWidth === 0 || canvasHeight === 0) {
+      canvasWidth = window.innerWidth - 400; // Sidebar genişliklerini çıkar
+      canvasHeight = window.innerHeight - 100; // Header ve status bar yüksekliklerini çıkar
+    }
+    
     console.log("Canvas boyutları:", canvasWidth, canvasHeight);
     
     // Şekilleri almak için bir dummy referans oluştur

@@ -18,9 +18,10 @@ export default function DrawingApp() {
     panOffset: { x: 0, y: 0 },
     canvasSize: { width: 0, height: 0 }
   });
+  const [selectedObject, setSelectedObject] = useState<any>(null);
   
-  // Seçili nesne (özellikler paneli tarafından kullanılacak)
-  const [selectedObject, setSelectedObject] = useState<any | null>(null);
+  // Canvas içindeki referans
+  // Removed canvasRef
   
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
@@ -45,124 +46,28 @@ export default function DrawingApp() {
           
           // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
           const cleanedCoordinates = coordinates.map(coord => ({
-            x: Number(coord.x),
-            y: Number(coord.y)
+            x: coord.x,
+            y: coord.y
           }));
           
-          // Koordinatlar büyük sayılar olabilir, normalleştirme gerekebilir (4540000 gibi)
-          const doNormalize = true; // Koordinatları normalleştiriyoruz
-          let normalizedCoordinates = [...cleanedCoordinates];
-          let xBase = 0, yBase = 0;
-          
-          if (doNormalize && coordinates.length > 0) {
-            // Koordinatlar arasında çok yüksek değerler varsa (örneğin 4540000)
-            // Daha iyi bir görünüm için koordinatları normalize edebiliriz
-            // Örn. 4540345 -> 345 gibi, daha kolay çalışmak için
-            
-            // Ortak tabanı bul (en küçük X ve Y)
-            let baseX = Infinity;
-            let baseY = Infinity;
-            
-            for (const coord of cleanedCoordinates) {
-              baseX = Math.min(baseX, coord.x);
-              baseY = Math.min(baseY, coord.y);
-            }
-            
-            // 100'ler basamağına yuvarla
-            xBase = Math.floor(baseX / 100) * 100;
-            yBase = Math.floor(baseY / 100) * 100;
-            
-            console.log(`Koordinat normalizasyonu: X-tabanı=${xBase}, Y-tabanı=${yBase}`);
-            
-            // Koordinatları normalize et
-            normalizedCoordinates = cleanedCoordinates.map(coord => ({
-              x: coord.x - xBase,
-              y: coord.y - yBase
-            }));
-            
-            console.log("Normalize edilmiş koordinatlar:", normalizedCoordinates);
-          }
-          
-          // Tüm koordinatlar için normalize edilmiş noktalar oluştur
-          normalizedCoordinates.forEach((coord, index) => {
-            console.log(`Eklenen koordinat ${index+1}: x=${coord.x}, y=${coord.y}`);
-            
-            const createPointEvent = new CustomEvent('createshape', { 
-              detail: { 
-                type: 'point',
-                x: coord.x,
-                y: coord.y,
-                style: 'default'
-              } 
-            });
-            
-            // Event'i yayınla 
-            canvasElement.dispatchEvent(createPointEvent);
-          
-            // Canvas elemanını da bulup dinleyici ekleyelim
-            const canvasObj = document.querySelector('#drawing-canvas canvas');
-            if (canvasObj) {
-              canvasObj.dispatchEvent(createPointEvent);
-            } else {
-              console.log("Canvas elem not found");
-            }
+          // Polyline oluşturmak için event gönder
+          const createEvent = new CustomEvent('createshape', { 
+            detail: { 
+              type: 'polyline',
+              points: cleanedCoordinates,
+              thickness: 2,
+              closed: true
+            } 
           });
           
-          // Aynı koordinatları kullanarak polyline oluştur
-          if (coordinates.length > 2) {
-            console.log("Koordinatlardan polyline oluşturuluyor...");
-            
-            // Polyline oluşturmak için event hazırla
-            const createPolylineEvent = new CustomEvent('createpolyline', { 
-              detail: { 
-                type: 'polyline',
-                points: normalizedCoordinates, // Normalize koordinatlar
-                thickness: 1,
-                closed: true
-              } 
-            });
-            
-            // Event'i yayınla
-            canvasElement.dispatchEvent(createPolylineEvent);
-            
-            const canvasObj = document.querySelector('#drawing-canvas canvas');
-            if (canvasObj) {
-              canvasObj.dispatchEvent(createPolylineEvent);
-            }
-          }
+          // Event'i div.absolute üzerinden yayınla
+          canvasElement.dispatchEvent(createEvent);
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
-          // Görünümü tam ekrana uyarla - daha uzun gecikme ekle
-          // Noktaların tamamen oluşturulması ve canvas'a eklenmesi için bekleyelim
-          setTimeout(() => {
-            console.log("Koordinatları merkeze alma işlemi yapılıyor...");
-            // Şekilleri kontrol et
-            const drawingContainer = document.getElementById('drawing-container');
-            if (drawingContainer) {
-              const absoluteDiv = drawingContainer.querySelector('div.absolute');
-              if (absoluteDiv) {
-                let shapeList: any[] = [];
-                try {
-                  const customEvent = new CustomEvent('getAllShapes', {
-                    detail: { 
-                      callback: (shapes: any[]) => {
-                        shapeList = shapes || [];
-                      }
-                    }
-                  });
-                  absoluteDiv.dispatchEvent(customEvent);
-                } catch (error) {
-                  console.error('Shapes retrieval error:', error);
-                }
-                
-                console.log("Fit View öncesi şekiller:", shapeList);
-              }
-            }
-            
-            handleResetView();
-          }, 3000); 
+          // Görünümü tam ekrana uyarla
+          handleResetView();
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {
@@ -320,20 +225,9 @@ export default function DrawingApp() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Zoom faktörlerini hesapla - çok büyük koordinat değerleriyle çalışırken taşma sorununu önlemek için
-    // Çok büyük koordinatlar (4540000 gibi) çok küçük zoom değerleri üretir (örn. 0.0002)
-    // Bu nedenle, koordinatları normalize ederek hesaplama yapmak daha güvenli
-    
-    // Genişlik ve yüksekliği al (çok büyük olsa bile)
-    let zoomX = canvasWidth / width;
-    let zoomY = canvasHeight / height;
-    
-    console.log("Ham zoom değerleri:", { width, height, canvasWidth, canvasHeight, rawZoomX: zoomX, rawZoomY: zoomY });
-    
-    // Eğer çok küçük zoom değerleri varsa (0'a çok yakın), minimum değeri ayarla
-    const MIN_ZOOM = 0.0001; // Minimum zoom değeri
-    zoomX = Math.max(MIN_ZOOM, zoomX);
-    zoomY = Math.max(MIN_ZOOM, zoomY);
+    // Zoom faktörlerini hesapla
+    const zoomX = canvasWidth / width;
+    const zoomY = canvasHeight / height;
     
     // Daha kısıtlayıcı olanı seç
     const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
@@ -345,6 +239,8 @@ export default function DrawingApp() {
     const centerY = (minY + maxY) / 2;
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
+    
+    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
     
     // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
     // Orijinal worldToScreen formülünden:
@@ -361,8 +257,8 @@ export default function DrawingApp() {
     // panOffset.x = -centerY * zoom
     // panOffset.y = centerX * zoom
     
-    const panOffsetX = canvasWidth / 2 - centerY * newZoom;
-    const panOffsetY = canvasHeight / 2 + centerX * newZoom;
+    const panOffsetX = -centerY * newZoom;
+    const panOffsetY = centerX * newZoom;
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     

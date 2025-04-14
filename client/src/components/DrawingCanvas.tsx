@@ -43,9 +43,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
   
-  // Olay dinleyicileri için ref'ler
-  const updateShapeEventRef = useRef<((e: any) => void) | null>(null);
-  
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [drawingLine, setDrawingLine] = useState<boolean>(false); // Çizgi çizim durumu
@@ -881,11 +878,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // Event callbacks ve referanslar için değişkenler
-  const createShapeEventFn = useRef<((e: any) => void) | null>(null);
-  const createPolylineEventFn = useRef<((e: any) => void) | null>(null);
-  const updateShapeEventFn = useRef<((e: any) => void) | null>(null);
-  const getAllShapesEventFn = useRef<((e: any) => void) | null>(null);
+  // Özel event'ler için Ref'ler
+  const updateEventRef = useRef<(e: any) => void>();
+  const getAllShapesRef = useRef<(e: any) => void>();
   
   useEffect(() => {
     // Şekil güncelleme
@@ -900,47 +895,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    // Şekil oluşturma
-    const handleCreateShape = (e: any) => {
-      const { detail } = e;
-      console.log("Şekil oluşturma olayı alındı:", detail);
-      
-      if (detail && detail.type === 'point') {
-        const newPoint = {
-          id: nextIdRef.current++,
-          type: 'point',
-          x: Number(detail.x),
-          y: Number(detail.y),
-          style: detail.style || 'default'
-        };
-        
-        console.log("Yeni nokta oluşturuluyor:", newPoint);
-        shapesRef.current.push(newPoint);
-      }
-    };
-    
-    // Polyline oluşturma
-    const handleCreatePolyline = (e: any) => {
-      const { detail } = e;
-      console.log("Polyline oluşturma olayı alındı:", detail);
-      
-      if (detail && detail.type === 'polyline' && Array.isArray(detail.points)) {
-        const newPolyline = {
-          id: nextIdRef.current++,
-          type: 'polyline',
-          points: detail.points.map((p: any) => ({
-            x: Number(p.x),
-            y: Number(p.y)
-          })),
-          thickness: detail.thickness || 1,
-          closed: detail.closed || false
-        };
-        
-        console.log("Yeni polyline oluşturuluyor:", newPolyline);
-        shapesRef.current.push(newPolyline);
-      }
-    };
-    
     // Tüm şekilleri döndürme - Fit View için
     const handleGetAllShapes = (e: any) => {
       const { detail } = e;
@@ -951,10 +905,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
     
     // Referansları sakla
-    updateShapeEventFn.current = handleShapeUpdate;
-    getAllShapesEventFn.current = handleGetAllShapes;
-    createShapeEventFn.current = handleCreateShape;
-    createPolylineEventFn.current = handleCreatePolyline;
+    updateEventRef.current = handleShapeUpdate;
+    getAllShapesRef.current = handleGetAllShapes;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -964,41 +916,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Event fonksiyonlarını referanstan al
     const updateHandler = (e: any) => {
-      if (updateShapeEventFn.current) {
-        updateShapeEventFn.current(e);
+      if (updateEventRef.current) {
+        updateEventRef.current(e);
       }
     };
     
     const getAllShapesHandler = (e: any) => {
-      if (getAllShapesEventFn.current) {
-        getAllShapesEventFn.current(e);
-      }
-    };
-    
-    const createShapeHandler = (e: any) => {
-      if (createShapeEventFn.current) {
-        createShapeEventFn.current(e);
-      }
-    };
-    
-    const createPolylineHandler = (e: any) => {
-      if (createPolylineEventFn.current) {
-        createPolylineEventFn.current(e);
+      if (getAllShapesRef.current) {
+        getAllShapesRef.current(e);
       }
     };
     
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
     containerElement.addEventListener('getAllShapes', getAllShapesHandler);
-    containerElement.addEventListener('createshape', createShapeHandler);
-    containerElement.addEventListener('createpolyline', createPolylineHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
       containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
-      containerElement.removeEventListener('createshape', createShapeHandler);
-      containerElement.removeEventListener('createpolyline', createPolylineHandler);
     };
   }, []);
   

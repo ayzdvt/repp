@@ -88,6 +88,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
     divider = 0.1;  // 0.1cm = 1mm
   }
   
+  // X ekseni dikey, Y ekseni yatay koordinat sistemi için ayarlama
   // Round to nearest grid line
   const startX = Math.floor(startPoint.x / gridStep) * gridStep;
   const startY = Math.floor(startPoint.y / gridStep) * gridStep;
@@ -96,35 +97,10 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   
   ctx.lineWidth = 0.5;
   
-  // Draw vertical grid lines
+  // Draw vertical grid lines (X axis lines)
   for (let x = startX; x <= endX; x += gridStep) {
-    const { x: screenX } = worldToScreen(x, 0, state);
-    
-    // Ekranın dışına taşan çizgileri çizme
-    if (screenX < 0 || screenX > width) continue;
-    
-    ctx.beginPath();
-    ctx.moveTo(screenX, 0);
-    ctx.lineTo(screenX, height);
-    
-    ctx.strokeStyle = '#AAAAAA';
-    ctx.stroke();
-    
-    // X ekseni etiketleri (alt kısımda)
-    if (x !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
-      ctx.fillStyle = '#666666';
-      ctx.font = '10px Arial';
-      ctx.textAlign = 'center';
-      
-      // Ölçü birimini değiştir (cm, m veya km)
-      const displayValue = (x / divider);
-      ctx.fillText(displayValue.toString() + ' ' + unit, screenX, height - 5);
-    }
-  }
-  
-  // Draw horizontal grid lines
-  for (let y = startY; y <= endY; y += gridStep) {
-    const { y: screenY } = worldToScreen(0, y, state);
+    // X ekseni dikey olduğu için, sabit X değeri = sabit screenY değeri anlamına gelir
+    const { y: screenY } = worldToScreen(x, 0, state);
     
     // Ekranın dışına taşan çizgileri çizme
     if (screenY < 0 || screenY > height) continue;
@@ -136,22 +112,49 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
     ctx.strokeStyle = '#AAAAAA';
     ctx.stroke();
     
-    // Y ekseni etiketleri (sol kısımda) - toolbar'ın dışında kalacak şekilde
-    if (y !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
+    // X ekseni etiketleri (sağ kısımda)
+    if (x !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
       ctx.fillStyle = '#666666';
       ctx.font = '10px Arial';
       ctx.textAlign = 'right';
       
-      // Toolbar'ın üzerinde gösterdiğimizden emin olmak için X pozisyonunu 30px'e yükselttik
+      // Ölçü birimini değiştir (cm, m veya km)
+      const displayValue = (x / divider);
+      ctx.fillText(displayValue.toString() + ' ' + unit, width - 5, screenY + 4);
+    }
+  }
+  
+  // Draw horizontal grid lines (Y axis lines)
+  for (let y = startY; y <= endY; y += gridStep) {
+    // Y ekseni yatay olduğu için, sabit Y değeri = sabit screenX değeri anlamına gelir
+    const { x: screenX } = worldToScreen(0, y, state);
+    
+    // Ekranın dışına taşan çizgileri çizme
+    if (screenX < 0 || screenX > width) continue;
+    
+    ctx.beginPath();
+    ctx.moveTo(screenX, 0);
+    ctx.lineTo(screenX, height);
+    
+    ctx.strokeStyle = '#AAAAAA';
+    ctx.stroke();
+    
+    // Y ekseni etiketleri (alt kısımda)
+    if (y !== 0) { // 0 noktasında etiket koymuyoruz (origin'de gösteriliyor)
+      ctx.fillStyle = '#666666';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      
+      // Ölçü birimini değiştir (cm, m veya km)
       const displayValue = (y / divider);
-      ctx.fillText(displayValue.toString() + ' ' + unit, 30, screenY + 4);
+      ctx.fillText(displayValue.toString() + ' ' + unit, screenX, height - 5);
     }
   }
   
   // Draw x and y axes
   const origin = worldToScreen(0, 0, state);
   
-  // X-axis
+  // X-axis (yatay çizgi)
   ctx.beginPath();
   ctx.moveTo(0, origin.y);
   ctx.lineTo(width, origin.y);
@@ -159,7 +162,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   ctx.lineWidth = 1;
   ctx.stroke();
   
-  // Y-axis
+  // Y-axis (dikey çizgi)
   ctx.beginPath();
   ctx.moveTo(origin.x, 0);
   ctx.lineTo(origin.x, height);

@@ -62,33 +62,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                value={pointX} 
-                onFocus={(e) => (e.target as HTMLInputElement).select()}
-                onChange={(e) => {
-                  setPointX(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
-                    const input = e.target as HTMLInputElement;
-                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
-                    input.blur();
-                  }
-                }}
-                onBlur={(e) => {
-                  if (onPropertyChange && selectedObject.id) {
-                    const input = e.target as HTMLInputElement;
-                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
-                  }
-                }}
-              />
-            </div>
-            
-            <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Position X</label>
-              <input 
-                type="number" 
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
-                value={pointY}
+                value={pointY} 
                 onFocus={(e) => (e.target as HTMLInputElement).select()}
                 onChange={(e) => {
                   setPointY(e.target.value);
@@ -104,6 +78,32 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   if (onPropertyChange && selectedObject.id) {
                     const input = e.target as HTMLInputElement;
                     onPropertyChange('y', parseFloat(input.value), selectedObject.id);
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Position X</label>
+              <input 
+                type="number" 
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                value={pointX}
+                onFocus={(e) => (e.target as HTMLInputElement).select()}
+                onChange={(e) => {
+                  setPointX(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
+                    input.blur();
+                  }
+                }}
+                onBlur={(e) => {
+                  if (onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('x', parseFloat(input.value), selectedObject.id);
                   }
                 }}
               />

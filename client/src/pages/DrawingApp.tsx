@@ -19,7 +19,6 @@ export default function DrawingApp() {
     canvasSize: { width: 0, height: 0 }
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
-  const [parcelCoordinates, setParcelCoordinates] = useState<Array<{No?: number, x: number, y: number}>>([]);
   
   // Canvas içindeki referans
   // Removed canvasRef
@@ -33,10 +32,7 @@ export default function DrawingApp() {
     try {
       const points = JSON.parse(pointsString);
       
-      // Koordinatları state'e kaydet
       if (Array.isArray(points) && points.length > 0) {
-        setParcelCoordinates(points);
-        
         // Canvas'a erişim
         setTimeout(() => {
           const canvasContainer = document.getElementById('drawing-container');
@@ -370,23 +366,19 @@ export default function DrawingApp() {
       }
     ]);
     
-    // Koordinatları tanımla
-    const coordinates = [
-      { No: 8, x: 4540345.97, y: 438538.46 },
-      { No: 9, x: 4540358.64, y: 438539.69 },
-      { No: 10, x: 4540362.61, y: 438544.59 },
-      { No: 11, x: 4540359.53, y: 438561.74 },
-      { No: 31, x: 4540343.54, y: 438560.07 }
-    ];
-    
-    // Koordinatları state'e kaydet
-    setParcelCoordinates(coordinates);
-    
     // Canvas element'ini bul
     const canvasContainer = document.getElementById('drawing-container');
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
       if (canvasElement) {
+        // Tüm koordinatları birer nokta olarak ekle
+        const coordinates = [
+          { No: 8, x: 4540345.97, y: 438538.46 },
+          { No: 9, x: 4540358.64, y: 438539.69 },
+          { No: 10, x: 4540362.61, y: 438544.59 },
+          { No: 11, x: 4540359.53, y: 438561.74 },
+          { No: 31, x: 4540343.54, y: 438560.07 }
+        ];
         
         // Her bir koordinat için nokta oluştur ve ekle
         coordinates.forEach((coord, index) => {
@@ -441,33 +433,6 @@ export default function DrawingApp() {
           >
             Test Noktaları Ekle
           </button>
-          
-          {/* Koordinat bilgisi listesi */}
-          {parcelCoordinates.length > 0 && (
-            <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-md shadow-md max-w-xs max-h-80 overflow-auto">
-              <h3 className="font-semibold text-gray-800 mb-2">Parsel Koordinatları</h3>
-              <div className="overflow-y-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="py-2 px-3 text-left">No</th>
-                      <th className="py-2 px-3 text-right">X</th>
-                      <th className="py-2 px-3 text-right">Y</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {parcelCoordinates.map((coord, index) => (
-                      <tr key={index} className="border-t border-gray-200 hover:bg-gray-50">
-                        <td className="py-2 px-3">{coord.No || index + 1}</td>
-                        <td className="py-2 px-3 text-right">{coord.x.toFixed(2)}</td>
-                        <td className="py-2 px-3 text-right">{coord.y.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
           
           <div id="drawing-canvas">
             <DrawingCanvas 

@@ -35,15 +35,6 @@ export default function DrawingApp() {
       if (Array.isArray(coordinates) && coordinates.length > 0) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
-        // Koordinat değerleri çok büyükse (1000'den fazla) normalizasyon yapalım
-        let shouldNormalize = false;
-        // Herhangi bir koordinat 1000'den büyükse normalize etmeye karar verelim
-        coordinates.forEach(coord => {
-          if (Math.abs(coord.x) > 1000 || Math.abs(coord.y) > 1000) {
-            shouldNormalize = true;
-          }
-        });
-        
         // Koordinatları çizim için hazırla
         setTimeout(() => {
           // Canvas'a erişim
@@ -53,59 +44,27 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          let coordsToUse = [...coordinates];
+          // Koordinat aralığını bulalım
+          const xValues = coordinates.map(c => c.x);
+          const yValues = coordinates.map(c => c.y);
           
-          // Eğer normalizasyon gerekiyorsa uygula
-          if (shouldNormalize) {
-            // Koordinatları normalize et
-            const xValues = coordinates.map(c => c.x);
-            const yValues = coordinates.map(c => c.y);
-            
-            const minX = Math.min(...xValues);
-            const maxX = Math.max(...xValues);
-            const minY = Math.min(...yValues);
-            const maxY = Math.max(...yValues);
-            
-            // Büyük değerleri normalize edelim - her koordinattan en küçük değeri çıkaralım
-            // Böylece koordinatlar 0'dan başlar ve en büyük X/Y değerine göre ölçeklendirme yapalım
-            
-            // X ve Y aralıklarını hesapla
-            const xRange = maxX - minX;
-            const yRange = maxY - minY;
-            
-            // X veya Y'nin çok büyük olduğu durumlar için (milyon gibi) ek ölçeklendirme 
-            // Standart çizim alanı için ideal max değer ~100 birim olsun
-            const idealRange = 100;
-            const scaleFactorX = xRange > idealRange ? idealRange / xRange : 1;
-            const scaleFactorY = yRange > idealRange ? idealRange / yRange : 1;
-            
-            // İki eksendeki ölçeklendirme faktörlerinden daha kısıtlayıcı olanı seçelim
-            // Böylece oranlar korunur
-            const scaleFactor = Math.min(scaleFactorX, scaleFactorY);
-            
-            // Orjinden uzak bir noktaya taşıyalım (orjine yapışmaması için)
-            const offsetX = 20;
-            const offsetY = 20;
-            
-            coordsToUse = coordinates.map(coord => ({
-              // X değerini normalize et, ölçeklendir ve offsetle
-              x: (coord.x - minX) * scaleFactor + offsetX,
-              // Y değerini normalize et, ölçeklendir ve offsetle
-              y: (coord.y - minY) * scaleFactor + offsetY,
-              No: coord.No
-            }));
-            
-            console.log("Normalize edilmiş koordinatlar:", coordsToUse);
-          }
+          const minX = Math.min(...xValues);
+          const maxX = Math.max(...xValues);
+          const minY = Math.min(...yValues);
+          const maxY = Math.max(...yValues);
           
-          // Koordinatları nokta olarak ekle
-          coordsToUse.forEach((coord, index) => {
+          // Çok büyük değerlerin olup olmadığını kontrol edelim (milyon veya milyar gibi)
+          const isVeryLargeValues = Math.abs(maxX) > 10000 || Math.abs(minX) > 10000 || 
+                                   Math.abs(maxY) > 10000 || Math.abs(minY) > 10000;
+          
+          // Koordinatları oluştur - HAM DEĞERLERİ KULLAN, NORMALİZE ETME
+          coordinates.forEach((coord, index) => {
             // Her bir koordinat için bir nokta oluştur
             const createPointEvent = new CustomEvent('createshape', { 
               detail: { 
                 type: 'point',
-                x: coord.x,
-                y: coord.y,
+                x: coord.x, // Orijinal ham X değeri
+                y: coord.y, // Orijinal ham Y değeri
                 style: 'default',
                 id: Date.now() + index // Benzersiz ID oluştur
               } 
@@ -117,6 +76,16 @@ export default function DrawingApp() {
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı noktaları oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
+          
+          // Çok büyük değerler için özel zoom ayarlaması
+          if (isVeryLargeValues) {
+            // Çok küçük bir zoom değeri ile başla
+            setZoom(0.00001);
+            setCanvasState(prev => ({
+              ...prev,
+              zoom: 0.00001
+            }));
+          }
           
           // Görünümü tam ekrana uyarla
           handleResetView();

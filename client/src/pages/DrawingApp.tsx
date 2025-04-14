@@ -20,8 +20,8 @@ export default function DrawingApp() {
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
-  // Canvas içindeki referans
-  // Removed canvasRef
+  // Şekilleri depolamak için referans
+  const shapesRef = useRef<any[]>([]);
   
   // Test için koordinatları doğrudan ekleyen buton
   const addTestCoordinates = () => {
@@ -125,7 +125,7 @@ export default function DrawingApp() {
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);
     }
-  }, [addTestCoordinates]);
+  }, []);
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -440,15 +440,58 @@ export default function DrawingApp() {
         />
       </div>
       
-      <StatusBar 
-        activeTool={activeTool}
-        gridSize={gridSize}
-        zoom={zoom}
-        mousePosition={mousePosition}
-        snapEnabled={snapEnabled}
-        onToggleSnap={toggleSnap}
-        canvasState={canvasState}
-      />
+      <div className="flex items-center bg-gray-200 px-4 py-2">
+        <button 
+          className="mr-4 px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={() => {
+            // Buraya tıklandığında manuel olarak bir nokta ekleyelim
+            // Canvas'a erişim
+            const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+            if (!canvasContainer) return;
+            
+            const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+            if (!canvasElement) return;
+            
+            // Test noktası oluştur
+            const testPoint = {
+              id: Date.now(),
+              type: 'point',
+              x: 4540345.97,
+              y: 438538.46,
+              style: 'default'
+            };
+            
+            // Event oluştur ve gönder
+            const updateEvent = new CustomEvent('shapeupdate', { 
+              detail: { 
+                type: 'update',
+                shape: testPoint
+              } 
+            });
+            
+            // Event'i div.absolute üzerinden yayınla
+            canvasElement.dispatchEvent(updateEvent);
+            console.log("Manuel test noktası eklendi:", testPoint);
+            
+            // Canvas'ı yenile için küçük bir gecikme
+            setTimeout(() => {
+              handleResetView();
+            }, 100);
+          }}
+        >
+          Büyük Koordinat Test
+        </button>
+      
+        <StatusBar 
+          activeTool={activeTool}
+          gridSize={gridSize}
+          zoom={zoom}
+          mousePosition={mousePosition}
+          snapEnabled={snapEnabled}
+          onToggleSnap={toggleSnap}
+          canvasState={canvasState}
+        />
+      </div>
     </div>
   );
 }

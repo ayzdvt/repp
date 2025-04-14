@@ -1017,6 +1017,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           if (shapeIndex !== -1) {
             // Şekli güncelle
             shapesRef.current[shapeIndex] = { ...e.detail.shape };
+          } else {
+            // Eğer şekil mevcut değilse, shapesRef'e ekle
+            shapesRef.current.push({ ...e.detail.shape });
+            console.log("Yeni şekil eklendi:", e.detail.shape);
           }
         }
       }) as EventListener;

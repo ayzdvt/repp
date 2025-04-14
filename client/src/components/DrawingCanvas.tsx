@@ -853,8 +853,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1; // Reduce zoom on scroll down, increase on scroll up
     const newZoom = canvasState.zoom * zoomDelta;
     
-    // Limit zoom range - çok küçük zoom değerlerini destekle (büyük koordinatlar için)
-    if (newZoom > 0.0000000001 && newZoom < 1000) {
+    // Limit zoom range
+    if (newZoom > 0.000001 && newZoom < 100) {
       // Update zoom first
       onZoomChange(newZoom);
       
@@ -1017,10 +1017,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           if (shapeIndex !== -1) {
             // Şekli güncelle
             shapesRef.current[shapeIndex] = { ...e.detail.shape };
-          } else {
-            // Eğer şekil mevcut değilse, shapesRef'e ekle
-            shapesRef.current.push({ ...e.detail.shape });
-            console.log("Yeni şekil eklendi:", e.detail.shape);
           }
         }
       }) as EventListener;

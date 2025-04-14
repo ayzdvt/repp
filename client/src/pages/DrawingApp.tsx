@@ -20,68 +20,11 @@ export default function DrawingApp() {
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
-  // Şekilleri depolamak için referans
-  const shapesRef = useRef<any[]>([]);
+  // Canvas içindeki referans
+  // Removed canvasRef
   
-  // Test için koordinatları doğrudan ekleyen fonksiyon
-  const addTestCoordinates = () => {
-    console.log("Test koordinatları ekleniyor...");
-    const testCoordinates = [
-      { No: 8, x: 4540345.97, y: 438538.46 },
-      { No: 9, x: 4540358.64, y: 438539.69 },
-      { No: 10, x: 4540362.61, y: 438544.59 },
-      { No: 11, x: 4540359.53, y: 438561.74 },
-      { No: 31, x: 4540343.54, y: 438560.07 }
-    ];
-    
-    // Canvas'a erişim
-    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-    if (!canvasContainer) return;
-    
-    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-    if (!canvasElement) return;
-    
-    // Ortak başlangıç ID'si
-    const startId = Date.now();
-    
-    // Her bir koordinat için bir nokta oluştur ve event ile ekle
-    testCoordinates.forEach((coord, index) => {
-      // Test noktası oluştur
-      const pointShape = {
-        id: startId + index,
-        type: 'point',
-        x: coord.x,
-        y: coord.y,
-        style: 'default'
-      };
-      
-      // Event oluştur ve gönder
-      const updateEvent = new CustomEvent('shapeupdate', { 
-        detail: { 
-          type: 'update',
-          shape: pointShape
-        } 
-      });
-      
-      // Event'i div.absolute üzerinden yayınla
-      canvasElement.dispatchEvent(updateEvent);
-      console.log(`Test noktası ${index + 1} eklendi:`, pointShape);
-    });
-    
-    // Canvas'ı yenile için küçük bir gecikme
-    setTimeout(() => {
-      handleResetView();
-      console.log("Test koordinatları eklendi, görünüm ayarlandı");
-    }, 100);
-  };
-
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
-    // Test için koordinatları ekle
-    setTimeout(() => {
-      addTestCoordinates();
-    }, 1000);
-    
     // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
     const coordsString = localStorage.getItem('parselCoordinates');
     if (!coordsString) return;
@@ -90,7 +33,7 @@ export default function DrawingApp() {
       const coordinates = JSON.parse(coordsString);
       
       if (Array.isArray(coordinates) && coordinates.length > 2) {
-        console.log("LocalStorage'dan parsel koordinatları bulundu:", coordinates);
+        console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
         setTimeout(() => {
@@ -125,7 +68,7 @@ export default function DrawingApp() {
           
           // Görünümü tam ekrana uyarla
           handleResetView();
-        }, 1500); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1.5 saniye bekle
+        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);
@@ -159,33 +102,17 @@ export default function DrawingApp() {
   
   // Tüm çizimleri ekrana sığdıran Fit View fonksiyonu
   const handleResetView = () => {
-    console.log("Fit View başlatılıyor...");
-    
     // Canvas'ı al
     const drawingContainer = document.getElementById('drawing-container');
-    if (!drawingContainer) {
-      console.error("drawing-container elementine erişilemiyor");
-      return;
-    }
+    if (!drawingContainer) return;
     
     // Absolute div'i bul
     const absoluteDiv = drawingContainer.querySelector('div.absolute');
-    if (!absoluteDiv) {
-      console.error("div.absolute elementine erişilemiyor");
-      return;
-    }
+    if (!absoluteDiv) return;
     
-    // Canvas boyutları - eğer 0 ise pencere boyutlarını kullan
-    let canvasWidth = canvasState.canvasSize.width;
-    let canvasHeight = canvasState.canvasSize.height;
-    
-    // Canvas boyutlarının geçerli olduğundan emin ol
-    if (canvasWidth === 0 || canvasHeight === 0) {
-      canvasWidth = window.innerWidth - 400; // Sidebar genişliklerini çıkar
-      canvasHeight = window.innerHeight - 100; // Header ve status bar yüksekliklerini çıkar
-    }
-    
-    console.log("Canvas boyutları:", canvasWidth, canvasHeight);
+    // Canvas boyutları
+    const canvasWidth = canvasState.canvasSize.width;
+    const canvasHeight = canvasState.canvasSize.height;
     
     // Şekilleri almak için bir dummy referans oluştur
     let shapeList: any[] = [];
@@ -274,74 +201,6 @@ export default function DrawingApp() {
       return;
     }
     
-    // Çok büyük koordinatlar için
-    if (minX > 1000000 || maxX > 1000000 || minY > 1000000 || maxY > 1000000) {
-      console.log("Büyük koordinatlar tespit edildi, özel zoom hesaplanıyor");
-      
-      // Tek bir koordinat mı, yoksa bir koordinat grubu mu olduğunu kontrol et
-      const width = maxX - minX;
-      const height = maxY - minY;
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-      
-      // Eğer bir alan varsa (birden fazla nokta), çok düşük bir zoom faktörüyle yap
-      if (width > 0 && height > 0) {
-        console.log("Koordinat alanı:", width, height);
-        
-        // Daha yüksek bir zoom değeri hesapla (noktaları görmek için)
-        const fixedZoom = 0.000001;
-        
-        // Parsel büyüklüğüne göre zoom oranını hesapla
-        const maxBounds = Math.max(width, height);
-        // Ortadaki parsel büyüklüğüne göre optimize edilmiş zoom - daha yüksek zoom faktörü
-        const adjustedZoom = (500 / maxBounds) * 0.001;
-        console.log("Hesaplanan adjustedZoom:", adjustedZoom, "maxBounds:", maxBounds);
-        
-        // panOffset değerleri - konumu ekranın ortasına getir
-        const panOffsetX = -centerX * adjustedZoom;
-        const panOffsetY = centerY * adjustedZoom;
-        
-        console.log("Büyük koordinatlar için hesaplanan değerler:", {
-          zoom: adjustedZoom,
-          panOffsetX,
-          panOffsetY,
-          centerX,
-          centerY
-        });
-        
-        // Ayarla - adjustedZoom kullanarak
-        setZoom(adjustedZoom);
-        setCanvasState({
-          gridSize: 10,
-          zoom: adjustedZoom,
-          panOffset: { x: panOffsetX, y: panOffsetY },
-          canvasSize: canvasState.canvasSize
-        });
-      }
-      else {
-        // Tek bir nokta ise
-        console.log("Tek büyük koordinat noktası:", centerX, centerY);
-        
-        // Daha yüksek bir zoom değeri kullan
-        const fixedZoom = 0.0000005;
-        
-        // panOffset değerleri
-        const panOffsetX = -centerX * fixedZoom;
-        const panOffsetY = centerY * fixedZoom;
-        
-        // Ayarla
-        setZoom(fixedZoom);
-        setCanvasState({
-          gridSize: 10,
-          zoom: fixedZoom,
-          panOffset: { x: panOffsetX, y: panOffsetY },
-          canvasSize: canvasState.canvasSize
-        });
-      }
-      
-      return;
-    }
-    
     // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
     const margin = 50;
     minX -= margin;
@@ -366,10 +225,6 @@ export default function DrawingApp() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Merkez noktayı hesapla
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    
     // Zoom faktörlerini hesapla
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
@@ -379,13 +234,24 @@ export default function DrawingApp() {
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     
+    // Merkez noktayı hesapla
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // canvasUtils.ts'deki worldToScreen formülleri
+    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
+    
+    // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
+    // Orijinal worldToScreen formülünden:
     // screenX = worldX * zoom + width / 2 + panOffset.x;
     // screenY = height / 2 - worldY * zoom + panOffset.y;
     
-    // centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için
+    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
+    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
+    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
+    
+    // Bu denklemleri çözersek:
     // panOffset.x = -centerX * zoom
     // panOffset.y = centerY * zoom
     
@@ -496,58 +362,15 @@ export default function DrawingApp() {
         />
       </div>
       
-      <div className="flex items-center bg-gray-200 px-4 py-2">
-        <button 
-          className="mr-4 px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          onClick={() => {
-            // Buraya tıklandığında manuel olarak bir nokta ekleyelim
-            // Canvas'a erişim
-            const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-            if (!canvasContainer) return;
-            
-            const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-            if (!canvasElement) return;
-            
-            // Test noktası oluştur
-            const testPoint = {
-              id: Date.now(),
-              type: 'point',
-              x: 4540345.97,
-              y: 438538.46,
-              style: 'default'
-            };
-            
-            // Event oluştur ve gönder
-            const updateEvent = new CustomEvent('shapeupdate', { 
-              detail: { 
-                type: 'update',
-                shape: testPoint
-              } 
-            });
-            
-            // Event'i div.absolute üzerinden yayınla
-            canvasElement.dispatchEvent(updateEvent);
-            console.log("Manuel test noktası eklendi:", testPoint);
-            
-            // Canvas'ı yenile için küçük bir gecikme
-            setTimeout(() => {
-              handleResetView();
-            }, 100);
-          }}
-        >
-          Büyük Koordinat Test
-        </button>
-      
-        <StatusBar 
-          activeTool={activeTool}
-          gridSize={gridSize}
-          zoom={zoom}
-          mousePosition={mousePosition}
-          snapEnabled={snapEnabled}
-          onToggleSnap={toggleSnap}
-          canvasState={canvasState}
-        />
-      </div>
+      <StatusBar 
+        activeTool={activeTool}
+        gridSize={gridSize}
+        zoom={zoom}
+        mousePosition={mousePosition}
+        snapEnabled={snapEnabled}
+        onToggleSnap={toggleSnap}
+        canvasState={canvasState}
+      />
     </div>
   );
 }

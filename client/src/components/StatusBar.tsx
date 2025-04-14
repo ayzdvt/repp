@@ -47,36 +47,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
       canvasState.canvasSize.height
     );
     
-    // Çok küçük veya 0 zoom değerini yakala ve düzelt (özellikle büyük koordinatlar için)
-    if (canvasState.zoom <= 0.0000001) {
-      console.log("StatusBar: Çok düşük zoom değeri algılandı, görünür alan hesaplanıyor");
-      // Büyük koordinatlarla çalışılıyorsa, ortalama koordinat değerlerinden ve canvas boyutundan hesapla
-      const centerX = mousePosition.x; // Mevcut fare pozisyonundan yaklaşık merkez koordinatları kullan
-      const centerY = mousePosition.y;
-      
-      // Canvas boyutuna ve zoom seviyesine göre görünür alan genişlik/yüksekliğini hesapla
-      const visibleWidth = canvasState.canvasSize.width / (canvasState.zoom || 0.000001);
-      const visibleHeight = canvasState.canvasSize.height / (canvasState.zoom || 0.000001);
-      
-      // Büyük koordinat sistemlerinde (milyon-bin) formatını kullan örn: 4,540K
-      const formatBigNumber = (num: number) => {
-        if (num >= 1000000) {
-          return (num / 1000000).toFixed(3) + 'M';
-        } else if (num >= 1000) {
-          return (num / 1000).toFixed(3) + 'K';
-        }
-        return num.toFixed(0);
-      };
-      
-      return {
-        minX: formatBigNumber(centerX - visibleWidth/2),
-        minY: formatBigNumber(centerY - visibleHeight/2),
-        maxX: formatBigNumber(centerX + visibleWidth/2),
-        maxY: formatBigNumber(centerY + visibleHeight/2)
-      };
-    }
-    
-    // Normal hesaplama
     return {
       minX: Math.min(topLeft.x, bottomRight.x).toFixed(0),
       minY: Math.min(topLeft.y, bottomRight.y).toFixed(0),
@@ -100,9 +70,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
         </div>
         <div>
           <span className="text-gray-500">Zoom:</span>
-          <span id="zoom-level" className="ml-1">
-            {zoom < 0.01 ? (zoom * 100).toFixed(6) : Math.round(zoom * 100)}%
-          </span>
+          <span id="zoom-level" className="ml-1">{Math.round(zoom * 100)}%</span>
         </div>
         <div>
           <span className="text-gray-500">Visible:</span>

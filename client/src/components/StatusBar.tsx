@@ -74,7 +74,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
         </div>
         <div>
           <span className="text-gray-500">Visible:</span>
-          <span id="visible-bounds" className="ml-1 font-mono">Y: {bounds.minY} to {bounds.maxY}, X: {bounds.minX} to {bounds.maxX}</span>
+          <span id="visible-bounds" className="ml-1 font-mono">X: {bounds.minX} to {bounds.maxX}, Y: {bounds.minY} to {bounds.maxY}</span>
         </div>
       </div>
       <div className="flex items-center space-x-4">

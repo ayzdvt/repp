@@ -58,7 +58,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             <h3 className="font-medium text-sm mb-2">Point Properties</h3>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Position X</label>
+              <label className="block text-xs text-gray-500 mb-1">Position Y</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -84,7 +84,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Position Y</label>
+              <label className="block text-xs text-gray-500 mb-1">Position X</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 

@@ -275,12 +275,28 @@ export default function DrawingApp() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Zoom faktörlerini hesapla
-    const zoomX = canvasWidth / width;
-    const zoomY = canvasHeight / height;
+    // Canvas boyutlarını kontrol edelim - log'dan göreceğimiz değerler
+    console.log("Ham zoom değerleri:", {
+      width,
+      height,
+      canvasWidth,
+      canvasHeight,
+      rawZoomX: canvasWidth / width,
+      rawZoomY: canvasHeight / height
+    });
     
-    // Daha kısıtlayıcı olanı seç
-    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    // Zoom faktörlerini hesapla, 0'a bölmeyi engelle
+    const zoomX = width > 0 ? canvasWidth / width : 0.1;
+    const zoomY = height > 0 ? canvasHeight / height : 0.1;
+    
+    // Güvenli bir zoom değeri garantile
+    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
+    
+    // Zoom değerinin her zaman güvenli bir aralıkta olmasını sağla
+    if (newZoom <= 0.0001 || !isFinite(newZoom)) {
+      console.log("Geçersiz zoom değeri, varsayılan kullanılıyor:", newZoom);
+      newZoom = 0.1; // Varsayılan güvenli değer
+    }
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     

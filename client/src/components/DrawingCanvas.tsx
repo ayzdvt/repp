@@ -881,27 +881,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Özel event'ler için Ref'ler
   const updateEventRef = useRef<(e: any) => void>();
   const getAllShapesRef = useRef<(e: any) => void>();
-  const createShapeEventRef = useRef<(e: any) => void>();
   
   useEffect(() => {
     // Şekil güncelleme
     const handleShapeUpdate = (e: any) => {
       const { detail } = e;
-      if (detail?.type === 'add' && detail?.shape) {
-        // Yeni şekil ekle
-        console.log('Yeni şekil ekleniyor:', detail.shape);
-        shapesRef.current.push(detail.shape);
-      }
-      else if (detail?.type === 'update' && detail?.shape) {
+      if (detail?.type === 'update' && detail?.shape) {
         // Güncellenen şekli bul ve güncelle
         const shapeIndex = shapesRef.current.findIndex(s => s.id === detail.shape.id);
         if (shapeIndex !== -1) {
           shapesRef.current[shapeIndex] = detail.shape;
         }
-      }
-      else if (detail?.type === 'delete' && detail?.shapeId) {
-        // Şekli sil
-        shapesRef.current = shapesRef.current.filter(s => s.id !== detail.shapeId);
       }
     };
     
@@ -914,41 +904,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    // Yeni şekil oluşturma (polyline gibi karmaşık şekiller için)
-    const handleCreateShape = (e: any) => {
-      const { detail } = e;
-      if (detail?.type === 'polyline' && Array.isArray(detail.points)) {
-        // Yeni polyline oluştur
-        const newPolyline = {
-          id: nextIdRef.current++,
-          type: 'polyline',
-          points: detail.points,
-          thickness: detail.thickness || 1,
-          closed: detail.closed || false
-        };
-        
-        // Şekiller listesine ekle
-        shapesRef.current.push(newPolyline);
-      } 
-      else if (detail?.type === 'point') {
-        // Yeni nokta oluştur
-        const newPoint = {
-          id: nextIdRef.current++,
-          type: 'point',
-          x: detail.x || 0,
-          y: detail.y || 0,
-          style: detail.style || 'default'
-        };
-        
-        // Şekiller listesine ekle
-        shapesRef.current.push(newPoint);
-      }
-    };
-    
     // Referansları sakla
     updateEventRef.current = handleShapeUpdate;
     getAllShapesRef.current = handleGetAllShapes;
-    createShapeEventRef.current = handleCreateShape;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -969,22 +927,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
-    const createShapeHandler = (e: any) => {
-      if (createShapeEventRef.current) {
-        createShapeEventRef.current(e);
-      }
-    };
-    
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
     containerElement.addEventListener('getAllShapes', getAllShapesHandler);
-    containerElement.addEventListener('createshape', createShapeHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
       containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
-      containerElement.removeEventListener('createshape', createShapeHandler);
     };
   }, []);
   
@@ -1050,23 +1000,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Fit View için şekilleri alma olayını dinle
       const getAllShapesHandler = ((e: any) => {
-        console.log("getAllShapes event yakalandı:", shapesRef.current);
         // Tüm şekilleri al ve callback'e gönder
         if (e.detail && typeof e.detail.callback === 'function') {
           e.detail.callback(shapesRef.current);
         }
       }) as EventListener;
       
-      // Şekil güncelleme (veya ekleme) olayını dinle
+      // Şekil güncelleme olayını dinle
       const shapeUpdateHandler = ((e: any) => {
-        console.log("shapeupdate event yakalandı:", e.detail);
-        
-        if (e.detail && e.detail.type === 'add' && e.detail.shape) {
-          // Yeni şekil ekle
-          console.log('Şekil ekleniyor:', e.detail.shape);
-          shapesRef.current.push({ ...e.detail.shape });
-        }
-        else if (e.detail && e.detail.type === 'update' && e.detail.shape) {
+        if (e.detail && e.detail.type === 'update' && e.detail.shape) {
           // Güncellenecek şekli bul
           const shapeIndex = shapesRef.current.findIndex(
             (s: any) => s.id === e.detail.shape.id
@@ -1077,56 +1019,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             shapesRef.current[shapeIndex] = { ...e.detail.shape };
           }
         }
-        else if (e.detail && e.detail.type === 'delete' && e.detail.shapeId) {
-          // Şekli sil
-          shapesRef.current = shapesRef.current.filter(
-            (s: any) => s.id !== e.detail.shapeId
-          );
-        }
-      }) as EventListener;
-      
-      // Özel şekil oluşturma olayını dinle
-      const createShapeHandler = ((e: any) => {
-        console.log("createshape event yakalandı:", e.detail);
-        
-        if (e.detail && e.detail.type === 'polyline' && Array.isArray(e.detail.points)) {
-          // Yeni polyline oluştur
-          const newPolyline = {
-            id: nextIdRef.current++,
-            type: 'polyline',
-            points: [...e.detail.points],
-            thickness: e.detail.thickness || 1,
-            closed: e.detail.closed || false
-          };
-          
-          // Şekiller listesine ekle
-          shapesRef.current.push(newPolyline);
-        }
-        else if (e.detail && e.detail.type === 'point') {
-          // Yeni nokta oluştur
-          const newPoint = {
-            id: nextIdRef.current++,
-            type: 'point',
-            x: e.detail.x || 0,
-            y: e.detail.y || 0,
-            style: e.detail.style || 'default'
-          };
-          
-          // Şekiller listesine ekle
-          shapesRef.current.push(newPoint);
-        }
       }) as EventListener;
       
       // Event listener'ları ekle
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
-      containerElement.addEventListener('createshape', createShapeHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
-        containerElement.removeEventListener('createshape', createShapeHandler);
       };
     }
     

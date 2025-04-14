@@ -23,7 +23,64 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // LocalStorage'dan koordinat okuma kodunu kaldırdık
+  // Analiz sayfasından gelen koordinatlar için noktalar oluştur
+  useEffect(() => {
+    // Sayfa yüklendiğinde sessionStorage'dan koordinatları kontrol et
+    const coordsString = sessionStorage.getItem('analysisCoordinates');
+    if (!coordsString) return;
+    
+    try {
+      const coordinates = JSON.parse(coordsString);
+      
+      if (Array.isArray(coordinates) && coordinates.length > 0) {
+        console.log("Analiz koordinatları bulundu:", coordinates);
+        
+        // Her koordinat için bir nokta oluşturacağız
+        setTimeout(() => {
+          // Canvas'a erişim
+          const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+          if (!canvasContainer) return;
+          
+          const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+          if (!canvasElement) return;
+          
+          // Her koordinat için ayrı nokta oluştur
+          coordinates.forEach((coord, index) => {
+            const pointShape = {
+              id: Date.now() + index, // Benzersiz ID
+              type: 'point',
+              x: coord.x,
+              y: coord.y,
+              style: 'default'
+            };
+            
+            console.log(`Nokta ${index + 1} ekleniyor:`, pointShape);
+            
+            // CustomEvent oluştur
+            const addEvent = new CustomEvent('shapeupdate', {
+              detail: {
+                type: 'add', // Ekleme işlemi
+                shape: pointShape
+              }
+            });
+            
+            // Olayı gönder
+            canvasElement.dispatchEvent(addEvent);
+          });
+          
+          // sessionStorage'ı temizle (tekrar yüklenince aynı noktaları oluşturmamak için)
+          sessionStorage.removeItem('analysisCoordinates');
+          
+          // Koordinatları ekledikten sonra Fit View yaparak görünür hale getir
+          setTimeout(() => {
+            handleResetView();
+          }, 200);
+        }, 500); // Canvas yüklenme süresi için kısa bir bekleme
+      }
+    } catch (error) {
+      console.error("Koordinatlar yüklenirken hata:", error);
+    }
+  }, []);
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);

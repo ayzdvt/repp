@@ -108,12 +108,35 @@ export default function DrawingApp() {
           // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
-          // Görünümü tam ekrana uyarla - ekstra gecikme ekle
+          // Görünümü tam ekrana uyarla - daha uzun gecikme ekle
           // Noktaların tamamen oluşturulması ve canvas'a eklenmesi için bekleyelim
           setTimeout(() => {
             console.log("Koordinatları merkeze alma işlemi yapılıyor...");
+            // Şekilleri kontrol et
+            const drawingContainer = document.getElementById('drawing-container');
+            if (drawingContainer) {
+              const absoluteDiv = drawingContainer.querySelector('div.absolute');
+              if (absoluteDiv) {
+                let shapeList: any[] = [];
+                try {
+                  const customEvent = new CustomEvent('getAllShapes', {
+                    detail: { 
+                      callback: (shapes: any[]) => {
+                        shapeList = shapes || [];
+                      }
+                    }
+                  });
+                  absoluteDiv.dispatchEvent(customEvent);
+                } catch (error) {
+                  console.error('Shapes retrieval error:', error);
+                }
+                
+                console.log("Fit View öncesi şekiller:", shapeList);
+              }
+            }
+            
             handleResetView();
-          }, 2000); 
+          }, 3000); 
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {

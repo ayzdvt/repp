@@ -978,16 +978,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    const createPolylineHandler = (e: any) => {
+      if (createPolylineEventRef.current) {
+        createPolylineEventRef.current(e);
+      }
+    };
+    
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
     containerElement.addEventListener('getAllShapes', getAllShapesHandler);
     containerElement.addEventListener('createshape', createShapeHandler);
+    containerElement.addEventListener('createpolyline', createPolylineHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
       containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
       containerElement.removeEventListener('createshape', createShapeHandler);
+      containerElement.removeEventListener('createpolyline', createPolylineHandler);
     };
   }, []);
   

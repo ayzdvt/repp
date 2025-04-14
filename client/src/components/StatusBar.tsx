@@ -80,7 +80,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       <div className="flex items-center space-x-4">
         <div>
           <span className="text-gray-500 mr-2">Position:</span>
-          <span id="mouse-position" className="font-mono">({formattedY}, {formattedX})</span>
+          <span id="mouse-position" className="font-mono">({formattedX}, {formattedY})</span>
         </div>
         <button
           onClick={onToggleSnap}

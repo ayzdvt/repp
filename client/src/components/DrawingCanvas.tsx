@@ -881,17 +881,27 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   // Özel event'ler için Ref'ler
   const updateEventRef = useRef<(e: any) => void>();
   const getAllShapesRef = useRef<(e: any) => void>();
+  const createShapeEventRef = useRef<(e: any) => void>();
   
   useEffect(() => {
     // Şekil güncelleme
     const handleShapeUpdate = (e: any) => {
       const { detail } = e;
-      if (detail?.type === 'update' && detail?.shape) {
+      if (detail?.type === 'add' && detail?.shape) {
+        // Yeni şekil ekle
+        console.log('Yeni şekil ekleniyor:', detail.shape);
+        shapesRef.current.push(detail.shape);
+      }
+      else if (detail?.type === 'update' && detail?.shape) {
         // Güncellenen şekli bul ve güncelle
         const shapeIndex = shapesRef.current.findIndex(s => s.id === detail.shape.id);
         if (shapeIndex !== -1) {
           shapesRef.current[shapeIndex] = detail.shape;
         }
+      }
+      else if (detail?.type === 'delete' && detail?.shapeId) {
+        // Şekli sil
+        shapesRef.current = shapesRef.current.filter(s => s.id !== detail.shapeId);
       }
     };
     
@@ -904,9 +914,41 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    // Yeni şekil oluşturma (polyline gibi karmaşık şekiller için)
+    const handleCreateShape = (e: any) => {
+      const { detail } = e;
+      if (detail?.type === 'polyline' && Array.isArray(detail.points)) {
+        // Yeni polyline oluştur
+        const newPolyline = {
+          id: nextIdRef.current++,
+          type: 'polyline',
+          points: detail.points,
+          thickness: detail.thickness || 1,
+          closed: detail.closed || false
+        };
+        
+        // Şekiller listesine ekle
+        shapesRef.current.push(newPolyline);
+      } 
+      else if (detail?.type === 'point') {
+        // Yeni nokta oluştur
+        const newPoint = {
+          id: nextIdRef.current++,
+          type: 'point',
+          x: detail.x || 0,
+          y: detail.y || 0,
+          style: detail.style || 'default'
+        };
+        
+        // Şekiller listesine ekle
+        shapesRef.current.push(newPoint);
+      }
+    };
+    
     // Referansları sakla
     updateEventRef.current = handleShapeUpdate;
     getAllShapesRef.current = handleGetAllShapes;
+    createShapeEventRef.current = handleCreateShape;
   }, []);
   
   // Container DOM düğümü bağlandığında olayları dinlemeye başla
@@ -927,14 +969,22 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
     };
     
+    const createShapeHandler = (e: any) => {
+      if (createShapeEventRef.current) {
+        createShapeEventRef.current(e);
+      }
+    };
+    
     // Olay dinleyicileri container'a ekle
     containerElement.addEventListener('shapeupdate', updateHandler);
     containerElement.addEventListener('getAllShapes', getAllShapesHandler);
+    containerElement.addEventListener('createshape', createShapeHandler);
     
     // Cleanup
     return () => {
       containerElement.removeEventListener('shapeupdate', updateHandler);
       containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
+      containerElement.removeEventListener('createshape', createShapeHandler);
     };
   }, []);
   

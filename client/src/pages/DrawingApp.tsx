@@ -20,8 +20,48 @@ export default function DrawingApp() {
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
   
+  // Test için nokta ekleme fonksiyonu
+  const addTestPoint = useCallback((x: number, y: number) => {
+    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+    if (!canvasContainer) return;
+    
+    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+    if (!canvasElement) return;
+    
+    // Yeni bir test noktası oluştur
+    const testPoint = {
+      id: Date.now(), // Benzersiz ID
+      type: 'point',
+      x: x,
+      y: y,
+      style: 'default'
+    };
+    
+    // CustomEvent ile noktayı canvas'a ekle
+    const addEvent = new CustomEvent('shapeupdate', { 
+      detail: { 
+        type: 'add',  // Ekleme işlemi
+        shape: testPoint
+      } 
+    });
+    
+    canvasElement.dispatchEvent(addEvent);
+    
+    // Görünümü yeni eklenen noktaya uyarla
+    setTimeout(() => handleResetView(), 100);
+  }, []);
+  
   // Canvas içindeki referans
   // Removed canvasRef
+  
+  // Test noktası eklemek için useEffect
+  useEffect(() => {
+    // Sayfa yüklendiğinde bir test noktası ekleyelim (100, 100 koordinatlarında)
+    setTimeout(() => {
+      addTestPoint(100, 100);
+      console.log('FitView çağrılıyor...');
+    }, 1000); // Canvas tamamen yüklendikten sonra
+  }, [addTestPoint]);
   
   // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
@@ -343,6 +383,16 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
+          {/* Test butonu */}
+          <div className="absolute top-2 right-2 z-10">
+            <button 
+              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              onClick={() => addTestPoint(100, 100)}
+            >
+              Test Noktası Ekle
+            </button>
+          </div>
+          
           <div id="drawing-canvas">
             <DrawingCanvas 
               canvasState={canvasState}

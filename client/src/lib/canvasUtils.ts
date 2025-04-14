@@ -9,9 +9,12 @@ export function screenToWorld(
 ): Point {
   const { width, height } = state.canvasSize;
   
+  // Zoom 0 veya NaN ise varsayılan değer kullan
+  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
+  
   // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
-  const worldY = (screenX - width / 2 - state.panOffset.x) / state.zoom;
-  const worldX = (height / 2 - screenY + state.panOffset.y) / state.zoom;
+  const worldY = (screenX - width / 2 - state.panOffset.x) / safeZoom;
+  const worldX = (height / 2 - screenY + state.panOffset.y) / safeZoom;
   
   return { x: worldX, y: worldY };
 }
@@ -25,9 +28,12 @@ export function worldToScreen(
 ): Point {
   const { width, height } = state.canvasSize;
   
+  // Zoom 0 veya NaN ise varsayılan değer kullan
+  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
+  
   // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
-  const screenX = worldY * state.zoom + width / 2 + state.panOffset.x;
-  const screenY = height / 2 - worldX * state.zoom + state.panOffset.y;
+  const screenX = worldY * safeZoom + width / 2 + state.panOffset.x;
+  const screenY = height / 2 - worldX * safeZoom + state.panOffset.y;
   
   return { x: screenX, y: screenY };
 }
@@ -233,9 +239,8 @@ export function drawSnapIndicators(
   // En yakın yakalama noktası varsa göster
   if (nearestPoint) {
     try {
-      // Dünya koordinatlarını ekran koordinatlarına dönüştür
-      const screenX = nearestPoint.x * state.zoom + state.canvasSize.width / 2 + state.panOffset.x;
-      const screenY = state.canvasSize.height / 2 - nearestPoint.y * state.zoom + state.panOffset.y;
+      // Dünya koordinatlarını ekran koordinatlarına dönüştür - worldToScreen fonksiyonunu kullan
+      const { x: screenX, y: screenY } = worldToScreen(nearestPoint.x, nearestPoint.y, state);
       
       // Dış yeşil daire çiz
       ctx.beginPath();

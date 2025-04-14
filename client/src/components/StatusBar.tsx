@@ -21,8 +21,12 @@ const StatusBar: React.FC<StatusBarProps> = ({
   canvasState
 }) => {
   // Format the mouse position to display exactly 2 decimal places
-  const formattedX = mousePosition.x.toFixed(2);
-  const formattedY = mousePosition.y.toFixed(2);
+  const formattedX = typeof mousePosition.x === 'number' && isFinite(mousePosition.x) 
+    ? mousePosition.x.toFixed(2) 
+    : 'N/A';
+  const formattedY = typeof mousePosition.y === 'number' && isFinite(mousePosition.y) 
+    ? mousePosition.y.toFixed(2) 
+    : 'N/A';
   
   // Görülebilir koordinat aralığını hesapla
   const calculateVisibleBounds = () => {
@@ -47,12 +51,21 @@ const StatusBar: React.FC<StatusBarProps> = ({
       canvasState.canvasSize.height
     );
     
-    return {
-      minX: Math.min(topLeft.x, bottomRight.x).toFixed(0),
-      minY: Math.min(topLeft.y, bottomRight.y).toFixed(0),
-      maxX: Math.max(topLeft.x, bottomRight.x).toFixed(0),
-      maxY: Math.max(topLeft.y, bottomRight.y).toFixed(0)
-    };
+    // Sonuçların geçerli sayılar olduğundan emin ol
+    const minX = isFinite(Math.min(topLeft.x, bottomRight.x)) 
+      ? Math.min(topLeft.x, bottomRight.x).toFixed(0) 
+      : '0';
+    const minY = isFinite(Math.min(topLeft.y, bottomRight.y)) 
+      ? Math.min(topLeft.y, bottomRight.y).toFixed(0) 
+      : '0';
+    const maxX = isFinite(Math.max(topLeft.x, bottomRight.x)) 
+      ? Math.max(topLeft.x, bottomRight.x).toFixed(0) 
+      : '0';
+    const maxY = isFinite(Math.max(topLeft.y, bottomRight.y)) 
+      ? Math.max(topLeft.y, bottomRight.y).toFixed(0) 
+      : '0';
+      
+    return { minX, minY, maxX, maxY };
   };
   
   const bounds = calculateVisibleBounds();

@@ -10,7 +10,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
   
   // Format coordinate values to show 2 decimal places
   const formatCoordinate = (value: number): string => {
-    return value.toFixed(2);
+    return isFinite(value) ? value.toFixed(2) : '0.00';
   };
   
   // Form state - each field gets its own state to avoid component rerender delays

@@ -32,10 +32,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
     
     // Ekran koordinatlarını dünya koordinatlarına doğru dönüştür
     const screenToWorld = (screenX: number, screenY: number) => {
-      // canvasUtils.ts dosyasındaki screenToWorld fonksiyonunu birebir uyguluyoruz
+      // X ekseni dikey, Y ekseni yatay - yeni koordinat sistemine uygun
       const { width, height } = canvasState.canvasSize;
-      const worldX = (screenX - width / 2 - canvasState.panOffset.x) / canvasState.zoom;
-      const worldY = (height / 2 - screenY + canvasState.panOffset.y) / canvasState.zoom;
+      const worldY = (screenX - width / 2 - canvasState.panOffset.x) / canvasState.zoom;
+      const worldX = (height / 2 - screenY + canvasState.panOffset.y) / canvasState.zoom;
       return { x: worldX, y: worldY };
     };
     

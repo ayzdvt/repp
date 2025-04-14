@@ -1,26 +1,34 @@
 import { CanvasState, Point } from '@/types';
 
 // Transform screen coordinates to world coordinates
+// X ekseni dikey, Y ekseni yatay olacak şekilde düzenlendi
 export function screenToWorld(
   screenX: number, 
   screenY: number, 
   state: CanvasState
 ): Point {
   const { width, height } = state.canvasSize;
-  const worldX = (screenX - width / 2 - state.panOffset.x) / state.zoom;
-  const worldY = (height / 2 - screenY + state.panOffset.y) / state.zoom;
+  
+  // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
+  const worldY = (screenX - width / 2 - state.panOffset.x) / state.zoom;
+  const worldX = (height / 2 - screenY + state.panOffset.y) / state.zoom;
+  
   return { x: worldX, y: worldY };
 }
 
 // Transform world coordinates to screen coordinates
+// X ekseni dikey, Y ekseni yatay olacak şekilde düzenlendi
 export function worldToScreen(
   worldX: number, 
   worldY: number, 
   state: CanvasState
 ): Point {
   const { width, height } = state.canvasSize;
-  const screenX = worldX * state.zoom + width / 2 + state.panOffset.x;
-  const screenY = height / 2 - worldY * state.zoom + state.panOffset.y;
+  
+  // Y ve X değerlerini ters çevirdik, Y artık yatay, X artık dikey eksen
+  const screenX = worldY * state.zoom + width / 2 + state.panOffset.x;
+  const screenY = height / 2 - worldX * state.zoom + state.panOffset.y;
+  
   return { x: screenX, y: screenY };
 }
 

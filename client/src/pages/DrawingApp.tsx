@@ -257,14 +257,8 @@ export default function DrawingApp() {
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
     
-    // Daha kısıtlayıcı olanı seç, ama sıfır olmasını engelle
-    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-    
-    // Çok büyük koordinatlar için ek önlem - sıfıra yakın değerleri kontrol et
-    if (newZoom < 0.000001) {
-      console.log("Zoom değeri çok küçük, varsayılan değer kullanılıyor.");
-      newZoom = 0.0001; // Çok küçük ama sıfır olmayan bir değer
-    }
+    // Daha kısıtlayıcı olanı seç
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     
@@ -291,21 +285,8 @@ export default function DrawingApp() {
     // panOffset.x = -centerY * zoom
     // panOffset.y = centerX * zoom
     
-    // panOffset değerlerini hesapla
-    let panOffsetX = -centerY * newZoom;
-    let panOffsetY = centerX * newZoom;
-    
-    // Çok büyük koordinatlar için ek önlem - çok büyük değerleri sınırla
-    const MAX_OFFSET = 1000000; // Makul bir üst sınır
-    if (Math.abs(panOffsetX) > MAX_OFFSET) {
-      console.log("panOffsetX değeri çok büyük, sınırlandırılıyor.");
-      panOffsetX = panOffsetX > 0 ? MAX_OFFSET : -MAX_OFFSET;
-    }
-    
-    if (Math.abs(panOffsetY) > MAX_OFFSET) {
-      console.log("panOffsetY değeri çok büyük, sınırlandırılıyor.");
-      panOffsetY = panOffsetY > 0 ? MAX_OFFSET : -MAX_OFFSET;
-    }
+    const panOffsetX = -centerY * newZoom;
+    const panOffsetY = centerX * newZoom;
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     

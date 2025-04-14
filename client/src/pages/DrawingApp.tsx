@@ -83,11 +83,15 @@ export default function DrawingApp() {
             // Böylece oranlar korunur
             const scaleFactor = Math.min(scaleFactorX, scaleFactorY);
             
+            // Orjinden uzak bir noktaya taşıyalım (orjine yapışmaması için)
+            const offsetX = 20;
+            const offsetY = 20;
+            
             coordsToUse = coordinates.map(coord => ({
-              // X değerini normalize et ve ölçeklendir
-              x: (coord.x - minX) * scaleFactor,
-              // Y değerini normalize et ve ölçeklendir
-              y: (coord.y - minY) * scaleFactor,
+              // X değerini normalize et, ölçeklendir ve offsetle
+              x: (coord.x - minX) * scaleFactor + offsetX,
+              // Y değerini normalize et, ölçeklendir ve offsetle
+              y: (coord.y - minY) * scaleFactor + offsetY,
               No: coord.No
             }));
             

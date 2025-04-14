@@ -42,9 +42,16 @@ export function worldToScreen(
 export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   const { width, height } = state.canvasSize;
   
+  // Zoom değeri için güvenlik kontrolü
+  const safeZoom = isFinite(state.zoom) && state.zoom > 0 ? state.zoom : 0.5;
+  const safeState = {
+    ...state,
+    zoom: safeZoom
+  };
+  
   // Calculate starting point for the grid lines
-  const startPoint = screenToWorld(0, height, state);
-  const endPoint = screenToWorld(width, 0, state);
+  const startPoint = screenToWorld(0, height, safeState);
+  const endPoint = screenToWorld(width, 0, safeState);
   
   // Zoom seviyesine göre grid aralığını ve birim gösterimini belirle
   let gridStep = 50; // Varsayılan 50cm grid adımı (zoom 1.0)
@@ -106,7 +113,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   // Draw vertical grid lines (X axis lines)
   for (let x = startX; x <= endX; x += gridStep) {
     // X ekseni dikey olduğu için, sabit X değeri = sabit screenY değeri anlamına gelir
-    const { y: screenY } = worldToScreen(x, 0, state);
+    const { y: screenY } = worldToScreen(x, 0, safeState);
     
     // Ekranın dışına taşan çizgileri çizme
     if (screenY < 0 || screenY > height) continue;
@@ -133,7 +140,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   // Draw horizontal grid lines (Y axis lines)
   for (let y = startY; y <= endY; y += gridStep) {
     // Y ekseni yatay olduğu için, sabit Y değeri = sabit screenX değeri anlamına gelir
-    const { x: screenX } = worldToScreen(0, y, state);
+    const { x: screenX } = worldToScreen(0, y, safeState);
     
     // Ekranın dışına taşan çizgileri çizme
     if (screenX < 0 || screenX > width) continue;
@@ -158,7 +165,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, state: CanvasState) {
   }
   
   // Draw x and y axes
-  const origin = worldToScreen(0, 0, state);
+  const origin = worldToScreen(0, 0, safeState);
   
   // X-axis (yatay çizgi)
   ctx.beginPath();

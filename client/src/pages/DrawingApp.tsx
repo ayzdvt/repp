@@ -35,6 +35,24 @@ export default function DrawingApp() {
       if (Array.isArray(coordinates) && coordinates.length > 2) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
+        // Koordinatları normalize et (büyük değerleri daha uygun değerlere dönüştür)
+        const normalizeCoordinates = (coords: Array<{No?: number, x: number, y: number}>) => {
+          // Minimum değerleri bul
+          const minX = Math.min(...coords.map(c => c.x));
+          const minY = Math.min(...coords.map(c => c.y));
+          
+          // Normalize edilmiş koordinatları oluştur (orijine göre kaydırma ile)
+          return coords.map(coord => ({
+            No: coord.No,
+            x: coord.x - minX, // X değerlerini minimize et
+            y: coord.y - minY  // Y değerlerini minimize et
+          }));
+        };
+        
+        // Normalize edilmiş koordinatları al
+        const normalizedCoordinates = normalizeCoordinates(coordinates);
+        console.log("Normalize edilmiş koordinatlar:", normalizedCoordinates);
+        
         // Koordinatları çizim için hazırla
         setTimeout(() => {
           // Canvas'a erişim
@@ -45,18 +63,22 @@ export default function DrawingApp() {
           if (!canvasElement) return;
           
           // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
-          const cleanedCoordinates = coordinates.map(coord => ({
+          const cleanedCoordinates = normalizedCoordinates.map(coord => ({
             x: coord.x,
             y: coord.y
           }));
           
           // Polyline oluşturmak için event gönder
-          const createEvent = new CustomEvent('createshape', { 
+          const createEvent = new CustomEvent('shapeupdate', { 
             detail: { 
-              type: 'polyline',
-              points: cleanedCoordinates,
-              thickness: 2,
-              closed: true
+              type: 'add',
+              shape: {
+                id: Date.now(),
+                type: 'polyline',
+                points: cleanedCoordinates,
+                thickness: 2,
+                closed: true
+              }
             } 
           });
           
@@ -73,7 +95,7 @@ export default function DrawingApp() {
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);
     }
-  }, []);
+  }, [handleResetView]);
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);

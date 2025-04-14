@@ -432,6 +432,10 @@ export default function AnalysisPage() {
             className="flex items-center space-x-2"
             onClick={() => {
               if (result?.parcel_coordinates && result.parcel_coordinates.length > 0) {
+                // LocalStorage'ı önce temizle
+                localStorage.removeItem('parselCoordinates');
+                localStorage.removeItem('autoDrawPoints');
+                
                 // Koordinatları localStorage'a kaydet
                 localStorage.setItem('parselCoordinates', JSON.stringify(result.parcel_coordinates));
                 // Nokta çizimi ve fit modu için bir bayrak da ekleyelim

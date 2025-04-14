@@ -47,93 +47,74 @@ export default function DrawingApp() {
           // AutoDraw bayrağını kontrol et
           const autoDraw = localStorage.getItem('autoDrawPoints') === 'true';
           
-          if (autoDraw) {
-            // Koordinatları nokta olarak ayrı ayrı çiz
-            coordinates.forEach((coord, index) => {
-              // Koordinat değişimi: x -> y, y -> x (y eksenini değiştirdik)
-              // Her bir koordinat için nokta oluştur
-              const createPointEvent = new CustomEvent('createshape', { 
-                detail: { 
-                  type: 'point',
-                  x: coord.y, // Önceki y değeri şimdi x oldu 
-                  y: coord.x, // Önceki x değeri şimdi y oldu
-                  style: 'square', // noktaları daha belirgin yapmak için kare olarak çiz
-                  text: coord.No ? `${coord.No}` : `${index + 1}` // Nokta numarası
-                } 
-              });
-              
-              // Event'i div.absolute üzerinden yayınla
-              canvasElement.dispatchEvent(createPointEvent);
-              
-              // Nokta numarasını metin olarak da ekle
-              const createTextEvent = new CustomEvent('createshape', { 
-                detail: { 
-                  type: 'text',
-                  x: coord.y + 3, // Koordinatlar yer değişti
-                  y: coord.x + 3, // Koordinatlar yer değişti
-                  text: coord.No ? `${coord.No}` : `${index + 1}`,
-                  fontSize: 10
-                } 
-              });
-              
-              // Text olarak nokta numarasını ekle
-              canvasElement.dispatchEvent(createTextEvent);
+          // Her koşulda line segmentleri ile çizme yöntemini kullan (polyline kaldırıldı)
+          // Koordinatları nokta olarak ayrı ayrı çiz
+          coordinates.forEach((coord, index) => {
+            // Koordinat değişimi: x -> y, y -> x (y eksenini değiştirdik)
+            // Her bir koordinat için nokta oluştur
+            const createPointEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'point',
+                x: coord.y, // Önceki y değeri şimdi x oldu 
+                y: coord.x, // Önceki x değeri şimdi y oldu
+                style: 'square', // noktaları daha belirgin yapmak için kare olarak çiz
+                text: coord.No ? `${coord.No}` : `${index + 1}` // Nokta numarası
+              } 
             });
             
-            // Koordinatlar arasında çizgi çizelim (polyline yerine ayrı ayrı çizgiler)
-            if (coordinates.length > 1) {
-              for (let i = 0; i < coordinates.length; i++) {
-                const currentCoord = coordinates[i];
-                // Son nokta ile ilk nokta arası da dahil olsun (kapalı şekil)
-                const nextCoord = i === coordinates.length - 1 ? coordinates[0] : coordinates[i + 1];
-                
-                // Çizgi oluşturmak için event gönder
-                const createLineEvent = new CustomEvent('createshape', { 
-                  detail: { 
-                    type: 'line',
-                    startX: currentCoord.y, // Koordinatlar yer değişti: eski y şimdi x
-                    startY: currentCoord.x, // Koordinatlar yer değişti: eski x şimdi y
-                    endX: nextCoord.y, // Koordinatlar yer değişti
-                    endY: nextCoord.x, // Koordinatlar yer değişti
-                    thickness: 1.5
-                  } 
-                });
-                
-                // Event'i div.absolute üzerinden yayınla
-                canvasElement.dispatchEvent(createLineEvent);
-              }
-            }
+            // Event'i div.absolute üzerinden yayınla
+            canvasElement.dispatchEvent(createPointEvent);
             
-            // Bayrağı temizle
-            localStorage.removeItem('autoDrawPoints');
+            // Nokta numarasını metin olarak da ekle
+            const createTextEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'text',
+                x: coord.y + 3, // Koordinatlar yer değişti
+                y: coord.x + 3, // Koordinatlar yer değişti
+                text: coord.No ? `${coord.No}` : `${index + 1}`,
+                fontSize: 10
+              } 
+            });
             
-            // Görünümü tam ekrana uyarla - çizimlerden sonra yapılmalı
-            setTimeout(() => {
-              handleResetView();
-            }, 200);
-          } else {
-            // Eğer autoDrawPoints bayrağı yoksa, sadece polyline olarak çiz (önceki davranış)
-            if (coordinates.length > 2) {
-              // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
-              const cleanedCoordinates = coordinates.map(coord => ({
-                x: coord.x,
-                y: coord.y
-              }));
+            // Text olarak nokta numarasını ekle
+            canvasElement.dispatchEvent(createTextEvent);
+          });
+          
+          // Koordinatlar arasında çizgi çizelim (ayrı ayrı çizgiler)
+          if (coordinates.length > 1) {
+            console.log("Koordinatlar arasında çizgiler çiziliyor...");
+            for (let i = 0; i < coordinates.length; i++) {
+              const currentCoord = coordinates[i];
+              // Son nokta ile ilk nokta arası da dahil olsun (kapalı şekil)
+              const nextCoord = i === coordinates.length - 1 ? coordinates[0] : coordinates[i + 1];
               
-              // Polyline oluşturmak için event gönder
-              const createEvent = new CustomEvent('createshape', { 
+              console.log(`Çizgi ${i}: (${currentCoord.y}, ${currentCoord.x}) -> (${nextCoord.y}, ${nextCoord.x})`);
+              
+              // Çizgi oluşturmak için event gönder
+              const createLineEvent = new CustomEvent('createshape', { 
                 detail: { 
-                  type: 'polyline',
-                  points: cleanedCoordinates,
-                  thickness: 2,
-                  closed: true
+                  type: 'line',
+                  startX: currentCoord.y, // Koordinatlar yer değişti: eski y şimdi x
+                  startY: currentCoord.x, // Koordinatlar yer değişti: eski x şimdi y
+                  endX: nextCoord.y, // Koordinatlar yer değişti
+                  endY: nextCoord.x, // Koordinatlar yer değişti
+                  thickness: 1.5
                 } 
               });
               
               // Event'i div.absolute üzerinden yayınla
-              canvasElement.dispatchEvent(createEvent);
+              canvasElement.dispatchEvent(createLineEvent);
             }
           }
+          
+          // Bayrağı temizle
+          localStorage.removeItem('autoDrawPoints');
+          localStorage.removeItem('parselCoordinates');
+          
+          // Görünümü tam ekrana uyarla - çizimlerden sonra yapılmalı
+          setTimeout(() => {
+            handleResetView();
+          }, 200);
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı koordinatları oluşturmamak için)
           localStorage.removeItem('parselCoordinates');

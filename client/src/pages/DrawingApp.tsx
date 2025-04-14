@@ -23,7 +23,7 @@ export default function DrawingApp() {
   // Şekilleri depolamak için referans
   const shapesRef = useRef<any[]>([]);
   
-  // Test için koordinatları doğrudan ekleyen buton
+  // Test için koordinatları doğrudan ekleyen fonksiyon
   const addTestCoordinates = () => {
     console.log("Test koordinatları ekleniyor...");
     const testCoordinates = [
@@ -34,36 +34,41 @@ export default function DrawingApp() {
       { No: 31, x: 4540343.54, y: 438560.07 }
     ];
     
-    let nextId = Date.now();
+    // Canvas'a erişim
+    const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
+    if (!canvasContainer) return;
     
-    // Canvas elementine referansı al
-    if (!document.getElementById("drawing-canvas")) {
-      console.error("Canvas bulunamadı");
-      return;
-    }
+    const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
+    if (!canvasElement) return;
     
-    // Doğrudan shapesRef'e erişmek yerine, her noktayı çizmek için bir yaklaşım kullanalım
+    // Ortak başlangıç ID'si
+    const startId = Date.now();
+    
+    // Her bir koordinat için bir nokta oluştur ve event ile ekle
     testCoordinates.forEach((coord, index) => {
-      // Point tool'u aktif et (geçici olarak)
-      setActiveTool("point");
-      
-      // Ekranın ortasına ekleyelim
-      const shape = {
-        id: nextId + index,
+      // Test noktası oluştur
+      const pointShape = {
+        id: startId + index,
         type: 'point',
         x: coord.x,
         y: coord.y,
         style: 'default'
       };
       
-      // Shape'i ekle - DraftJS.tsx içinde kullanılan bir yaklaşım
-      shapesRef.current.push(shape);
+      // Event oluştur ve gönder
+      const updateEvent = new CustomEvent('shapeupdate', { 
+        detail: { 
+          type: 'update',
+          shape: pointShape
+        } 
+      });
+      
+      // Event'i div.absolute üzerinden yayınla
+      canvasElement.dispatchEvent(updateEvent);
+      console.log(`Test noktası ${index + 1} eklendi:`, pointShape);
     });
     
-    // Shapesleri temizlemeden seçim aracını aktif et
-    setActiveTool("selection");
-    
-    // Yeni eklenen şekillerin görünür olması için görünümü sıfırla
+    // Canvas'ı yenile için küçük bir gecikme
     setTimeout(() => {
       handleResetView();
       console.log("Test koordinatları eklendi, görünüm ayarlandı");
@@ -280,32 +285,6 @@ export default function DrawingApp() {
     // Merkez noktayı hesapla
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
-    
-    // Çok büyük koordinatlar için özel kontrol
-    if (maxX > 1000000 || minX > 1000000 || maxY > 1000000 || minY > 1000000) {
-      console.log("Büyük koordinatlar için ayarlanan değerler:", {
-        zoom: 0.0000001,
-        panX: -(centerX * 0.0000001),
-        panY: (centerY * 0.0000001),
-        width: width,
-        height: height,
-        centerX: centerX,
-        centerY: centerY
-      });
-      
-      // Çok düşük zoom değeri kullan ve viewport'u merkeze getir
-      setZoom(0.0000001);
-      setCanvasState({
-        gridSize: 10,
-        zoom: 0.0000001,
-        panOffset: { 
-          x: -(centerX * 0.0000001), 
-          y: (centerY * 0.0000001) 
-        },
-        canvasSize: canvasState.canvasSize
-      });
-      return;
-    }
     
     // Zoom faktörlerini hesapla
     const zoomX = canvasWidth / width;

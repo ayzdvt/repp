@@ -50,18 +50,61 @@ export default function DrawingApp() {
             y: coord.y
           }));
           
-          // Polyline oluşturmak için event gönder
-          const createEvent = new CustomEvent('createshape', { 
-            detail: { 
-              type: 'polyline',
-              points: cleanedCoordinates,
-              thickness: 2,
-              closed: true
-            } 
+          // Her bir koordinat için ayrı nokta oluştur
+          cleanedCoordinates.forEach((coord, index) => {
+            // Her koordinat için point nesnesi oluştur
+            const createPointEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'point',
+                x: coord.x,
+                y: coord.y,
+                style: 'default'
+              } 
+            });
+            
+            // Event'i div.absolute üzerinden yayınla
+            canvasElement.dispatchEvent(createPointEvent);
+            
+            // Ardışık koordinatlar arasında çizgi çiz
+            if (index > 0) {
+              const previousCoord = cleanedCoordinates[index - 1];
+              const createLineEvent = new CustomEvent('createshape', { 
+                detail: { 
+                  type: 'line',
+                  startX: previousCoord.x,
+                  startY: previousCoord.y,
+                  endX: coord.x,
+                  endY: coord.y,
+                  thickness: 1
+                } 
+              });
+              
+              // Event'i div.absolute üzerinden yayınla
+              canvasElement.dispatchEvent(createLineEvent);
+            }
           });
           
-          // Event'i div.absolute üzerinden yayınla
-          canvasElement.dispatchEvent(createEvent);
+          // İlk ve son noktayı birleştir (kapalı polyline için)
+          if (cleanedCoordinates.length > 2) {
+            const firstCoord = cleanedCoordinates[0];
+            const lastCoord = cleanedCoordinates[cleanedCoordinates.length - 1];
+            
+            const closeLineEvent = new CustomEvent('createshape', { 
+              detail: { 
+                type: 'line',
+                startX: lastCoord.x,
+                startY: lastCoord.y,
+                endX: firstCoord.x,
+                endY: firstCoord.y,
+                thickness: 1
+              } 
+            });
+            
+            // Event'i div.absolute üzerinden yayınla
+            canvasElement.dispatchEvent(closeLineEvent);
+          }
+          
+          // Artık polyline yaratmıyoruz, bu kod satırına gerek yok
           
           // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
           localStorage.removeItem('parselCoordinates');

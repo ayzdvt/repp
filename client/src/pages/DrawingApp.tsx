@@ -20,6 +20,7 @@ export default function DrawingApp() {
     canvasSize: { width: 0, height: 0 }
   });
   const [selectedObject, setSelectedObject] = useState<any>(null);
+  const [isPointDialogOpen, setIsPointDialogOpen] = useState<boolean>(false);
   
   // Canvas içindeki referans
   // Removed canvasRef
@@ -413,6 +414,51 @@ export default function DrawingApp() {
     }
   };
 
+  // Koordinat giriş diyalogu açıldığında çağrılacak fonksiyon
+  const handleOpenPointDialog = () => {
+    setIsPointDialogOpen(true);
+  };
+  
+  // Koordinat giriş diyalogu kapatıldığında çağrılacak fonksiyon
+  const handleClosePointDialog = () => {
+    setIsPointDialogOpen(false);
+  };
+  
+  // Koordinat girişinden nokta eklemek için fonksiyon
+  const handleAddPointFromCoordinates = (x: number, y: number) => {
+    console.log(`Koordinat girişinden nokta ekleniyor: (${x}, ${y})`);
+    
+    // Canvas element'ini bul
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        // Yeni nokta oluştur
+        const newPoint = {
+          id: Date.now(),
+          type: 'point',
+          x,
+          y,
+          style: 'default'
+        };
+        
+        // CustomEvent oluştur
+        const addEvent = new CustomEvent('shapeupdate', {
+          detail: {
+            type: 'add',
+            shape: newPoint
+          }
+        });
+        
+        // Olayı gönder
+        canvasElement.dispatchEvent(addEvent);
+        
+        // Nokta ekledikten sonra dialog'u kapat
+        setIsPointDialogOpen(false);
+      }
+    }
+  };
+
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">
       <Header />
@@ -424,6 +470,7 @@ export default function DrawingApp() {
           onZoomIn={() => handleZoomChange(zoom * 1.2)}
           onZoomOut={() => handleZoomChange(zoom / 1.2)}
           onFitView={handleResetView}
+          onOpenPointDialog={handleOpenPointDialog}
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
@@ -464,6 +511,13 @@ export default function DrawingApp() {
         snapEnabled={snapEnabled}
         onToggleSnap={toggleSnap}
         canvasState={canvasState}
+      />
+      
+      {/* Koordinat Girişi Dialog'u */}
+      <PointCoordinateDialog 
+        isOpen={isPointDialogOpen} 
+        onClose={handleClosePointDialog} 
+        onAddPoint={handleAddPointFromCoordinates}
       />
     </div>
   );

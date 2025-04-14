@@ -247,16 +247,18 @@ export default function DrawingApp() {
     // screenX = worldX * zoom + width / 2 + panOffset.x;
     // screenY = height / 2 - worldY * zoom + panOffset.y;
     
-    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
-    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
-    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
+    // X ve Y eksenlerinin yerlerini değiştirdik, yeni koordinat sistemi için hesaplama yapılmalı
+    // Yeni koordinat sisteminde X ekseni dikey, Y ekseni yatay
+    // Yeni worldToScreen formülümüz:
+    // screenX = worldY * zoom + width / 2 + panOffset.x;
+    // screenY = height / 2 - worldX * zoom + panOffset.y;
     
-    // Bu denklemleri çözersek:
-    // panOffset.x = -centerX * zoom
-    // panOffset.y = centerY * zoom
+    // Çözersek:
+    // panOffset.x = -centerY * zoom
+    // panOffset.y = centerX * zoom
     
-    const panOffsetX = -centerX * newZoom;
-    const panOffsetY = centerY * newZoom;
+    const panOffsetX = -centerY * newZoom;
+    const panOffsetY = centerX * newZoom;
     
     console.log("Fit View - Hesaplanan panOffset:", { panOffsetX, panOffsetY });
     

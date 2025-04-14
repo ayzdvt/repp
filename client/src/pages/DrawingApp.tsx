@@ -50,12 +50,13 @@ export default function DrawingApp() {
           if (autoDraw) {
             // Koordinatları nokta olarak ayrı ayrı çiz
             coordinates.forEach((coord, index) => {
+              // Koordinat değişimi: x -> y, y -> x (y eksenini değiştirdik)
               // Her bir koordinat için nokta oluştur
               const createPointEvent = new CustomEvent('createshape', { 
                 detail: { 
                   type: 'point',
-                  x: coord.x,
-                  y: coord.y,
+                  x: coord.y, // Önceki y değeri şimdi x oldu 
+                  y: coord.x, // Önceki x değeri şimdi y oldu
                   style: 'square', // noktaları daha belirgin yapmak için kare olarak çiz
                   text: coord.No ? `${coord.No}` : `${index + 1}` // Nokta numarası
                 } 
@@ -68,8 +69,8 @@ export default function DrawingApp() {
               const createTextEvent = new CustomEvent('createshape', { 
                 detail: { 
                   type: 'text',
-                  x: coord.x + 3, // Noktanın yanında
-                  y: coord.y + 3, // Noktanın yanında
+                  x: coord.y + 3, // Koordinatlar yer değişti
+                  y: coord.x + 3, // Koordinatlar yer değişti
                   text: coord.No ? `${coord.No}` : `${index + 1}`,
                   fontSize: 10
                 } 
@@ -79,26 +80,28 @@ export default function DrawingApp() {
               canvasElement.dispatchEvent(createTextEvent);
             });
             
-            // Ayrıca polyline olarak da oluşturalım (kapalı olarak)
-            if (coordinates.length > 2) {
-              // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
-              const cleanedCoordinates = coordinates.map(coord => ({
-                x: coord.x,
-                y: coord.y
-              }));
-              
-              // Polyline oluşturmak için event gönder
-              const createPolylineEvent = new CustomEvent('createshape', { 
-                detail: { 
-                  type: 'polyline',
-                  points: cleanedCoordinates,
-                  thickness: 1.5,
-                  closed: true
-                } 
-              });
-              
-              // Event'i div.absolute üzerinden yayınla
-              canvasElement.dispatchEvent(createPolylineEvent);
+            // Koordinatlar arasında çizgi çizelim (polyline yerine ayrı ayrı çizgiler)
+            if (coordinates.length > 1) {
+              for (let i = 0; i < coordinates.length; i++) {
+                const currentCoord = coordinates[i];
+                // Son nokta ile ilk nokta arası da dahil olsun (kapalı şekil)
+                const nextCoord = i === coordinates.length - 1 ? coordinates[0] : coordinates[i + 1];
+                
+                // Çizgi oluşturmak için event gönder
+                const createLineEvent = new CustomEvent('createshape', { 
+                  detail: { 
+                    type: 'line',
+                    startX: currentCoord.y, // Koordinatlar yer değişti: eski y şimdi x
+                    startY: currentCoord.x, // Koordinatlar yer değişti: eski x şimdi y
+                    endX: nextCoord.y, // Koordinatlar yer değişti
+                    endY: nextCoord.x, // Koordinatlar yer değişti
+                    thickness: 1.5
+                  } 
+                });
+                
+                // Event'i div.absolute üzerinden yayınla
+                canvasElement.dispatchEvent(createLineEvent);
+              }
             }
             
             // Bayrağı temizle

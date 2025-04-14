@@ -32,29 +32,16 @@ export default function DrawingApp() {
     if (!pointsString) return;
     
     try {
-      // Alınan veriyi konsola yazdıralım
-      console.log("LocalStorage'dan alınan ham veri:", pointsString);
-      
       const points = JSON.parse(pointsString);
-      console.log("Çözümlenmiş veri:", points);
-      console.log("Veri türü:", typeof points, Array.isArray(points) ? "Array" : "Not Array", "Uzunluk:", Array.isArray(points) ? points.length : "N/A");
       
       if (Array.isArray(points) && points.length > 0) {
         // Canvas'a erişim
         setTimeout(() => {
           const canvasContainer = document.getElementById('drawing-container');
-          if (!canvasContainer) {
-            console.error("Canvas container bulunamadı!");
-            return;
-          }
+          if (!canvasContainer) return;
           
           const canvasElement = canvasContainer.querySelector('div.absolute');
-          if (!canvasElement) {
-            console.error("Canvas elementi bulunamadı!");
-            return;
-          }
-          
-          console.log("Canvas elementleri bulundu, noktalar ekleniyor...");
+          if (!canvasElement) return;
           
           // Her bir nokta için işlem yap
           points.forEach((point, index) => {
@@ -80,23 +67,17 @@ export default function DrawingApp() {
               
               // Olayı gönder
               canvasElement.dispatchEvent(addEvent);
-            } else {
-              console.error("Geçersiz nokta formatı:", point);
             }
           });
           
           // Tüm noktalar eklendikten sonra görünümü sıfırla
-          console.log("Tüm noktalar eklendi, görünüm sıfırlanıyor...");
           setTimeout(() => {
             handleResetView();
           }, 100);
           
           // LocalStorage'ı temizle
           localStorage.removeItem('addPoints');
-          console.log("LocalStorage temizlendi");
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
-      } else {
-        console.log("Geçerli nokta dizisi bulunamadı");
       }
     } catch (error) {
       console.error("Nokta bilgisi işlenirken hata:", error);
@@ -258,15 +239,7 @@ export default function DrawingApp() {
     const zoomY = canvasHeight / height;
     
     // Daha kısıtlayıcı olanı seç
-    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-    
-    // Çok büyük koordinatlar için zoom değeri çok küçük olabilir
-    // Bu durumda makul bir değerle sınırlayalım
-    const MIN_ZOOM = 0.001; // Makul bir minimum zoom değeri
-    if (newZoom < MIN_ZOOM) {
-        console.log("Zoom değeri çok küçük, varsayılan değer kullanılıyor.");
-        newZoom = MIN_ZOOM;
-    }
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     

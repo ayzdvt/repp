@@ -286,6 +286,30 @@ export default function DrawingApp() {
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
+    // Çok büyük koordinatlar için özel düzenleme
+    if (maxX > 1000000 || minX > 1000000 || maxY > 1000000 || minY > 1000000) {
+      console.log("Büyük koordinatlar tespit edildi, sabit zoom kullanılıyor");
+      
+      // Çok düşük sabit zoom değeri kullan
+      const fixedZoom = 0.0000001;
+      
+      // Merkez koordinatlarını ekranın ortasına getir
+      const panOffsetX = -centerX * fixedZoom; 
+      const panOffsetY = centerY * fixedZoom;
+      
+      // Yeni değerleri ayarla
+      setZoom(fixedZoom);
+      setCanvasState({
+        gridSize: 10,
+        zoom: fixedZoom,
+        panOffset: { x: panOffsetX, y: panOffsetY },
+        canvasSize: canvasState.canvasSize
+      });
+      
+      return;
+    }
+    
+    // Normal koordinatlar için hesaplamaya devam et
     // Zoom faktörlerini hesapla
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;

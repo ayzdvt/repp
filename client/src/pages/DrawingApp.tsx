@@ -23,59 +23,9 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // Test amaçlı noktaları ekle ve çizim alanını ayarla
+  // LocalStorage'dan koordinatları al ve çizim alanına ekle
   useEffect(() => {
-    // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
-    setTimeout(() => {
-      // Canvas'a erişim
-      const canvasContainer = document.getElementById('drawing-container') as HTMLElement;
-      if (!canvasContainer) return;
-      
-      const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
-      if (!canvasElement) return;
-      
-      // Test noktalarını oluştur - doğrudan şekil ekleme olayını kullan
-      const testPoint1 = {
-        id: 1,
-        type: 'point',
-        x: 100,
-        y: 100,
-        style: 'default'
-      };
-      
-      const testPoint2 = {
-        id: 2,
-        type: 'point',
-        x: 200,
-        y: 200,
-        style: 'default'
-      };
-      
-      // Noktaları ekle
-      const addEvent1 = new CustomEvent('shapeupdate', { 
-        detail: { 
-          type: 'add',
-          shape: testPoint1
-        } 
-      });
-      canvasElement.dispatchEvent(addEvent1);
-      
-      const addEvent2 = new CustomEvent('shapeupdate', { 
-        detail: { 
-          type: 'add',
-          shape: testPoint2
-        } 
-      });
-      canvasElement.dispatchEvent(addEvent2);
-      
-      // Görünümü tam ekrana uyarla
-      setTimeout(() => {
-        console.log("FitView çağrılıyor...");
-        handleResetView();
-      }, 500);
-    }, 1000);
-    
-    // Parsel koordinatlarını da kontrol et
+    // Sayfa yüklendiğinde localStorage'dan koordinatları kontrol et
     const coordsString = localStorage.getItem('parselCoordinates');
     if (!coordsString) return;
     
@@ -118,7 +68,7 @@ export default function DrawingApp() {
           
           // Görünümü tam ekrana uyarla
           handleResetView();
-        }, 1500); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1.5 saniye bekle
+        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {
       console.error("Parsel koordinatları yüklenirken hata:", error);
@@ -275,28 +225,12 @@ export default function DrawingApp() {
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Canvas boyutlarını kontrol edelim - log'dan göreceğimiz değerler
-    console.log("Ham zoom değerleri:", {
-      width,
-      height,
-      canvasWidth,
-      canvasHeight,
-      rawZoomX: canvasWidth / width,
-      rawZoomY: canvasHeight / height
-    });
+    // Zoom faktörlerini hesapla
+    const zoomX = canvasWidth / width;
+    const zoomY = canvasHeight / height;
     
-    // Zoom faktörlerini hesapla, 0'a bölmeyi engelle
-    const zoomX = width > 0 ? canvasWidth / width : 0.1;
-    const zoomY = height > 0 ? canvasHeight / height : 0.1;
-    
-    // Güvenli bir zoom değeri garantile
-    let newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
-    
-    // Zoom değerinin her zaman güvenli bir aralıkta olmasını sağla
-    if (newZoom <= 0.0001 || !isFinite(newZoom)) {
-      console.log("Geçersiz zoom değeri, varsayılan kullanılıyor:", newZoom);
-      newZoom = 0.1; // Varsayılan güvenli değer
-    }
+    // Daha kısıtlayıcı olanı seç
+    const newZoom = Math.min(zoomX, zoomY) * 0.9; // %90 faktör (kenar marjları için)
     
     console.log("Fit View - Hesaplanan zoom faktörleri:", { zoomX, zoomY, newZoom });
     

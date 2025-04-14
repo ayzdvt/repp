@@ -159,17 +159,26 @@ export default function DrawingApp() {
   
   // Tüm çizimleri ekrana sığdıran Fit View fonksiyonu
   const handleResetView = () => {
+    console.log("Fit View başlatılıyor...");
+    
     // Canvas'ı al
     const drawingContainer = document.getElementById('drawing-container');
-    if (!drawingContainer) return;
+    if (!drawingContainer) {
+      console.error("drawing-container elementine erişilemiyor");
+      return;
+    }
     
     // Absolute div'i bul
     const absoluteDiv = drawingContainer.querySelector('div.absolute');
-    if (!absoluteDiv) return;
+    if (!absoluteDiv) {
+      console.error("div.absolute elementine erişilemiyor");
+      return;
+    }
     
     // Canvas boyutları
     const canvasWidth = canvasState.canvasSize.width;
     const canvasHeight = canvasState.canvasSize.height;
+    console.log("Canvas boyutları:", canvasWidth, canvasHeight);
     
     // Şekilleri almak için bir dummy referans oluştur
     let shapeList: any[] = [];
@@ -258,6 +267,68 @@ export default function DrawingApp() {
       return;
     }
     
+    // Çok büyük koordinatlar için
+    if (minX > 1000000 || maxX > 1000000 || minY > 1000000 || maxY > 1000000) {
+      console.log("Büyük koordinatlar tespit edildi, özel zoom hesaplanıyor");
+      
+      // Tek bir koordinat mı, yoksa bir koordinat grubu mu olduğunu kontrol et
+      const width = maxX - minX;
+      const height = maxY - minY;
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      
+      // Eğer bir alan varsa (birden fazla nokta), çok düşük bir zoom faktörüyle yap
+      if (width > 0 && height > 0) {
+        console.log("Koordinat alanı:", width, height);
+        
+        // Çok düşük bir zoom değeri hesapla
+        const fixedZoom = 0.0000005;
+        
+        // panOffset değerleri
+        const panOffsetX = -centerX * fixedZoom;
+        const panOffsetY = centerY * fixedZoom;
+        
+        console.log("Büyük koordinatlar için hesaplanan değerler:", {
+          zoom: fixedZoom,
+          panOffsetX,
+          panOffsetY,
+          centerX,
+          centerY
+        });
+        
+        // Ayarla
+        setZoom(fixedZoom);
+        setCanvasState({
+          gridSize: 10,
+          zoom: fixedZoom,
+          panOffset: { x: panOffsetX, y: panOffsetY },
+          canvasSize: canvasState.canvasSize
+        });
+      }
+      else {
+        // Tek bir nokta ise
+        console.log("Tek büyük koordinat noktası:", centerX, centerY);
+        
+        // Daha yüksek bir zoom değeri kullan
+        const fixedZoom = 0.0000005;
+        
+        // panOffset değerleri
+        const panOffsetX = -centerX * fixedZoom;
+        const panOffsetY = centerY * fixedZoom;
+        
+        // Ayarla
+        setZoom(fixedZoom);
+        setCanvasState({
+          gridSize: 10,
+          zoom: fixedZoom,
+          panOffset: { x: panOffsetX, y: panOffsetY },
+          canvasSize: canvasState.canvasSize
+        });
+      }
+      
+      return;
+    }
+    
     // Nesnelerin çevresine marj ekle (daha geniş görünüm için)
     const margin = 50;
     minX -= margin;
@@ -286,30 +357,6 @@ export default function DrawingApp() {
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
-    // Çok büyük koordinatlar için özel düzenleme
-    if (maxX > 1000000 || minX > 1000000 || maxY > 1000000 || minY > 1000000) {
-      console.log("Büyük koordinatlar tespit edildi, sabit zoom kullanılıyor");
-      
-      // Çok düşük sabit zoom değeri kullan
-      const fixedZoom = 0.0000001;
-      
-      // Merkez koordinatlarını ekranın ortasına getir
-      const panOffsetX = -centerX * fixedZoom; 
-      const panOffsetY = centerY * fixedZoom;
-      
-      // Yeni değerleri ayarla
-      setZoom(fixedZoom);
-      setCanvasState({
-        gridSize: 10,
-        zoom: fixedZoom,
-        panOffset: { x: panOffsetX, y: panOffsetY },
-        canvasSize: canvasState.canvasSize
-      });
-      
-      return;
-    }
-    
-    // Normal koordinatlar için hesaplamaya devam et
     // Zoom faktörlerini hesapla
     const zoomX = canvasWidth / width;
     const zoomY = canvasHeight / height;
@@ -321,18 +368,11 @@ export default function DrawingApp() {
     
     console.log("Fit View - Merkez noktası:", { centerX, centerY });
     
-    // Bu hesaplamalar artık gereksiz, doğrudan worldToScreen dönüşüm mantığını kullanacağız
-    
-    // canvasUtils.ts'deki worldToScreen fonksiyonunu kullanarak panOffset değerlerini hesaplayalım
-    // Orijinal worldToScreen formülünden:
+    // canvasUtils.ts'deki worldToScreen formülleri
     // screenX = worldX * zoom + width / 2 + panOffset.x;
     // screenY = height / 2 - worldY * zoom + panOffset.y;
     
-    // Yani, centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için:
-    // canvasWidth / 2 = centerX * zoom + canvasWidth / 2 + panOffset.x
-    // canvasHeight / 2 = canvasHeight / 2 - centerY * zoom + panOffset.y
-    
-    // Bu denklemleri çözersek:
+    // centerX ve centerY dünya koordinatlarını ekranın ortasına getirmek için
     // panOffset.x = -centerX * zoom
     // panOffset.y = centerY * zoom
     

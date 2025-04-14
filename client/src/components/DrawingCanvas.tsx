@@ -883,15 +883,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const getAllShapesRef = useRef<(e: any) => void>();
   
   useEffect(() => {
-    // Şekil güncelleme
+    // Şekil güncelleme veya ekleme
     const handleShapeUpdate = (e: any) => {
       const { detail } = e;
+      
+      // Şekil güncelleme
       if (detail?.type === 'update' && detail?.shape) {
         // Güncellenen şekli bul ve güncelle
         const shapeIndex = shapesRef.current.findIndex(s => s.id === detail.shape.id);
         if (shapeIndex !== -1) {
           shapesRef.current[shapeIndex] = detail.shape;
         }
+      }
+      // Şekil ekleme
+      else if (detail?.type === 'add' && detail?.shape) {
+        // Yeni şekli listeye ekle
+        shapesRef.current.push(detail.shape);
+        console.log("Şekil eklendi:", detail.shape);
       }
     };
     

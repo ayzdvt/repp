@@ -434,6 +434,8 @@ export default function AnalysisPage() {
               if (result?.parcel_coordinates && result.parcel_coordinates.length > 0) {
                 // Koordinatları localStorage'a kaydet
                 localStorage.setItem('parselCoordinates', JSON.stringify(result.parcel_coordinates));
+                // Nokta çizimi ve fit modu için bir bayrak da ekleyelim
+                localStorage.setItem('autoDrawPoints', 'true');
               }
               // Çizim sayfasına yönlendir
               window.location.href = '/drawing';

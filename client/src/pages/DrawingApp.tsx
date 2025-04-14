@@ -32,7 +32,7 @@ export default function DrawingApp() {
     try {
       const coordinates = JSON.parse(coordsString);
       
-      if (Array.isArray(coordinates) && coordinates.length > 2) {
+      if (Array.isArray(coordinates) && coordinates.length > 0) {
         console.log("Parsel koordinatları bulundu:", coordinates);
         
         // Koordinatları çizim için hazırla
@@ -44,30 +44,97 @@ export default function DrawingApp() {
           const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
           if (!canvasElement) return;
           
-          // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
-          const cleanedCoordinates = coordinates.map(coord => ({
-            x: coord.x,
-            y: coord.y
-          }));
+          // AutoDraw bayrağını kontrol et
+          const autoDraw = localStorage.getItem('autoDrawPoints') === 'true';
           
-          // Polyline oluşturmak için event gönder
-          const createEvent = new CustomEvent('createshape', { 
-            detail: { 
-              type: 'polyline',
-              points: cleanedCoordinates,
-              thickness: 2,
-              closed: true
-            } 
-          });
+          if (autoDraw) {
+            // Koordinatları nokta olarak ayrı ayrı çiz
+            coordinates.forEach((coord, index) => {
+              // Her bir koordinat için nokta oluştur
+              const createPointEvent = new CustomEvent('createshape', { 
+                detail: { 
+                  type: 'point',
+                  x: coord.x,
+                  y: coord.y,
+                  style: 'square', // noktaları daha belirgin yapmak için kare olarak çiz
+                  text: coord.No ? `${coord.No}` : `${index + 1}` // Nokta numarası
+                } 
+              });
+              
+              // Event'i div.absolute üzerinden yayınla
+              canvasElement.dispatchEvent(createPointEvent);
+              
+              // Nokta numarasını metin olarak da ekle
+              const createTextEvent = new CustomEvent('createshape', { 
+                detail: { 
+                  type: 'text',
+                  x: coord.x + 3, // Noktanın yanında
+                  y: coord.y + 3, // Noktanın yanında
+                  text: coord.No ? `${coord.No}` : `${index + 1}`,
+                  fontSize: 10
+                } 
+              });
+              
+              // Text olarak nokta numarasını ekle
+              canvasElement.dispatchEvent(createTextEvent);
+            });
+            
+            // Ayrıca polyline olarak da oluşturalım (kapalı olarak)
+            if (coordinates.length > 2) {
+              // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+              const cleanedCoordinates = coordinates.map(coord => ({
+                x: coord.x,
+                y: coord.y
+              }));
+              
+              // Polyline oluşturmak için event gönder
+              const createPolylineEvent = new CustomEvent('createshape', { 
+                detail: { 
+                  type: 'polyline',
+                  points: cleanedCoordinates,
+                  thickness: 1.5,
+                  closed: true
+                } 
+              });
+              
+              // Event'i div.absolute üzerinden yayınla
+              canvasElement.dispatchEvent(createPolylineEvent);
+            }
+            
+            // Bayrağı temizle
+            localStorage.removeItem('autoDrawPoints');
+            
+            // Görünümü tam ekrana uyarla - çizimlerden sonra yapılmalı
+            setTimeout(() => {
+              handleResetView();
+            }, 200);
+          } else {
+            // Eğer autoDrawPoints bayrağı yoksa, sadece polyline olarak çiz (önceki davranış)
+            if (coordinates.length > 2) {
+              // Koordinatlardan No alanını çıkarıp sadece x ve y değerlerini kullan
+              const cleanedCoordinates = coordinates.map(coord => ({
+                x: coord.x,
+                y: coord.y
+              }));
+              
+              // Polyline oluşturmak için event gönder
+              const createEvent = new CustomEvent('createshape', { 
+                detail: { 
+                  type: 'polyline',
+                  points: cleanedCoordinates,
+                  thickness: 2,
+                  closed: true
+                } 
+              });
+              
+              // Event'i div.absolute üzerinden yayınla
+              canvasElement.dispatchEvent(createEvent);
+            }
+          }
           
-          // Event'i div.absolute üzerinden yayınla
-          canvasElement.dispatchEvent(createEvent);
-          
-          // LocalStorage'ı temizle (tekrar yüklenince aynı polyline'ı oluşturmamak için)
+          // LocalStorage'ı temizle (tekrar yüklenince aynı koordinatları oluşturmamak için)
           localStorage.removeItem('parselCoordinates');
           
-          // Görünümü tam ekrana uyarla
-          handleResetView();
         }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
       }
     } catch (error) {

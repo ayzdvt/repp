@@ -1335,6 +1335,27 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             shapesRef.current.push(newShape);
             console.log("Şekil eklendi:", newShape);
           }
+          // Toplu ekleme işlemi (batch) - bu yeni bir işlem türü
+          else if (e.detail.type === 'batch' && Array.isArray(e.detail.shapes)) {
+            console.log("TEST PARALEL: Batch şekil ekleme işlemi başladı");
+            
+            // İşlem tarihçesine tek bir toplu işlem olarak ekle
+            const shapeIds = [];
+            
+            // Her şekli ekle
+            e.detail.shapes.forEach(shape => {
+              const newShape = { ...shape };
+              shapesRef.current.push(newShape);
+              shapeIds.push(newShape.id);
+              console.log("TEST PARALEL: Toplu şekil eklendi:", newShape);
+            });
+            
+            // Tüm şekilleri tek bir işlem olarak tarihçeye ekle
+            actionsHistoryRef.current.push({
+              action: 'batch_add_shapes',
+              data: { shapeIds }
+            });
+          }
         }
       }) as EventListener;
       

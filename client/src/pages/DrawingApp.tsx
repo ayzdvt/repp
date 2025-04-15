@@ -447,23 +447,22 @@ export default function DrawingApp() {
         // Seçili nesneyi temizle
         setSelectedObject(null);
         
-        // Pozitif yöndeki çizgi için ekleme olayını oluştur ve gönder
-        const addPositiveEvent = new CustomEvent('shapeupdate', {
-          detail: {
-            type: 'add',
-            shape: positiveLine
-          }
-        });
-        canvasElement.dispatchEvent(addPositiveEvent);
+        // Test: Önce bir konsol log ekleyelim ve her şeyi temizleyelim
+        console.log("TEST PARALEL: Dialog kapatıldı, çizgiler oluşturuluyor");
         
-        // Negatif yöndeki çizgi için ekleme olayını oluştur ve gönder
-        const addNegativeEvent = new CustomEvent('shapeupdate', {
+        // Pozitif ve negatif çizgileri birleştirip tek bir event olarak göndereceğiz
+        // Tek seferde işlem yapmak için 'batch' tipinde yeni bir event oluşturuyoruz
+        const parallelLinesEvent = new CustomEvent('shapeupdate', {
           detail: {
-            type: 'add',
-            shape: negativeLine
+            type: 'batch', // Yeni tip: 'batch'
+            shapes: [positiveLine, negativeLine] // Her iki çizgiyi de tek bir işlemde ekleyelim
           }
         });
-        canvasElement.dispatchEvent(addNegativeEvent);
+        
+        console.log("TEST PARALEL: Çizgiler event'e eklendi:", positiveLine, negativeLine);
+        
+        // Event'i sadece bir kez gönderelim
+        canvasElement.dispatchEvent(parallelLinesEvent);
         
         // ÖNEMLİ: Paralel modunu açık tut
         // setParalelModu(false); - Bu satırı kaldırdık

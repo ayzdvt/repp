@@ -16,8 +16,8 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Hızlı Erişim</h3>
             <ul className="space-y-2 text-gray-300 text-sm">
-              <li><Link href="/"><a className="hover:text-blue-400">Ana Sayfa</a></Link></li>
-              <li><Link href="/options"><a className="hover:text-blue-400">Çözümler</a></Link></li>
+              <li><Link href="/"><div className="hover:text-blue-400 cursor-pointer">Ana Sayfa</div></Link></li>
+              <li><Link href="/options"><div className="hover:text-blue-400 cursor-pointer">Çözümler</div></Link></li>
               <li><a href="#features" className="hover:text-blue-400">Özellikler</a></li>
               <li><a href="#demo" className="hover:text-blue-400">Demo</a></li>
             </ul>

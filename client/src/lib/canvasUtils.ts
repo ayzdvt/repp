@@ -313,6 +313,44 @@ export function drawShape(
     // Dash ayarlarını sıfırla
     ctx.setLineDash([]);
     
+    // Çizginin uzunluğunu hesapla ve göster
+    const lengthInWorld = Math.sqrt(
+      Math.pow(shape.endX - shape.startX, 2) + 
+      Math.pow(shape.endY - shape.startY, 2)
+    );
+    
+    // Uzunluğu formatla (2 ondalık basamağa yuvarla)
+    const formattedLength = lengthInWorld.toFixed(2);
+    
+    // Metin için orta nokta
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    
+    // Çizginin açısını hesapla
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    
+    // Metni çizgiye paralel hizalamak için dönüşüm
+    ctx.save();
+    ctx.translate(midX, midY);
+    ctx.rotate(angle);
+    
+    // Beyaz arka plan ile metin çiz (okunaklı olması için)
+    ctx.font = '10px Arial';
+    const textWidth = ctx.measureText(formattedLength).width;
+    
+    // Beyaz arka plan
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
+    
+    // Metni çiz
+    ctx.fillStyle = isSelected ? '#FF4500' : '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(formattedLength, 0, -3);
+    
+    // Dönüşümü geri al
+    ctx.restore();
+    
     // Eğer çizgi seçiliyse uç noktaları göster
     if (isSelected) {
       // Başlangıç noktasını çiz
@@ -383,6 +421,47 @@ export function drawShape(
         ctx.stroke();
         ctx.setLineDash([]); // Kesikli çizgiyi sıfırla
         
+        // Ön izleme çizgisinin uzunluğunu hesapla
+        const segmentLength = Math.sqrt(
+          Math.pow(shape.previewPoint.x - lastPoint.x, 2) + 
+          Math.pow(shape.previewPoint.y - lastPoint.y, 2)
+        );
+        
+        // Uzunluğu formatla
+        const formattedLength = segmentLength.toFixed(2);
+        
+        // Metin için orta nokta
+        const midX = (lastScreenPoint.x + previewScreenPoint.x) / 2;
+        const midY = (lastScreenPoint.y + previewScreenPoint.y) / 2;
+        
+        // Çizginin açısını hesapla
+        const angle = Math.atan2(
+          previewScreenPoint.y - lastScreenPoint.y, 
+          previewScreenPoint.x - lastScreenPoint.x
+        );
+        
+        // Metni çizgiye paralel hizalamak için dönüşüm
+        ctx.save();
+        ctx.translate(midX, midY);
+        ctx.rotate(angle);
+        
+        // Beyaz arka plan ile metin çiz (okunaklı olması için)
+        ctx.font = '10px Arial';
+        const textWidth = ctx.measureText(formattedLength).width;
+        
+        // Beyaz arka plan
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
+        
+        // Metni çiz
+        ctx.fillStyle = "#000000";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(formattedLength, 0, -3);
+        
+        // Dönüşümü geri al
+        ctx.restore();
+        
         // Snap varsa özel görünüm ekle
         if (shape.isSnapping) {
           // Ekran koordinatları zaten dönüştürülmüş durumda
@@ -415,6 +494,59 @@ export function drawShape(
       // Çizgiyi çiz
       ctx.lineWidth = shape.thickness; // Sabit kalınlık
       ctx.stroke();
+      
+      // Her bir segment'in uzunluğunu göster
+      if (shape.points.length >= 2) {
+        for (let i = 0; i < shape.points.length - 1; i++) {
+          const startPoint = shape.points[i];
+          const endPoint = shape.points[i + 1];
+          
+          // Segment uzunluğunu hesapla
+          const segmentLength = Math.sqrt(
+            Math.pow(endPoint.x - startPoint.x, 2) + 
+            Math.pow(endPoint.y - startPoint.y, 2)
+          );
+          
+          // Uzunluğu formatla
+          const formattedLength = segmentLength.toFixed(2);
+          
+          // Ekran koordinatlarına dönüştür
+          const startScreen = worldToScreen(startPoint.x, startPoint.y, state);
+          const endScreen = worldToScreen(endPoint.x, endPoint.y, state);
+          
+          // Metin için orta nokta
+          const midX = (startScreen.x + endScreen.x) / 2;
+          const midY = (startScreen.y + endScreen.y) / 2;
+          
+          // Çizginin açısını hesapla
+          const angle = Math.atan2(
+            endScreen.y - startScreen.y, 
+            endScreen.x - startScreen.x
+          );
+          
+          // Metni çizgiye paralel hizalamak için dönüşüm
+          ctx.save();
+          ctx.translate(midX, midY);
+          ctx.rotate(angle);
+          
+          // Beyaz arka plan ile metin çiz (okunaklı olması için)
+          ctx.font = '10px Arial';
+          const textWidth = ctx.measureText(formattedLength).width;
+          
+          // Beyaz arka plan
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
+          
+          // Metni çiz
+          ctx.fillStyle = isSelected ? "#FF4500" : "#000000";
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(formattedLength, 0, -3);
+          
+          // Dönüşümü geri al
+          ctx.restore();
+        }
+      }
     }
     
     // Eğer polyline seçiliyse, tüm köşe noktalarını göster

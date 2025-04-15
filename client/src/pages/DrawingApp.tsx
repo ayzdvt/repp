@@ -406,60 +406,24 @@ export default function DrawingApp() {
     const perpX = -unitY;
     const perpY = unitX;
     
-    // Her iki yönde de paralel çizgi oluştur
-    // Pozitif yönde paralel
-    const pos = {
-      id: Date.now() + 1,
+    // Paralel çizgiyi oluştur (sadece pozitif yönde)
+    const newLine = {
+      id: Date.now(),
       type: 'line',
       startX: startX + perpX * distance,
       startY: startY + perpY * distance,
       endX: endX + perpX * distance,
       endY: endY + perpY * distance,
       thickness: parallelLineSource.thickness,
-      isPreview: true,
-      direction: 'positive'
+      isPreview: false
     };
     
-    // Negatif yönde paralel
-    const neg = {
-      id: Date.now() + 2,
-      type: 'line',
-      startX: startX - perpX * distance,
-      startY: startY - perpY * distance,
-      endX: endX - perpX * distance,
-      endY: endY - perpY * distance,
-      thickness: parallelLineSource.thickness,
-      isPreview: true,
-      direction: 'negative'
-    };
-    
-    // Paralel çizgi önizlemelerini ayarla
-    setParallelPreviewLines([pos, neg]);
-    
-    // Canvas'a önizlemeleri göster
+    // Canvas'a çizgi ekle
     const canvasContainer = document.getElementById('drawing-container');
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
       if (canvasElement) {
-        // Paralel önizleme olayını oluştur
-        const previewEvent = new CustomEvent('parallelPreview', {
-          detail: {
-            lines: [pos, neg]
-          }
-        });
-        
-        // Olayı gönder
-        canvasElement.dispatchEvent(previewEvent);
-        
-        // Doğrudan çizgi ekleyelim - paralel çizgi önizlemesini kullanarak tek tıklama ile tamamlayalım
-        // Pozitif yöndeki çizgiyi seçelim (fare konumuna yakın olanı seçmek yerine, basitçe pozitif olanı alalım)
-        const newLine = {
-          ...pos,
-          isPreview: false,
-          id: Date.now()
-        };
-        
-        // Kalıcı çizgiyi ekle
+        // Çizgi ekleme olayını oluştur
         const addEvent = new CustomEvent('shapeupdate', {
           detail: {
             type: 'add',
@@ -467,17 +431,15 @@ export default function DrawingApp() {
           }
         });
         
-        // Önizleme çizgilerini temizle
-        const clearEvent = new CustomEvent('clearParallelPreviews', {});
-        
-        // Olayları sırayla gönder
-        canvasElement.dispatchEvent(clearEvent);
+        // Olayı gönder
         canvasElement.dispatchEvent(addEvent);
         
-        // Diyalogu kapat ve state'i temizle
+        // Tüm state'leri temizle
         setIsParallelDialogOpen(false);
         setParallelPreviewLines([]);
         setParallelLineSource(null);
+        setParalelModu(false);
+        setSelectedObject(null); // Seçili nesneyi temizle
       }
     }
   };

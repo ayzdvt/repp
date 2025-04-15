@@ -1,4 +1,5 @@
 import { CanvasState, Point } from '@/types';
+import { findNearestSnapPoint } from './drawingPrimitives';
 
 // Transform screen coordinates to world coordinates
 // X ekseni dikey, Y ekseni yatay olacak şekilde düzenlendi

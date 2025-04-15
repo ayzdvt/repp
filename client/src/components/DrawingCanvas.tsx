@@ -46,6 +46,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const originalLineRef = useRef<any | null>(null); // Sürükleme başladığında çizginin orijinal hali
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
+  const parallelPreviewsRef = useRef<any[]>([]); // Paralel çizgi önizlemeleri
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
   const [isDragging, setIsDragging] = useState<boolean>(false);

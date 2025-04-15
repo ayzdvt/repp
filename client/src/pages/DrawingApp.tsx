@@ -494,6 +494,7 @@ export default function DrawingApp() {
           onZoomOut={() => handleZoomChange(zoom / 1.2)}
           onFitView={handleResetView}
           onOpenPointDialog={handleOpenPointDialog}
+          onStartParallel={handleStartParallel}
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
@@ -536,6 +537,13 @@ export default function DrawingApp() {
         isOpen={isPointDialogOpen} 
         onClose={handleClosePointDialog} 
         onAddPoint={handleAddPointFromCoordinates}
+      />
+      
+      {/* Paralel Mesafe Dialog'u */}
+      <ParallelDistanceDialog
+        isOpen={isParallelDialogOpen}
+        onClose={handleCloseParallelDialog}
+        onApplyDistance={handleApplyParallelDistance}
       />
     </div>
   );

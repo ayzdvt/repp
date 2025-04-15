@@ -56,21 +56,21 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
   return (
     <div className="bg-white w-0 md:w-64 border-l border-gray-300 flex-shrink-0 overflow-y-auto custom-scrollbar hidden md:block">
       <div className="p-4">
-        <h2 className="font-semibold text-gray-700 mb-4">Properties</h2>
+        <h2 className="font-semibold text-gray-700 mb-4">Özellikler</h2>
         
         {!hasSelection && (
           <div className="mb-4 opacity-50">
-            <p className="text-sm text-gray-500 mb-1">No object selected</p>
-            <p className="text-xs text-gray-400">Select an object to edit its properties</p>
+            <p className="text-sm text-gray-500 mb-1">Hiçbir obje seçilmedi</p>
+            <p className="text-xs text-gray-400">Özelliklerini düzenlemek için bir obje seçin</p>
           </div>
         )}
         
         {hasSelection && selectedObject.type === 'point' && (
           <div id="point-properties">
-            <h3 className="font-medium text-sm mb-2">Point Properties</h3>
+            <h3 className="font-medium text-sm mb-2">Nokta Özellikleri</h3>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Position Y</label>
+              <label className="block text-xs text-gray-500 mb-1">Y Pozisyonu</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -96,7 +96,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Position X</label>
+              <label className="block text-xs text-gray-500 mb-1">X Pozisyonu</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -122,7 +122,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Style</label>
+              <label className="block text-xs text-gray-500 mb-1">Stil</label>
               <select 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                 value={pointStyle}
@@ -133,9 +133,9 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   }
                 }}
               >
-                <option value="default">Default</option>
-                <option value="square">Square</option>
-                <option value="cross">Cross</option>
+                <option value="default">Varsayılan</option>
+                <option value="square">Kare</option>
+                <option value="cross">Çarpı</option>
               </select>
             </div>
           </div>
@@ -143,11 +143,11 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
         
         {hasSelection && selectedObject.type === 'line' && (
           <div id="line-properties">
-            <h3 className="font-medium text-sm mb-2">Line Properties</h3>
+            <h3 className="font-medium text-sm mb-2">Çizgi Özellikleri</h3>
             
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Start X</label>
+                <label className="block text-xs text-gray-500 mb-1">Başlangıç X</label>
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -172,7 +172,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Start Y</label>
+                <label className="block text-xs text-gray-500 mb-1">Başlangıç Y</label>
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -200,7 +200,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">End X</label>
+                <label className="block text-xs text-gray-500 mb-1">Bitiş X</label>
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -225,7 +225,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">End Y</label>
+                <label className="block text-xs text-gray-500 mb-1">Bitiş Y</label>
                 <input 
                   type="number" 
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -252,7 +252,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Thickness</label>
+              <label className="block text-xs text-gray-500 mb-1">Kalınlık</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -283,10 +283,10 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
         
         {hasSelection && selectedObject.type === 'polyline' && (
           <div id="polyline-properties">
-            <h3 className="font-medium text-sm mb-2">Polyline Properties</h3>
+            <h3 className="font-medium text-sm mb-2">Çoklu Çizgi Özellikleri</h3>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Total Length</label>
+              <label className="block text-xs text-gray-500 mb-1">Toplam Uzunluk</label>
               <div className="flex items-center">
                 <input 
                   type="text" 
@@ -299,7 +299,7 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Thickness</label>
+              <label className="block text-xs text-gray-500 mb-1">Kalınlık</label>
               <input 
                 type="number" 
                 className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
@@ -327,9 +327,9 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
             </div>
             
             <div className="mb-3">
-              <label className="block text-xs text-gray-500 mb-1">Points</label>
+              <label className="block text-xs text-gray-500 mb-1">Noktalar</label>
               <div className="text-xs text-gray-500">
-                {selectedObject.points?.length || 0} points in this polyline
+                Bu çoklu çizgide {selectedObject.points?.length || 0} nokta var
               </div>
             </div>
           </div>

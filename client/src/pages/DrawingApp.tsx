@@ -253,6 +253,9 @@ export default function DrawingApp() {
   ) => {
     // Mevcut seçili nesnenin bir kopyasını oluştur
     if (selectedObject && selectedObject.id === objectId) {
+      // Çizimi işlem kaydına eklemeden önce mevcut durumu kaydedelim
+      const originalObject = { ...selectedObject };
+      
       // Özelliği doğrudan güncelleme
       const updatedObject = { ...selectedObject };
       
@@ -272,11 +275,18 @@ export default function DrawingApp() {
         // İçindeki canvas containerına erişelim
         const canvasElement = canvasContainer.querySelector('div.absolute') as HTMLElement;
         if (canvasElement) {
-          // Özel olay oluştur - canvas.tsx dosyasında dinleyeceğiz
+          // İşlem tarihçesine ekleme için gerekli bilgileri içeren özel detaylarla olayı oluştur
           const updateEvent = new CustomEvent('shapeupdate', { 
             detail: { 
               type: 'update',
-              shape: updatedObject
+              shape: updatedObject,
+              // İşlem tarihçesi için ek detaylar
+              operation: {
+                type: 'update_shape',
+                originalShape: originalObject,
+                updatedShape: updatedObject,
+                propertyName: property
+              }
             } 
           });
           

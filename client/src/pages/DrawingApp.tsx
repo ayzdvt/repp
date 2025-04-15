@@ -406,9 +406,12 @@ export default function DrawingApp() {
     const perpX = -unitY;
     const perpY = unitX;
     
-    // Paralel çizgiyi oluştur (sadece pozitif yönde)
-    const newLine = {
-      id: Date.now(),
+    // Her iki yöne çizgi oluştur (hem pozitif hem negatif)
+    
+    // Pozitif yöndeki çizgi (seçilen çizginin bir tarafı)
+    const positiveLineId = Date.now();
+    const positiveLine = {
+      id: positiveLineId,
       type: 'line',
       startX: startX + perpX * distance,
       startY: startY + perpY * distance,
@@ -418,7 +421,20 @@ export default function DrawingApp() {
       isPreview: false
     };
     
-    // Canvas'a çizgi ekle
+    // Negatif yöndeki çizgi (seçilen çizginin diğer tarafı)
+    const negativeLineId = positiveLineId + 1;
+    const negativeLine = {
+      id: negativeLineId,
+      type: 'line',
+      startX: startX - perpX * distance,
+      startY: startY - perpY * distance,
+      endX: endX - perpX * distance,
+      endY: endY - perpY * distance,
+      thickness: parallelLineSource.thickness,
+      isPreview: false
+    };
+    
+    // Canvas'a çizgileri ekle
     const canvasContainer = document.getElementById('drawing-container');
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
@@ -431,16 +447,23 @@ export default function DrawingApp() {
         // Seçili nesneyi temizle
         setSelectedObject(null);
         
-        // Çizgi ekleme olayını oluştur
-        const addEvent = new CustomEvent('shapeupdate', {
+        // Pozitif yöndeki çizgi için ekleme olayını oluştur ve gönder
+        const addPositiveEvent = new CustomEvent('shapeupdate', {
           detail: {
             type: 'add',
-            shape: newLine
+            shape: positiveLine
           }
         });
+        canvasElement.dispatchEvent(addPositiveEvent);
         
-        // Olayı gönder
-        canvasElement.dispatchEvent(addEvent);
+        // Negatif yöndeki çizgi için ekleme olayını oluştur ve gönder
+        const addNegativeEvent = new CustomEvent('shapeupdate', {
+          detail: {
+            type: 'add',
+            shape: negativeLine
+          }
+        });
+        canvasElement.dispatchEvent(addNegativeEvent);
         
         // ÖNEMLİ: Paralel modunu açık tut
         // setParalelModu(false); - Bu satırı kaldırdık

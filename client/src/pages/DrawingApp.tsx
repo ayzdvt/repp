@@ -284,8 +284,8 @@ export default function DrawingApp() {
         // Paralel mesafe girişi dialogunu aç
         setIsParallelDialogOpen(true);
         
-        // Paralel modunu kapat
-        setParalelModu(false);
+        // Paralel modunu kapatmıyoruz artık
+        // setParalelModu(false); - Bu kod çift çizgi sorununa neden oluyordu, bu yüzden kaldırıldı
       } else if (object) {
         // Çizgi olmayan bir obje seçildiğinde uyarı ver
         alert('Paralel çizgi oluşturmak için sadece çizgiler seçilebilir.');

@@ -23,8 +23,8 @@ export default function OptionsPage() {
   
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header - App variant for no "try free" button */}
-      <Header variant="app" />
+      {/* Header - landing variant like on homepage */}
+      <Header variant="landing" />
       
       {/* AutoCAD dosya yükleme dialog'u */}
       <FileUploadDialog

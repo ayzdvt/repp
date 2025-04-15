@@ -734,13 +734,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    // Paralel çizgi önizlemesini devre dışı bırakıyoruz, artık handleApplyParallelDistance'tan yönetilecek
-    // Artık bu kısım kullanılmıyor, HandleApplyParallelDistance ile doğrudan çizgi ekleniyor
-    if (false && e.button === 0 && parallelPreviewsRef.current.length === 2) {
-      // NOT: Bu kısım artık kullanılmıyor, paralel çizgi ekleme işlemi DrawingApp.tsx'te yapılıyor
-      console.log("Paralel çizgi seçme devre dışı bırakıldı, doğrudan çizgi ekleniyor");
-      return;
-    }
+    // Paralel çizgi kodu tamamen kaldırıldı
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
     if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)

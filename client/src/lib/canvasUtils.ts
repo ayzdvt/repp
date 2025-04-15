@@ -262,7 +262,8 @@ export function drawShape(
   ctx: CanvasRenderingContext2D, 
   shape: any, 
   state: CanvasState,
-  isSelected: boolean = false
+  isSelected: boolean = false,
+  isPreview: boolean = false // Önizleme modu için yeni parametre
 ) {
   // Seçilen şekiller için farklı renk kullan
   if (isSelected) {
@@ -313,43 +314,52 @@ export function drawShape(
     // Dash ayarlarını sıfırla
     ctx.setLineDash([]);
     
-    // Çizginin uzunluğunu hesapla ve göster
-    const lengthInWorld = Math.sqrt(
-      Math.pow(shape.endX - shape.startX, 2) + 
-      Math.pow(shape.endY - shape.startY, 2)
-    );
-    
-    // Uzunluğu formatla (2 ondalık basamağa yuvarla)
-    const formattedLength = lengthInWorld.toFixed(2);
-    
-    // Metin için orta nokta
-    const midX = (start.x + end.x) / 2;
-    const midY = (start.y + end.y) / 2;
-    
-    // Çizginin açısını hesapla
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
-    
-    // Metni çizgiye paralel hizalamak için dönüşüm
-    ctx.save();
-    ctx.translate(midX, midY);
-    ctx.rotate(angle);
-    
-    // Beyaz arka plan ile metin çiz (okunaklı olması için)
-    ctx.font = '10px Arial';
-    const textWidth = ctx.measureText(formattedLength).width;
-    
-    // Beyaz arka plan
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
-    
-    // Metni çiz
-    ctx.fillStyle = isSelected ? '#FF4500' : '#000000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(formattedLength, 0, -3);
-    
-    // Dönüşümü geri al
-    ctx.restore();
+    // Sadece önizleme durumunda veya shape.isDashed true ise uzunluk ve açı göster
+    if (isPreview || shape.isDashed) {
+      // Çizginin uzunluğunu hesapla ve göster
+      const lengthInWorld = Math.sqrt(
+        Math.pow(shape.endX - shape.startX, 2) + 
+        Math.pow(shape.endY - shape.startY, 2)
+      );
+      
+      // Uzunluğu formatla (2 ondalık basamağa yuvarla)
+      const formattedLength = lengthInWorld.toFixed(2);
+      
+      // Metin için orta nokta
+      const midX = (start.x + end.x) / 2;
+      const midY = (start.y + end.y) / 2;
+      
+      // Çizginin açısını hesapla
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      
+      // Metni çizgiye paralel hizalamak için dönüşüm
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.rotate(angle);
+      
+      // Beyaz arka plan ile metin çiz (okunaklı olması için)
+      ctx.font = '10px Arial';
+      
+      // Uzunluk ve açı bilgisini içeren metin
+      const angleInDegrees = (angle * 180 / Math.PI).toFixed(1);
+      const displayText = `${formattedLength} (${angleInDegrees}°)`;
+      
+      // Açıyı hesapla ve metne ekle
+      const textWidth = ctx.measureText(displayText).width;
+      
+      // Beyaz arka plan - çizginin daha üstünde gösterilecek
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillRect(-textWidth/2 - 3, -22, textWidth + 6, 16);
+      
+      // Metni çiz - çizginin daha üstünde gösterilecek
+      ctx.fillStyle = isSelected ? '#FF4500' : '#000000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(displayText, 0, -14);
+      
+      // Dönüşümü geri al
+      ctx.restore();
+    }
     
     // Eğer çizgi seçiliyse uç noktaları göster
     if (isSelected) {
@@ -447,17 +457,22 @@ export function drawShape(
         
         // Beyaz arka plan ile metin çiz (okunaklı olması için)
         ctx.font = '10px Arial';
-        const textWidth = ctx.measureText(formattedLength).width;
         
-        // Beyaz arka plan
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
+        // Açıyı hesapla ve metne ekle
+        const angleInDegrees = (angle * 180 / Math.PI).toFixed(1);
+        const displayText = `${formattedLength} (${angleInDegrees}°)`;
         
-        // Metni çiz
+        const textWidth = ctx.measureText(displayText).width;
+        
+        // Beyaz arka plan - çizginin daha üstünde gösterilecek
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillRect(-textWidth/2 - 3, -22, textWidth + 6, 16);
+        
+        // Metni çiz - çizginin daha üstünde gösterilecek
         ctx.fillStyle = "#000000";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(formattedLength, 0, -3);
+        ctx.fillText(displayText, 0, -14);
         
         // Dönüşümü geri al
         ctx.restore();
@@ -495,8 +510,8 @@ export function drawShape(
       ctx.lineWidth = shape.thickness; // Sabit kalınlık
       ctx.stroke();
       
-      // Her bir segment'in uzunluğunu göster
-      if (shape.points.length >= 2) {
+      // Her bir segment'in uzunluğunu sadece önizleme modunda göster
+      if (isPreview && shape.points.length >= 2) {
         for (let i = 0; i < shape.points.length - 1; i++) {
           const startPoint = shape.points[i];
           const endPoint = shape.points[i + 1];
@@ -529,19 +544,23 @@ export function drawShape(
           ctx.translate(midX, midY);
           ctx.rotate(angle);
           
-          // Beyaz arka plan ile metin çiz (okunaklı olması için)
+          // Uzunluk ve açı bilgisini içeren metin hazırla
+          const angleInDegrees = (angle * 180 / Math.PI).toFixed(1);
+          const displayText = `${formattedLength} (${angleInDegrees}°)`;
+          
+          // Metin genişliğini ölç
           ctx.font = '10px Arial';
-          const textWidth = ctx.measureText(formattedLength).width;
+          const textWidth = ctx.measureText(displayText).width;
           
-          // Beyaz arka plan
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-          ctx.fillRect(-textWidth/2 - 2, -10, textWidth + 4, 14);
+          // Beyaz arka plan - çizginin daha üstünde gösterilecek
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.fillRect(-textWidth/2 - 3, -22, textWidth + 6, 16);
           
-          // Metni çiz
-          ctx.fillStyle = isSelected ? "#FF4500" : "#000000";
+          // Metni çiz - çizginin daha üstünde gösterilecek
+          ctx.fillStyle = isSelected ? '#FF4500' : '#000000';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(formattedLength, 0, -3);
+          ctx.fillText(displayText, 0, -14);
           
           // Dönüşümü geri al
           ctx.restore();

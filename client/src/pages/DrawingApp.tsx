@@ -464,7 +464,7 @@ export default function DrawingApp() {
     setParalelModu('önizleme-seçimi');
   };
   
-  // Önizleme çizgisi seçildiğinde çağrılacak yeni bir fonksiyon
+  // Önizleme çizgisi seçildiğinde çağrılacak fonksiyon
   const selectParallelPreviewLine = (selectedPreviewLine: any) => {
     // Şu anki önizleme çizgisini, kalıcı çizgiye dönüştür
     const finalLine = {
@@ -565,12 +565,14 @@ export default function DrawingApp() {
     if (!canvasElement) return;
     
     // Önizleme çizgi seçimini dinleyen fonksiyon
-    const handleSelectParallelPreview = (e: CustomEvent) => {
-      if (e.detail && e.detail.selectedPreviewLine) {
-        console.log("DrawingApp: Önizleme çizgisi seçildi:", e.detail.selectedPreviewLine);
+    const handleSelectParallelPreview = (e: Event) => {
+      // Event'i CustomEvent olarak cast et, tip güvenli için CustomEvent<any> kullan
+      const customEvent = e as unknown as CustomEvent<{selectedPreviewLine: any}>;
+      if (customEvent.detail && customEvent.detail.selectedPreviewLine) {
+        console.log("DrawingApp: Önizleme çizgisi seçildi:", customEvent.detail.selectedPreviewLine);
         
         // Seçilen önizleme çizgisini kalıcı hale getir
-        selectParallelPreviewLine(e.detail.selectedPreviewLine);
+        selectParallelPreviewLine(customEvent.detail.selectedPreviewLine);
       }
     };
     

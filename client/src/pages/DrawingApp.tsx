@@ -449,47 +449,12 @@ export default function DrawingApp() {
     }
   };
   
-  // Paralel çizgi seçildiğinde çağrılan fonksiyon
+  // Paralel çizgi seçildiğinde çağrılan fonksiyon - Artık bu fonksiyon kullanılmıyor
+  // ÖNEMLİ: Bu fonksiyon artık kullanılmıyor, tüm işlev handleApplyParallelDistance tarafından gerçekleştiriliyor.
+  // Ancak, event listener hala referans aldığı için burada tutuyoruz.
   const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
-    if (!parallelLineSource || parallelPreviewLines.length !== 2) return;
-    
-    // Canvas element'ini bul
-    const canvasContainer = document.getElementById('drawing-container');
-    if (canvasContainer) {
-      const canvasElement = canvasContainer.querySelector('div.absolute');
-      if (canvasElement) {
-        // Seçilen yöndeki paralel çizgiyi bul
-        const selectedLine = parallelPreviewLines.find(line => line.direction === direction);
-        if (!selectedLine) return;
-        
-        // Önizleme özelliğini kaldır ve kalıcı bir çizgi oluştur
-        const newLine = {
-          ...selectedLine,
-          isPreview: false,
-          id: Date.now()
-        };
-        
-        // Kalıcı çizgiyi ekle
-        const addEvent = new CustomEvent('shapeupdate', {
-          detail: {
-            type: 'add',
-            shape: newLine
-          }
-        });
-        
-        // Önizleme çizgilerini temizle
-        const clearEvent = new CustomEvent('clearParallelPreviews', {});
-        
-        // Olayları sırayla gönder
-        canvasElement.dispatchEvent(clearEvent);
-        canvasElement.dispatchEvent(addEvent);
-        
-        // Diyalogu kapat ve state'i temizle
-        setIsParallelDialogOpen(false);
-        setParallelPreviewLines([]);
-        setParallelLineSource(null);
-      }
-    }
+    console.log("Bu fonksiyon artık kullanılmıyor, paralel çizgi ekleme handleApplyParallelDistance ile yapılıyor.");
+    return; // Hiçbir işlem yapmadan çık
   };
   
   // Koordinat girişinden nokta eklemek için fonksiyon

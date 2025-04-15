@@ -450,10 +450,10 @@ export default function DrawingApp() {
   };
   
   // Paralel çizgi seçildiğinde çağrılan fonksiyon - Artık bu fonksiyon kullanılmıyor
-  // ÖNEMLİ: Bu fonksiyon artık kullanılmıyor, tüm işlev handleApplyParallelDistance tarafından gerçekleştiriliyor.
-  // Ancak, event listener hala referans aldığı için burada tutuyoruz.
+  // Bu fonksiyon tamamen kaldırıldı ve yerine yeni sistem kullanılıyor.
+  // Event listener'ları da tamamen kaldırıldı, bu fonksiyon artık kullanılmıyor.
   const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
-    console.log("Bu fonksiyon artık kullanılmıyor, paralel çizgi ekleme handleApplyParallelDistance ile yapılıyor.");
+    console.log("Eski paralel önizleme temizleme işlevi çağrıldı, ancak artık kullanılmıyor");
     return; // Hiçbir işlem yapmadan çık
   };
   
@@ -492,31 +492,8 @@ export default function DrawingApp() {
     }
   };
   
-  // Paralel çizgi yönü seçildiğinde çağrılan event'i dinle
-  useEffect(() => {
-    const canvasContainer = document.getElementById('drawing-container');
-    if (canvasContainer) {
-      const canvasElement = canvasContainer.querySelector('div.absolute');
-      if (canvasElement) {
-        // Paralel çizgi yönü seçimini dinleyen fonksiyon
-        const handleSelectParallelDirection = (event: Event) => {
-          const customEvent = event as CustomEvent;
-          if (customEvent.detail && customEvent.detail.direction) {
-            handleSelectParallelLine(customEvent.detail.direction);
-          }
-        };
-        
-        // Event listener'ı ekle
-        canvasElement.addEventListener('selectParallelLineDirection', handleSelectParallelDirection);
-        
-        // Cleanup
-        return () => {
-          canvasElement.removeEventListener('selectParallelLineDirection', handleSelectParallelDirection);
-        };
-      }
-    }
-    return undefined;
-  }, [parallelLineSource, parallelPreviewLines]); // Bu bağımlılıklar değiştiğinde event listener'ı güncelle
+  // NOT: Eski paralel çizgi yöntemi kaldırıldı ve kullanım dışı bırakıldı
+  // Bu event listener'ları artık kullanılmıyor, kaldırıldı.
 
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">

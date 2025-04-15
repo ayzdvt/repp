@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeatureCard from '@/components/FeatureCard';
-import Testimonial from '@/components/Testimonial';
+import ComparisonTable from '@/components/ComparisonTable';
 import heroImage1 from '../assets/img/1.jpg';
 import heroImage2 from '../assets/img/2.jpg';
 
@@ -202,13 +202,9 @@ export default function HomePage() {
         </div>
       </section>
       
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-50 to-indigo-50 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 opacity-20">
-          <img src={heroImage1} alt="" className="w-full h-full object-cover blur-sm" />
-        </div>
-        
-        <div className="max-w-7xl mx-auto relative z-10">
+      {/* Comparison Section */}
+      <section id="comparison" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -216,58 +212,20 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Kullanıcılarımız Ne Diyor?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Neden ArchiFrost?</h2>
             <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Bugüne kadar yüzlerce mimar ve inşaat profesyoneli ArchiFrost ile çalıştı. İşte geri dönüşleri:
+              Rakip çözümlerle karşılaştırdığınızda, ArchiFrost'un farkını göreceksiniz.
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -10 }}
-            >
-              <Testimonial
-                quote="İmar analizi ve çizim sürecimiz ArchiFrost ile %70 hızlandı. Artık daha fazla projeye odaklanabiliyoruz."
-                author="Ayşe Yılmaz"
-                role="Baş Mimar"
-                company="YZ Mimarlık"
-              />
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -10 }}
-            >
-              <Testimonial
-                quote="Revizyon sürecinde yaşanan karmaşayı tamamen ortadan kaldırdı. İş akışımız inanılmaz şekilde optimize oldu."
-                author="Mehmet Kaya"
-                role="Proje Müdürü"
-                company="Kaya İnşaat"
-              />
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -10 }}
-            >
-              <Testimonial
-                quote="Yerel mevzuata uyumsuzluk nedeniyle yaşadığımız sorunlar neredeyse sıfıra indi. Büyük maliyet tasarrufu sağladık."
-                author="Deniz Acar"
-                role="İnşaat Mühendisi"
-                company="Acar Proje"
-              />
-            </motion.div>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <ComparisonTable />
+          </motion.div>
         </div>
       </section>
       

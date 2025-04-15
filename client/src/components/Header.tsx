@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Ana Sayfa</div>
               </Link>
               <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium">Özellikler</a>
-              <a href="#testimonials" className="text-gray-700 hover:text-blue-600 font-medium">Kullanıcı Yorumları</a>
+              <a href="#comparison" className="text-gray-700 hover:text-blue-600 font-medium">Karşılaştırma</a>
             </nav>
           </div>
           <div className="flex items-center">

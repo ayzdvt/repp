@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { insertUserSchema, insertDrawingSchema, insertShapeSchema, insertProjectAnalysisSchema } from "@shared/schema";
+import { insertUserSchema, insertDrawingSchema, insertShapeSchema, insertProjectAnalysisSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -259,6 +259,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting project analysis:', error);
       res.status(500).json({ error: 'Failed to delete project analysis' });
+    }
+  });
+  
+  // Feedback routes
+  app.get('/api/feedbacks', async (req, res) => {
+    try {
+      const feedbacks = await storage.getAllFeedbacks();
+      res.json(feedbacks);
+    } catch (error) {
+      console.error('Error fetching feedbacks:', error);
+      res.status(500).json({ error: 'Failed to fetch feedbacks' });
+    }
+  });
+  
+  app.get('/api/feedbacks/:id', async (req, res) => {
+    try {
+      const feedbackId = Number(req.params.id);
+      const feedback = await storage.getFeedback(feedbackId);
+      
+      if (!feedback) {
+        return res.status(404).json({ error: 'Feedback not found' });
+      }
+      
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+  });
+  
+  app.post('/api/feedbacks', async (req, res) => {
+    try {
+      const feedbackData = insertFeedbackSchema.parse(req.body);
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors });
+      } else {
+        console.error('Error creating feedback:', error);
+        res.status(500).json({ error: 'Failed to create feedback' });
+      }
+    }
+  });
+  
+  app.delete('/api/feedbacks/:id', async (req, res) => {
+    try {
+      const feedbackId = Number(req.params.id);
+      const success = await storage.deleteFeedback(feedbackId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Feedback not found' });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      res.status(500).json({ error: 'Failed to delete feedback' });
     }
   });
 

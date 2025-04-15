@@ -126,5 +126,30 @@ export type Drawing = typeof drawings.$inferSelect;
 export type InsertShape = z.infer<typeof insertShapeSchema>;
 export type Shape = typeof shapes.$inferSelect;
 
+// Feedback tablosu
+export const feedbacks = pgTable("feedbacks", {
+  id: serial("id").primaryKey(),
+  message: text("message").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Feedback ilişkileri
+export const feedbacksRelations = relations(feedbacks, ({ one }) => ({
+  user: one(users, {
+    fields: [feedbacks.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert Schema for feedbacks
+export const insertFeedbackSchema = createInsertSchema(feedbacks).omit({
+  id: true,
+  createdAt: true
+});
+
 export type InsertProjectAnalysis = z.infer<typeof insertProjectAnalysisSchema>;
 export type ProjectAnalysis = typeof projectAnalyses.$inferSelect;
+
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type Feedback = typeof feedbacks.$inferSelect;

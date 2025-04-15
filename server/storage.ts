@@ -1,4 +1,4 @@
-import { users, drawings, shapes, projectAnalyses, type User, type InsertUser, type Drawing, type InsertDrawing, type Shape, type InsertShape, type ProjectAnalysis, type InsertProjectAnalysis } from "@shared/schema";
+import { users, drawings, shapes, projectAnalyses, feedbacks, type User, type InsertUser, type Drawing, type InsertDrawing, type Shape, type InsertShape, type ProjectAnalysis, type InsertProjectAnalysis, type Feedback, type InsertFeedback } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
@@ -29,6 +29,12 @@ export interface IStorage {
   createProjectAnalysis(analysis: InsertProjectAnalysis): Promise<ProjectAnalysis>;
   updateProjectAnalysis(id: number, analysis: Partial<InsertProjectAnalysis>): Promise<ProjectAnalysis | undefined>;
   deleteProjectAnalysis(id: number): Promise<boolean>;
+  
+  // Feedback methods
+  getFeedback(id: number): Promise<Feedback | undefined>;
+  getAllFeedbacks(): Promise<Feedback[]>;
+  createFeedback(feedback: InsertFeedback): Promise<Feedback>;
+  deleteFeedback(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -132,6 +138,26 @@ export class DatabaseStorage implements IStorage {
   
   async deleteProjectAnalysis(id: number): Promise<boolean> {
     const result = await db.delete(projectAnalyses).where(eq(projectAnalyses.id, id)).returning({ id: projectAnalyses.id });
+    return result.length > 0;
+  }
+  
+  // Feedback methods
+  async getFeedback(id: number): Promise<Feedback | undefined> {
+    const [feedback] = await db.select().from(feedbacks).where(eq(feedbacks.id, id));
+    return feedback;
+  }
+  
+  async getAllFeedbacks(): Promise<Feedback[]> {
+    return await db.select().from(feedbacks);
+  }
+  
+  async createFeedback(feedback: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db.insert(feedbacks).values(feedback).returning();
+    return newFeedback;
+  }
+  
+  async deleteFeedback(id: number): Promise<boolean> {
+    const result = await db.delete(feedbacks).where(eq(feedbacks.id, id)).returning({ id: feedbacks.id });
     return result.length > 0;
   }
 }

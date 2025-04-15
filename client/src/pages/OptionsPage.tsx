@@ -23,8 +23,8 @@ export default function OptionsPage() {
   
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header - landing variant like on homepage */}
-      <Header variant="landing" />
+      {/* Header - options variant for no "try free" button */}
+      <Header variant="options" />
       
       {/* AutoCAD dosya yükleme dialog'u */}
       <FileUploadDialog
@@ -90,8 +90,8 @@ export default function OptionsPage() {
             <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all hover:scale-105">
               <div className="p-6 h-full flex flex-col">
                 <div className="flex-1">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                     </svg>
                   </div>
@@ -115,8 +115,8 @@ export default function OptionsPage() {
             <div className="bg-white rounded-lg overflow-hidden shadow-lg transform transition-all hover:scale-105">
               <div className="p-6 h-full flex flex-col">
                 <div className="flex-1">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                   </div>

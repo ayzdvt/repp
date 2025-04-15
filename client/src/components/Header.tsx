@@ -3,11 +3,11 @@ import { Link } from 'wouter';
 import logoSrc from '../assets/img/archifrost-logo-blue.png';
 
 interface HeaderProps {
-  variant?: 'landing' | 'app';
+  variant?: 'landing' | 'app' | 'options';
 }
 
 const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
-  if (variant === 'landing') {
+  if (variant === 'landing' || variant === 'options') {
     return (
       <header className="bg-white shadow-md py-4 px-6 fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -26,11 +26,14 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
             </nav>
           </div>
           <div className="flex items-center">
-            <Link href="/options">
-              <div className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium cursor-pointer">
-                Ücretsiz Deneyin
-              </div>
-            </Link>
+            {/* Sadece ana sayfada göster, options sayfasında gösterme */}
+            {variant === 'landing' && (
+              <Link href="/options">
+                <div className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium cursor-pointer">
+                  Ücretsiz Deneyin
+                </div>
+              </Link>
+            )}
           </div>
         </div>
       </header>

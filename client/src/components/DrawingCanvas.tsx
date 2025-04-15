@@ -942,7 +942,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     setIsDragging(false); // UI için
     
     // Çizgi uç noktası sürükleme işlemini sonlandır
-    if (isDraggingEndpoint) {
+    if (isDraggingEndpoint && originalLineRef.current) {
+      // Şekil ID'sini bul
+      const shapeId = originalLineRef.current.id;
+      
+      // Değişiklik öncesi durumu işlem tarihçesine ekle
+      actionsHistoryRef.current.push({
+        action: 'update_shape',
+        data: { originalShape: originalLineRef.current }
+      });
+      
+      // Sürükleme durumunu temizle
       setIsDraggingEndpoint(false);
       draggingLineEndpointRef.current = null;
       originalLineRef.current = null;

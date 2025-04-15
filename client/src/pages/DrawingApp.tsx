@@ -450,6 +450,34 @@ export default function DrawingApp() {
         
         // Olayı gönder
         canvasElement.dispatchEvent(previewEvent);
+        
+        // Doğrudan çizgi ekleyelim - paralel çizgi önizlemesini kullanarak tek tıklama ile tamamlayalım
+        // Pozitif yöndeki çizgiyi seçelim (fare konumuna yakın olanı seçmek yerine, basitçe pozitif olanı alalım)
+        const newLine = {
+          ...pos,
+          isPreview: false,
+          id: Date.now()
+        };
+        
+        // Kalıcı çizgiyi ekle
+        const addEvent = new CustomEvent('shapeupdate', {
+          detail: {
+            type: 'add',
+            shape: newLine
+          }
+        });
+        
+        // Önizleme çizgilerini temizle
+        const clearEvent = new CustomEvent('clearParallelPreviews', {});
+        
+        // Olayları sırayla gönder
+        canvasElement.dispatchEvent(clearEvent);
+        canvasElement.dispatchEvent(addEvent);
+        
+        // Diyalogu kapat ve state'i temizle
+        setIsParallelDialogOpen(false);
+        setParallelPreviewLines([]);
+        setParallelLineSource(null);
       }
     }
   };

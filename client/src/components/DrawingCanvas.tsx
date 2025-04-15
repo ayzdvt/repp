@@ -1280,6 +1280,19 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
+      // Paralel önizleme çizgilerini temizleme olayını dinle
+      const clearParallelPreviewsHandler = ((e: any) => {
+        // Paralellik önizleme çizgilerini temizle
+        console.log("Paralel önizleme çizgileri temizleniyor");
+        parallelPreviewsRef.current = [];
+        
+        // Yeniden çizim tetikle
+        if (requestRef.current) {
+          cancelAnimationFrame(requestRef.current);
+        }
+        renderCanvas();
+      }) as EventListener;
+      
       // Şekil güncelleme ve ekleme olayını dinle
       const shapeUpdateHandler = ((e: any) => {
         if (e.detail) {
@@ -1351,11 +1364,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Event listener'ları ekle - yalnızca hala kullanılanlar
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
+      containerElement.addEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
+        containerElement.removeEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
       };
     }
     

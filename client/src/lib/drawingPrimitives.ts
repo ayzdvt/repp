@@ -166,6 +166,35 @@ export function getLineMidpoint(line: LineShape): Point {
   };
 }
 
+// Polyline şeklinin toplam uzunluğunu hesaplar
+export function calculatePolylineLength(polyline: PolylineShape): number {
+  if (!polyline.points || polyline.points.length < 2) return 0;
+  
+  let totalLength = 0;
+  
+  // Tüm segmentleri dolaş ve uzunluklarını topla
+  for (let i = 0; i < polyline.points.length - 1; i++) {
+    const p1 = polyline.points[i];
+    const p2 = polyline.points[i + 1];
+    
+    // Euclidean mesafeyi hesapla ve toplama ekle
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    totalLength += Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  // Kapalı polyline ise son nokta ile ilk nokta arasındaki mesafeyi de ekle
+  if (polyline.closed && polyline.points.length > 2) {
+    const first = polyline.points[0];
+    const last = polyline.points[polyline.points.length - 1];
+    const dx = last.x - first.x;
+    const dy = last.y - first.y;
+    totalLength += Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  return totalLength;
+}
+
 // Bir nokta çizginin başlangıç, orta veya bitiş noktasına yakın mı kontrol eder
 export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 10): Point | null {
   // Başlangıç noktasını kontrol et

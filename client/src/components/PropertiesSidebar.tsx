@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { calculatePolylineLength } from '@/lib/drawingPrimitives';
 
 interface PropertiesSidebarProps {
   selectedObject: any | null;
@@ -24,6 +25,10 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
   const [lineEndY, setLineEndY] = useState<string>('0.00');
   const [lineThickness, setLineThickness] = useState<string>('1');
   
+  // Polyline özelliklerini saklamak için state
+  const [polylineThickness, setPolylineThickness] = useState<string>('1');
+  const [polylineTotalLength, setPolylineTotalLength] = useState<string>('0.00');
+  
   // Seçili nesne değiştiğinde form state'ini güncelle
   useEffect(() => {
     if (selectedObject) {
@@ -37,6 +42,13 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
         setLineEndX(formatCoordinate(selectedObject.endX));
         setLineEndY(formatCoordinate(selectedObject.endY));
         setLineThickness(selectedObject.thickness.toString());
+      } else if (selectedObject.type === 'polyline') {
+        // Polyline özellikleri
+        setPolylineThickness(selectedObject.thickness?.toString() || '1');
+        
+        // Toplam uzunluğu hesapla
+        const totalLength = calculatePolylineLength(selectedObject);
+        setPolylineTotalLength(totalLength.toFixed(2));
       }
     }
   }, [selectedObject]);
@@ -265,6 +277,60 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ selectedObject, o
                   }
                 }}
               />
+            </div>
+          </div>
+        )}
+        
+        {hasSelection && selectedObject.type === 'polyline' && (
+          <div id="polyline-properties">
+            <h3 className="font-medium text-sm mb-2">Polyline Properties</h3>
+            
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Total Length</label>
+              <div className="flex items-center">
+                <input 
+                  type="text" 
+                  readOnly
+                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-50" 
+                  value={polylineTotalLength}
+                />
+                <span className="ml-1 text-xs text-gray-500">birim</span>
+              </div>
+            </div>
+            
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Thickness</label>
+              <input 
+                type="number" 
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                value={polylineThickness} 
+                min="0.1" 
+                step="0.1"
+                onFocus={(e) => (e.target as HTMLInputElement).select()}
+                onChange={(e) => {
+                  setPolylineThickness(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('thickness', parseFloat(input.value), selectedObject.id);
+                    input.blur();
+                  }
+                }}
+                onBlur={(e) => {
+                  if (onPropertyChange && selectedObject.id) {
+                    const input = e.target as HTMLInputElement;
+                    onPropertyChange('thickness', parseFloat(input.value), selectedObject.id);
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Points</label>
+              <div className="text-xs text-gray-500">
+                {selectedObject.points?.length || 0} points in this polyline
+              </div>
             </div>
           </div>
         )}

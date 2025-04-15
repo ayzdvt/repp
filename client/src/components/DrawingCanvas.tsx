@@ -738,10 +738,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
           const pointPosition = snapPoint || worldPos;
           
-          // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-          shapesHistoryRef.current.push([...shapesRef.current]);
-          
-          // Create a point and add it directly to shapes
+          // Yeni nokta oluştur
           const newPoint = {
             id: nextIdRef.current++,
             type: 'point',
@@ -749,6 +746,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             y: pointPosition.y,
             style: 'default'
           };
+          
+          // İşlem tarihçesine ekle (geri almak için)
+          actionsHistoryRef.current.push({
+            action: 'add_shape',
+            data: { shapeId: newPoint.id }
+          });
           
           // Şekli ekle
           shapesRef.current.push(newPoint);
@@ -814,10 +817,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 }
               }
               
-              // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-              shapesHistoryRef.current.push([...shapesRef.current]);
-              
-              // Tamamlanmış çizgiyi shapesRef'e ekle
+              // Tamamlanmış çizgiyi oluştur
               const newLine = {
                 id: nextIdRef.current++,
                 type: 'line',
@@ -827,6 +827,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 endY: endPoint.y,
                 thickness: 1
               };
+              
+              // İşlem tarihçesine ekle
+              actionsHistoryRef.current.push({
+                action: 'add_shape',
+                data: { shapeId: newLine.id }
+              });
+              
+              // Şekli ekle
               shapesRef.current.push(newLine);
               
               // Otomatik seçim özelliğini kaldırdık
@@ -1079,33 +1087,77 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   // Escape tuşu işlemini memoize ediyoruz - performans için
-  // Geri alma (undo) işlemi
+  // Geri alma (undo) işlemi - Operasyon bazlı geri alma
   const handleUndo = useCallback(() => {
-    // Tarihçede bir şey var mı kontrol et
-    if (shapesHistoryRef.current.length === 0) {
-      console.log("Geri alınacak bir işlem yok");
+    // İşlem geçmişinde bir şey var mı kontrol et
+    if (actionsHistoryRef.current.length === 0) {
+      console.log("Geri alınacak işlem yok");
       return;
     }
+
+    // Son işlemi al
+    const lastAction = actionsHistoryRef.current.pop();
     
-    // Mevcut durumu al
-    const currentShapes = shapesRef.current;
+    if (!lastAction) return;
     
-    // En son kayıtlı durumu al
-    shapesRef.current = shapesHistoryRef.current.pop() || [];
-    
-    console.log("İşlem geri alındı. Kalan işlem sayısı:", shapesHistoryRef.current.length);
-    
-    // Eğer seçili şekil artık mevcut değilse, seçimi kaldır
-    if (selectedShapeId !== null) {
-      const shapeExists = shapesRef.current.some(s => s.id === selectedShapeId);
-      
-      if (!shapeExists) {
-        setSelectedShapeId(null);
-        if (onSelectObject) {
-          onSelectObject(null);
+    console.log("İşlem geri alınıyor:", lastAction.action);
+
+    switch (lastAction.action) {
+      case 'add_shape':
+        // Son eklenen şekli kaldır
+        if (lastAction.data && lastAction.data.shapeId) {
+          const shapeIndex = shapesRef.current.findIndex(s => s.id === lastAction.data.shapeId);
+          
+          if (shapeIndex !== -1) {
+            // Şekli kaldır
+            shapesRef.current.splice(shapeIndex, 1);
+            
+            // Eğer silinen şekil seçiliyse, seçimi kaldır
+            if (selectedShapeId === lastAction.data.shapeId) {
+              setSelectedShapeId(null);
+              if (onSelectObject) onSelectObject(null);
+            }
+          }
         }
-      }
+        break;
+        
+      case 'update_shape':
+        // Değiştirilen şekli önceki duruma getir
+        if (lastAction.data && lastAction.data.originalShape) {
+          const shapeIndex = shapesRef.current.findIndex(s => s.id === lastAction.data.originalShape.id);
+          
+          if (shapeIndex !== -1) {
+            // Şekli eski haline döndür
+            shapesRef.current[shapeIndex] = lastAction.data.originalShape;
+            
+            // Eğer güncellenen şekil seçiliyse, güncellenmiş bilgileri göster
+            if (selectedShapeId === lastAction.data.originalShape.id && onSelectObject) {
+              onSelectObject(lastAction.data.originalShape);
+            }
+          }
+        }
+        break;
+        
+      case 'delete_shape':
+        // Silinen şekli geri ekle
+        if (lastAction.data && lastAction.data.deletedShape) {
+          shapesRef.current.push(lastAction.data.deletedShape);
+        }
+        break;
+        
+      case 'clear_shapes':
+        // Temizlenen tüm şekilleri geri getir
+        if (lastAction.data && lastAction.data.oldShapes) {
+          shapesRef.current = [...lastAction.data.oldShapes];
+        }
+        break;
+        
+      default:
+        console.log("Bilinmeyen işlem tipi:", lastAction.action);
     }
+    
+    console.log("İşlem geri alındı. Kalan işlem sayısı:", actionsHistoryRef.current.length);
+    
   }, [selectedShapeId, onSelectObject]);
   
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -1193,8 +1245,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             );
             
             if (shapeIndex !== -1) {
-              // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-              shapesHistoryRef.current.push([...shapesRef.current]);
+              // Orijinal şekli kaydet (geri almak için)
+              const originalShape = { ...shapesRef.current[shapeIndex] };
+              
+              // İşlem tarihçesine ekle
+              actionsHistoryRef.current.push({
+                action: 'update_shape',
+                data: { originalShape }
+              });
               
               // Şekli güncelle
               shapesRef.current[shapeIndex] = { ...e.detail.shape };
@@ -1202,12 +1260,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           } 
           // Ekleme işlemi
           else if (e.detail.type === 'add') {
-            // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-            shapesHistoryRef.current.push([...shapesRef.current]);
-            
             // Yeni şekli ekle
-            shapesRef.current.push({ ...e.detail.shape });
-            console.log("Şekil eklendi:", e.detail.shape);
+            const newShape = { ...e.detail.shape };
+            
+            // İşlem tarihçesine ekle
+            actionsHistoryRef.current.push({
+              action: 'add_shape',
+              data: { shapeId: newShape.id }
+            });
+            
+            // Şekli ekle
+            shapesRef.current.push(newShape);
+            console.log("Şekil eklendi:", newShape);
           }
         }
       }) as EventListener;
@@ -1300,10 +1364,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     // Polyline çizimi sırasında sağ tıklama ile polyline'ı tamamla
     else if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
-      // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-      shapesHistoryRef.current.push([...shapesRef.current]);
-      
-      // Polyline'ı tamamla ve shapesRef'e ekle
+      // Polyline'ı oluştur
       const newPolyline = {
         id: nextIdRef.current++,
         type: 'polyline',
@@ -1312,6 +1373,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         closed: false
       };
       
+      // İşlem tarihçesine ekle
+      actionsHistoryRef.current.push({
+        action: 'add_shape',
+        data: { shapeId: newPolyline.id }
+      });
+      
+      // Şekli ekle
       shapesRef.current.push(newPolyline);
       
       // Temizle
@@ -1328,10 +1396,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
       // Son tıklama noktasını eklemeye gerek yok, zaten ekledik
 
-      // Değişiklik öncesi mevcut durumu tarihçeye kaydet
-      shapesHistoryRef.current.push([...shapesRef.current]);
-      
-      // Polyline'ı tamamla ve shapesRef'e ekle
+      // Polyline'ı oluştur
       const newPolyline = {
         id: nextIdRef.current++,
         type: 'polyline',
@@ -1340,6 +1405,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         closed: false
       };
       
+      // İşlem tarihçesine ekle
+      actionsHistoryRef.current.push({
+        action: 'add_shape',
+        data: { shapeId: newPolyline.id }
+      });
+      
+      // Şekli ekle
       shapesRef.current.push(newPolyline);
       
       // Temizle

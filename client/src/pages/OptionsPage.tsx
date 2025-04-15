@@ -103,7 +103,7 @@ export default function OptionsPage() {
                 <div className="mt-auto">
                   <button 
                     onClick={() => setIsCADDialogOpen(true)}
-                    className="block text-center w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+                    className="block text-center w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
                   >
                     Seç
                   </button>
@@ -126,7 +126,7 @@ export default function OptionsPage() {
                   </p>
                 </div>
                 <div className="mt-auto">
-                  <Link href="/drawing" className="block text-center w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition-colors">
+                  <Link href="/drawing" className="block text-center w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
                     Seç
                   </Link>
                 </div>

@@ -423,23 +423,39 @@ export default function DrawingApp() {
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
       if (canvasElement) {
-        // Çizgi ekleme olayını oluştur
-        const addEvent = new CustomEvent('shapeupdate', {
-          detail: {
-            type: 'add',
-            shape: newLine
-          }
-        });
+        // Önce tüm state'leri temizle, sonra olayı gönder
+        // Bu sayede çift ekleme önlenir
+        const cleanupFirst = () => {
+          // Tüm state'leri temizle
+          setIsParallelDialogOpen(false);
+          setParallelPreviewLines([]);
+          setParallelLineSource(null);
+          setParalelModu(false);
+          
+          // Seçim aracı ile başka bir paralel çizgi oluşturmayı önlemek için
+          // Çizgi aracına geç, böylece kullanıcı paralel atamaya devam edemez
+          setActiveTool('line');
+          
+          // Seçili nesneyi temizle
+          setSelectedObject(null);
+          
+          // Temizlik tamamlandıktan sonra
+          // Çizgi ekleme olayını oluştur
+          setTimeout(() => {
+            const addEvent = new CustomEvent('shapeupdate', {
+              detail: {
+                type: 'add',
+                shape: newLine
+              }
+            });
+            
+            // Olayı gönder
+            canvasElement.dispatchEvent(addEvent);
+          }, 10);
+        };
         
-        // Olayı gönder
-        canvasElement.dispatchEvent(addEvent);
-        
-        // Tüm state'leri temizle
-        setIsParallelDialogOpen(false);
-        setParallelPreviewLines([]);
-        setParallelLineSource(null);
-        setParalelModu(false);
-        setSelectedObject(null); // Seçili nesneyi temizle
+        // Önce temizlik işlemlerini yap
+        cleanupFirst();
       }
     }
   };

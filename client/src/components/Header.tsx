@@ -62,17 +62,24 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
             <img src={logoSrc} alt="ArchiFrost Logo" className="h-10 mr-4" />
           </div>
         </Link>
-        <h1 className="text-xl font-semibold text-gray-700">CAD Çizim Aracı</h1>
-        <div className="ml-8 flex space-x-4">
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">Dosya</button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">Düzenle</button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">Görünüm</button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">Araçlar</button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">Yardım</button>
-        </div>
       </div>
       <div>
-        <button className="px-3 py-1 text-sm bg-[#0066CC] text-white rounded hover:bg-blue-700">Giriş Yap</button>
+        <button 
+          onClick={() => {
+            // Basit bir alert göster, gerçek uygulamada bir form gönderimi olabilir
+            const feedbackMessage = window.prompt("Lütfen görüş, öneri veya hata bildiriminizi yazın:");
+            if (feedbackMessage) {
+              alert("Geribildiriminiz için teşekkür ederiz! En kısa sürede değerlendireceğiz.");
+              console.log("Kullanıcı geribildirimi:", feedbackMessage);
+            }
+          }}
+          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          Geribildirim Gönder
+        </button>
       </div>
     </header>
   );

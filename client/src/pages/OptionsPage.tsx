@@ -23,8 +23,8 @@ export default function OptionsPage() {
   
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <Header variant="landing" />
+      {/* Header - App variant for no "try free" button */}
+      <Header variant="app" />
       
       {/* AutoCAD dosya yükleme dialog'u */}
       <FileUploadDialog
@@ -37,14 +37,25 @@ export default function OptionsPage() {
         fileTypeDescription="DWG veya DXF dosyaları (maks. 20MB)"
       />
       
-      <div className="flex-grow bg-gradient-to-b from-gray-50 to-gray-100 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-              Çizime Nasıl Başlamak İstersiniz?
+      <div className="flex-grow bg-gradient-to-b from-blue-900 to-blue-800 py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+            </pattern>
+            <rect width="100" height="100" fill="url(#grid)" />
+          </svg>
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">
+              <span className="block">Keşfedin ve</span>
+              <span className="block text-blue-300 mt-2">Katkıda Bulunun</span>
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
-              Aşağıdaki seçeneklerden birini seçerek çizim deneyiminizi özelleştirebilirsiniz.
+            <p className="mt-6 text-xl text-blue-100 max-w-4xl mx-auto">
+              Siz de çalışmalar denemeler yapıp projeyi deneyimleyin. Gelişimine katkıda bulunun.
             </p>
           </div>
           

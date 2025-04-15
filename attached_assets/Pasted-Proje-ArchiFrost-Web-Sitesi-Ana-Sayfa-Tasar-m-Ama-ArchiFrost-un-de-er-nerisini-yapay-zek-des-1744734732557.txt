@@ -1,0 +1,78 @@
+Proje: ArchiFrost Web Sitesi Ana Sayfa Tasarımı
+
+Amaç:
+ArchiFrost’un değer önerisini (yapay zekâ destekli, otomatik mimari çizim ve revizyon çözümleri) net, etkileyici ve kullanıcı dostu bir şekilde sunacak, hedef kitle (mimarlar, inşaat profesyonelleri, müteahhitler ve arsa sahipleri) üzerinde güven ve merak uyandıracak modern, profesyonel bir ana sayfa tasarımı oluşturmak.
+
+Tasarım Stili ve Genel Hissiyat:
+
+Modern & Minimal: Temiz çizgiler, bol beyaz alan, modern tipografi ve ikonlar kullanılmalı.
+
+Renk Paleti: Markanızın kurumsal renklerine (örneğin, mavi, gri, beyaz tonları) sadık kalınarak profesyonel ve güven veren bir atmosfer oluşturulmalı.
+
+Duyarlı Tasarım (Responsive): Ana sayfa, masaüstü, tablet ve mobil cihazlarda uyumlu şekilde görüntülenmeli.
+
+Ana Bölümler ve İçerik Yapısı:
+
+Header (Başlık Bölümü):
+
+Logo ve Marka İsim: Sol üstte, markanın net ve okunaklı logosu yer almalı.
+
+Navigasyon Menüsü: “Ana Sayfa”, “Özellikler”, “Hakkımızda”, “Demo”, “İletişim” gibi temel başlıklar yer almalı.
+
+Call to Action (CTA): "Ücretsiz Deneyin" veya "Demo İzleyin" butonları, header kısmında dikkat çekici şekilde konumlandırılmalı.
+
+Hero (Kahraman) Bölümü:
+
+Başlık: Etkileyici ve kısa bir başlık, örneğin: "Mimari Çizimleriniz Dakikalar İçinde Hazır" veya "Dijital Dönüşümle Bina Tasarımı Artık Çok Kolay".
+
+Alt Başlık: Projeye özgü değeri vurgulayan kısa bir açıklama: "ArchiFrost, yapay zekâ destekli otomasyon sayesinde, manuel çizim ve revizyon sürecini dakikalara indirir."
+
+Görsel/Video: Yüksek çözünürlüklü, ilham verici bir görsel veya kısa bir tanıtım videosu; arka planda animasyonlu çizimler, taslaklar veya bir mimarın ekranda çalışmasını gösteren görsel kullanılabilir.
+
+CTA Butonları: “Demo İzle” ve “Hemen Başla” gibi butonlar net ve belirgin şekilde yer almalı.
+
+Ürün Özellikleri Bölümü:
+
+Modüler Yapı: ArchiFrost’un temel modülleri (İmar Belgesi Analizi, Otomatik Taslak Çıkarma, Kat Planı Revizyonu gibi) kısa açıklamalarla birlikte ikonlar veya görseller eşliğinde sunulmalı.
+
+Özellik Avantajları: “Hızlı Revizyon”, “Yerel Mevzuata Uyum”, “Zaman ve Maliyet Tasarrufu” gibi başlıklarla her özelliğin ne kadar zaman kazandırdığı veya hata oranını nasıl azalttığına dair kısa veri ve grafikler eklenebilir.
+
+Kullanıcı Deneyimi ve Geri Bildirim Bölümü:
+
+Pilot Test Sonuçları: Sultanbeyli gibi pilot bölgelerde elde edilen olumlu geri bildirimlerden örnekler (örneğin, “proje başlangıç süresi %50 kısaldı”) kısa alıntılarla veya röportaj videolarıyla sunulabilir.
+
+Referanslar: Mimarlar, inşaat firmaları ve müteahhitlerin olumlu görüşleri, kısa metin kutuları ve isim-soyisim, firma logosu eşliğinde yer alabilir.
+
+Çözümün Karşılaştırılması (Rakip Analiz Bölümü):
+
+Rakip Avantajları vs. ArchiFrost’un Farkı: Kısa, bilgilendirici grafikler veya karşılaştırma tabloları ile; örneğin, AutoCAD’in manuel yöntemleri, Revit’in yüksek maliyetleri, TestFit’in yerel uyum eksikliği gibi noktalarla ArchiFrost’un yerel mevzuata tam uyum, otomasyon hızı ve düşük maliyet avantajları vurgulanabilir.
+
+CTAs ve İletişim:
+
+Son CTA: Ana sayfanın sonunda, "Hemen Başlayın", "Demo Talep Edin" gibi güçlü çağrılar yer almalı.
+
+İletişim Formu: Basit bir iletişim formu veya demo talep formu, kullanıcıların hızlıca erişebilmesi için yerleştirilmeli.
+
+Footer (Alt Bilgi):
+
+Kurumsal Bilgiler: Şirket bilgileri, iletişim detayları, sosyal medya bağlantıları.
+
+Yasal Uyum ve Fikri Mülkiyet Bilgileri: KVKK, telif hakları ve yasal açıklamalar gibi kısa notlar eklenmeli.
+
+Tasarımın Teknik ve Kullanıcı Deneyimi Yönü:
+
+Kullanılabilirlik: Basit, sezgisel ve hızlı erişilebilir arayüz.
+
+Performans: Hızlı yükleme süreleri ve responsive tasarım.
+
+Görsellik: Modern tipografi, uyumlu renk paleti ve etkileyici görsel öğeler.
+
+Erişilebilirlik: Hem masaüstü hem de mobil cihazlarda optimum kullanıcı deneyimi sunan tasarım.
+
+Ek Notlar:
+
+Ana sayfanın hem marka hikayesini hem de ürünün getirilerinin, basit ve net mesajlarla vurgulanması hedeflenmelidir.
+
+Kullanıcıların “nasıl çalışıyor?” sorusuna yanıt verecek interaktif öğeler (örneğin, kısa animasyonlar, tıklanabilir bölümler veya infografikler) eklenmesi önerilir.
+
+Tasarım sürecinde kullanıcı testleri ve A/B testleri ile geri bildirimler alınarak sürekli iyileştirme sağlanmalıdır.

@@ -210,6 +210,47 @@ export function drawSnapIndicators(
       // Yeni koordinat sistemiyle uyumlu olacak şekilde worldToScreen kullan
       const screenPoint = worldToScreen(nearestPoint.x, nearestPoint.y, state);
       
+      // Bu bir extension snap point ise uzantı çizgisini görselleştir
+      // Extension noktaları için şekil üzerinde bulduğumuz noktaları ararız
+      if (nearestPoint.isExtension && nearestPoint.lineStart && nearestPoint.lineEnd) {
+        const lineStart = worldToScreen(nearestPoint.lineStart.x, nearestPoint.lineStart.y, state);
+        const lineEnd = worldToScreen(nearestPoint.lineEnd.x, nearestPoint.lineEnd.y, state);
+        
+        // Extension çizgisini çiz (kesik çizgilerle)
+        ctx.beginPath();
+        
+        // Çizginin her iki yönde de uzantısını göster
+        // Çizgi vektörünü oluştur
+        const dx = lineEnd.x - lineStart.x;
+        const dy = lineEnd.y - lineStart.y;
+        
+        // Çizgiyi her iki yönde de uzat
+        const extensionLength = Math.max(ctx.canvas.width, ctx.canvas.height); // Tüm canvas boyunca uzat
+        
+        // Normalize et
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const normalizedDx = dx / length;
+        const normalizedDy = dy / length;
+        
+        // Başlangıç noktasından geriye doğru uzat
+        const startExtensionX = lineStart.x - normalizedDx * extensionLength;
+        const startExtensionY = lineStart.y - normalizedDy * extensionLength;
+        
+        // Bitiş noktasından ileriye doğru uzat
+        const endExtensionX = lineEnd.x + normalizedDx * extensionLength;
+        const endExtensionY = lineEnd.y + normalizedDy * extensionLength;
+        
+        // Extension çizgisini çiz (kesik çizgilerle ve şeffaf)
+        ctx.beginPath();
+        ctx.moveTo(startExtensionX, startExtensionY);
+        ctx.lineTo(endExtensionX, endExtensionY);
+        ctx.strokeStyle = 'rgba(0, 200, 83, 0.3)'; // Açık yeşil ve şeffaf
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]); // Kesik çizgi
+        ctx.stroke();
+        ctx.setLineDash([]); // Dash ayarını sıfırla
+      }
+      
       // Dış yeşil daire çiz
       ctx.beginPath();
       ctx.arc(screenPoint.x, screenPoint.y, 6, 0, Math.PI * 2);

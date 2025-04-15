@@ -201,7 +201,7 @@ export function isPointOnLineExtension(
   lineStart: Point, 
   lineEnd: Point, 
   tolerance: number
-): Point | null {
+): Point & { isExtension: boolean, lineStart: Point, lineEnd: Point } | null {
   // Doğru üzerindeki en yakın noktayı bul
   const dx = lineEnd.x - lineStart.x;
   const dy = lineEnd.y - lineStart.y;
@@ -219,6 +219,9 @@ export function isPointOnLineExtension(
   const projectionPoint = {
     x: lineStart.x + u * dx,
     y: lineStart.y + u * dy,
+    isExtension: true, // Bir uzantı noktası olduğunu belirt
+    lineStart, // Başlangıç noktasını kaydet - görselleştirmede kullanılacak
+    lineEnd // Bitiş noktasını kaydet - görselleştirmede kullanılacak
   };
   
   // Projeksiyonun başlangıç veya bitiş noktasına uzaklığını kontrol et

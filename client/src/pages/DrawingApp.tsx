@@ -372,6 +372,21 @@ export default function DrawingApp() {
     
     // Mevcut seçimi sıfırla
     setSelectedObject(null);
+    
+    // Önemli: Paralel modunda olduğumuzda selection aracını aktif et
+    // ama activeTool state'ini değiştirme - bu şekilde görsel olarak selection
+    // aracı aktif görünmeyecek ancak içeride obje seçimine izin verilecek
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        // Özel bir olay gönder
+        const tempSelectEvent = new CustomEvent('temporarySelectionMode', {
+          detail: { enabled: true }
+        });
+        canvasElement.dispatchEvent(tempSelectEvent);
+      }
+    }
   };
   
   // Paralel diyalogunu kapatan fonksiyon

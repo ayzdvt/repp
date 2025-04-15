@@ -50,6 +50,8 @@ export default function ParallelDistanceDialog({
     if (distance > 0) {
       // Mesafeyi uygula ve önizleme oluştur
       onApplyDistance(distance);
+      // Diyaloğu kapat
+      onClose();
     } else {
       alert('Lütfen pozitif bir değer girin.');
     }

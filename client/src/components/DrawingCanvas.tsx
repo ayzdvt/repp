@@ -1358,17 +1358,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         parallelPreviewsRef.current = [];
       }) as EventListener;
       
-      // Paralel çizgi yönü seçildiğinde
+      // Paralel çizgi yönü seçildiğinde - artık kullanılmıyor
       const selectParallelLineHandler = ((e: any) => {
-        if (e.detail && e.detail.direction) {
-          // DrawingApp'deki handleSelectParallelLine'ı çağıracak özel bir event oluştur
-          const selectEvent = new CustomEvent('selectParallelLineDirection', {
-            detail: { direction: e.detail.direction }
-          });
-          
-          // Bu eventi doğrudan container'a gönder - DrawingApp bu olayı yakalayacak
-          containerElement.dispatchEvent(selectEvent);
-        }
+        console.log("Eski paralel çizgi seçim işlevi çağrıldı, ancak artık kullanılmıyor");
+        // Bu fonksiyon artık hiçbir şey yapmıyor, yeni paralellik işlevi tamamen farklı çalışıyor
       }) as EventListener;
       
       // Event listener'ları ekle

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,27 @@ export default function ParallelDistanceDialog({
   onApplyDistance,
 }: ParallelDistanceDialogProps) {
   const [distance, setDistance] = useState<number>(10);
-  const [selectedSide, setSelectedSide] = useState<'positive' | 'negative' | null>(null);
+
+  // Dialog açıldığında değeri sıfırla
+  useEffect(() => {
+    if (isOpen) {
+      setDistance(10);
+    }
+  }, [isOpen]);
+
+  // Escape tuşu kontrolü
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const handleApply = () => {
     // Mesafeyi sıfır veya negatif değilse uygula
@@ -33,36 +53,6 @@ export default function ParallelDistanceDialog({
     } else {
       alert('Lütfen pozitif bir değer girin.');
     }
-  };
-
-  const handlePositiveSelect = () => {
-    setSelectedSide('positive');
-    handleSelectParallelLine('positive');
-  };
-
-  const handleNegativeSelect = () => {
-    setSelectedSide('negative');
-    handleSelectParallelLine('negative');
-  };
-
-  const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
-    // Event'i canvas'a gönder - burada doğrudan bir yöntem çağırmak yerine
-    // DrawingApp'teki onSelectParallelLine fonksiyonunu kullanıyoruz
-    const event = new CustomEvent('selectParallelLine', {
-      detail: { direction }
-    });
-    
-    // Canvas container'ı bul
-    const container = document.getElementById('drawing-container');
-    if (container) {
-      const canvas = container.querySelector('div.absolute');
-      if (canvas) {
-        canvas.dispatchEvent(event);
-      }
-    }
-    
-    // Diyaloğu kapat
-    onClose();
   };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +72,7 @@ export default function ParallelDistanceDialog({
         <DialogHeader>
           <DialogTitle>Paralel Uzaklık Ayarla</DialogTitle>
           <DialogDescription>
-            Paralel çizgilerin orijinal çizgiye olan uzaklığını belirleyin.
+            Paralel çizginin orijinal çizgiye olan uzaklığını belirleyin.
           </DialogDescription>
         </DialogHeader>
         
@@ -102,40 +92,14 @@ export default function ParallelDistanceDialog({
               onFocus={(e) => e.target.select()}
             />
           </div>
-          
-          {selectedSide === null && (
-            <div className="flex justify-center space-x-4 pt-2">
-              <Button onClick={handleApply}>
-                Önizleme Göster
-              </Button>
-            </div>
-          )}
-          
-          {selectedSide === null && distance > 0 && (
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <Button 
-                onClick={handlePositiveSelect}
-                variant="outline"
-                className="flex flex-col"
-              >
-                <span>Üst/Sağ Taraf</span>
-                <span className="text-xs text-gray-500">Pozitif yön</span>
-              </Button>
-              <Button 
-                onClick={handleNegativeSelect}
-                variant="outline"
-                className="flex flex-col"
-              >
-                <span>Alt/Sol Taraf</span>
-                <span className="text-xs text-gray-500">Negatif yön</span>
-              </Button>
-            </div>
-          )}
         </div>
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             İptal
+          </Button>
+          <Button onClick={handleApply}>
+            Tamam
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -37,6 +37,31 @@ export default function DrawingApp() {
     if (selectedObject) {
       setSelectedObject(null);
     }
+    
+    // Paralel modu aktifse ve başka araca geçilirse iptal et
+    if (paralelModu) {
+      // Paralel modunu kapat
+      setParalelModu(false);
+      
+      // Açık dialog varsa kapat
+      if (isParallelDialogOpen) {
+        setIsParallelDialogOpen(false);
+      }
+      
+      // Önizleme çizgilerini temizle
+      setParallelPreviewLines([]);
+      setParallelLineSource(null);
+      
+      // Canvas'a önizlemeleri temizle olayını gönder
+      const canvasContainer = document.getElementById('drawing-container');
+      if (canvasContainer) {
+        const canvasElement = canvasContainer.querySelector('div.absolute');
+        if (canvasElement) {
+          const clearEvent = new CustomEvent('clearParallelPreviews', {});
+          canvasElement.dispatchEvent(clearEvent);
+        }
+      }
+    }
   };
   
   const handleZoomChange = (newZoom: number) => {
@@ -347,9 +372,6 @@ export default function DrawingApp() {
     
     // Mevcut seçimi sıfırla
     setSelectedObject(null);
-    
-    // Kullanıcıya bilgi ver
-    alert('Paralel çizgi oluşturma modu aktif. Ekrandaki herhangi bir çizgiye tıklayın.');
   };
   
   // Paralel diyalogunu kapatan fonksiyon

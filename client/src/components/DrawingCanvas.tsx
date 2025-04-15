@@ -34,6 +34,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // Mutable References (State'in sonsuz döngü yapmaması için ref kullanıyoruz)
   const shapesRef = useRef<any[]>([]); 
+  const shapesHistoryRef = useRef<any[][]>([]); // Şekillerin geçmiş durumlarını saklamak için
+  const actionsHistoryRef = useRef<{action: string, data: any}[]>([]); // Yapılan işlemlerin tarihçesi
   const currentShapeRef = useRef<any | null>(null);
   const dragStartRef = useRef<Point>({ x: 0, y: 0 });
   const isDraggingRef = useRef<boolean>(false);
@@ -1069,7 +1071,44 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   // Escape tuşu işlemini memoize ediyoruz - performans için
+  // Geri alma (undo) işlemi
+  const handleUndo = useCallback(() => {
+    // Tarihçede bir şey var mı kontrol et
+    if (shapesHistoryRef.current.length === 0) {
+      console.log("Geri alınacak bir işlem yok");
+      return;
+    }
+    
+    // Mevcut durumu al
+    const currentShapes = shapesRef.current;
+    
+    // En son kayıtlı durumu al
+    shapesRef.current = shapesHistoryRef.current.pop() || [];
+    
+    console.log("İşlem geri alındı. Kalan işlem sayısı:", shapesHistoryRef.current.length);
+    
+    // Eğer seçili şekil artık mevcut değilse, seçimi kaldır
+    if (selectedShapeId !== null) {
+      const shapeExists = shapesRef.current.some(s => s.id === selectedShapeId);
+      
+      if (!shapeExists) {
+        setSelectedShapeId(null);
+        if (onSelectObject) {
+          onSelectObject(null);
+        }
+      }
+    }
+  }, [selectedShapeId, onSelectObject]);
+  
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // CTRL+Z geri al (Mac için Command+Z)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault(); // Tarayıcının varsayılan geri alma davranışını engelle
+      handleUndo();
+      return;
+    }
+    
+    // Escape tuşu - işlemi iptal et
     if (e.key === 'Escape') {
       // Seçili şekli temizle
       setSelectedShapeId(null);
@@ -1109,7 +1148,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         onToolChange('selection');
       }
     }
-  }, [activeTool, onSelectObject, onToolChange, drawingLine, drawingPolyline, isDraggingEndpoint]);
+  }, [activeTool, onSelectObject, onToolChange, drawingLine, drawingPolyline, isDraggingEndpoint, handleUndo]);
   
   // Keyboard eventleri için ayrı bir useEffect
   useEffect(() => {

@@ -169,7 +169,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const closestPoint = findNearestSnapPoint(currentMousePosRef.current, shapesRef.current, snapTolerance, excludedId);
       
       // Bu bir extension snap point ise uzantı çizgisini görselleştir
-      if (closestPoint && closestPoint.isExtension && closestPoint.lineStart && closestPoint.lineEnd) {
+      if (closestPoint && closestPoint.isExtension && closestPoint.lineStart && closestPoint.lineEnd && ctx) {
         // console.log("Extension noktası bulundu:", closestPoint);
         
         // Çizgi başlangıç ve bitiş noktalarını ekran koordinatlarına dönüştür
@@ -305,7 +305,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         : null;
         
       // Extension doğrultularını göstermek için - extension kontrolü
-      if (snapPoint && snapPoint.isExtension && ctx.current && snapPoint.lineStart && snapPoint.lineEnd) {
+      if (snapPoint && snapPoint.isExtension && snapPoint.lineStart && snapPoint.lineEnd && canvasRef.current) {
+        const tempCtx = canvasRef.current.getContext('2d');
         const lineStart = worldToScreen(snapPoint.lineStart.x, snapPoint.lineStart.y, canvasState);
         const lineEnd = worldToScreen(snapPoint.lineEnd.x, snapPoint.lineEnd.y, canvasState);
         

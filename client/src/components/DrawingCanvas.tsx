@@ -1193,12 +1193,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             );
             
             if (shapeIndex !== -1) {
+              // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+              shapesHistoryRef.current.push([...shapesRef.current]);
+              
               // Şekli güncelle
               shapesRef.current[shapeIndex] = { ...e.detail.shape };
             }
           } 
           // Ekleme işlemi
           else if (e.detail.type === 'add') {
+            // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+            shapesHistoryRef.current.push([...shapesRef.current]);
+            
             // Yeni şekli ekle
             shapesRef.current.push({ ...e.detail.shape });
             console.log("Şekil eklendi:", e.detail.shape);
@@ -1294,6 +1300,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
     // Polyline çizimi sırasında sağ tıklama ile polyline'ı tamamla
     else if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
+      // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+      shapesHistoryRef.current.push([...shapesRef.current]);
+      
       // Polyline'ı tamamla ve shapesRef'e ekle
       const newPolyline = {
         id: nextIdRef.current++,
@@ -1319,6 +1328,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length >= 2) {
       // Son tıklama noktasını eklemeye gerek yok, zaten ekledik
 
+      // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+      shapesHistoryRef.current.push([...shapesRef.current]);
+      
       // Polyline'ı tamamla ve shapesRef'e ekle
       const newPolyline = {
         id: nextIdRef.current++,

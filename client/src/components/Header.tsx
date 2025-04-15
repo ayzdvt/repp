@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import logoSrc from '../assets/logo.svg';
+import logoSrc from '../assets/img/archifrost-logo-blue.png';
 
 interface HeaderProps {
   variant?: 'landing' | 'app';
@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
           <div className="flex items-center">
             <Link href="/">
               <div className="flex items-center cursor-pointer">
-                <img src={logoSrc} alt="ArchiFrost Logo" className="h-8" />
+                <img src={logoSrc} alt="ArchiFrost Logo" className="h-12" />
               </div>
             </Link>
             <nav className="ml-10 hidden md:flex space-x-8">
@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
       <div className="flex items-center">
         <Link href="/">
           <div className="cursor-pointer">
-            <img src={logoSrc} alt="ArchiFrost Logo" className="h-8 mr-4" />
+            <img src={logoSrc} alt="ArchiFrost Logo" className="h-10 mr-4" />
           </div>
         </Link>
         <h1 className="text-xl font-semibold text-gray-700">CAD Çizim Aracı</h1>

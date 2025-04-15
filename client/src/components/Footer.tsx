@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
+import logoWhite from '../assets/img/archifrost-logo-white.png';
 
 const Footer: React.FC = () => {
   return (
@@ -7,7 +8,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">ArchiFrost</h3>
+            <img src={logoWhite} alt="ArchiFrost Logo" className="h-12 mb-4" />
             <p className="text-gray-300 text-sm">
               Yapay zekâ destekli, otomatik mimari çizim ve revizyon çözümleri ile profesyonellere zaman kazandırıyoruz.
             </p>

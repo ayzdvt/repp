@@ -13,6 +13,7 @@ interface DrawingCanvasProps {
   onSelectObject?: (object: any) => void;
   onToolChange?: (tool: Tool) => void; // Aracı değiştirmek için prop ekledik
   snapEnabled?: boolean; // Snap özelliğinin açık/kapalı durumu
+  orthoEnabled?: boolean; // Ortho modunun açık/kapalı durumu
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -24,7 +25,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   onCanvasSizeChange,
   onSelectObject,
   onToolChange,
-  snapEnabled = true // Default olarak snap aktif
+  snapEnabled = true, // Default olarak snap aktif
+  orthoEnabled = false // Default olarak ortho kapalı
 }) => {
   // DOM References
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -374,7 +376,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
-          const endPoint = snapPoint || worldPos;
+          let endPoint = snapPoint || worldPos;
+          
+          // Ortho modu açıksa, çizgiyi yatay veya dikey olarak zorla
+          if (orthoEnabled && !snapPoint) { // Snap noktası varsa, snap'e öncelik ver
+            // İlk nokta ile fare pozisyonu arasındaki delta değerlerini hesapla
+            const dx = Math.abs(endPoint.x - lineFirstPointRef.current.x);
+            const dy = Math.abs(endPoint.y - lineFirstPointRef.current.y);
+            
+            // Hangisi daha büyük - yatay veya dikey çizim
+            if (dx > dy) {
+              // Yatay çizgi (y değerini sabit tut)
+              endPoint = {
+                x: endPoint.x,
+                y: lineFirstPointRef.current.y
+              };
+            } else {
+              // Dikey çizgi (x değerini sabit tut)
+              endPoint = {
+                x: lineFirstPointRef.current.x, 
+                y: endPoint.y
+              };
+            }
+          }
           
           currentShapeRef.current = {
             ...currentShapeRef.current,
@@ -411,7 +435,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             : null;
           
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
-          const currentPoint = snapPoint || worldPos;
+          let currentPoint = snapPoint || worldPos;
+          
+          // Ortho modu açıksa, çizgiyi yatay veya dikey olarak zorla
+          if (orthoEnabled && !snapPoint && polylinePointsRef.current.length > 0) {
+            // Son eklenen nokta ile fare pozisyonu arasında ortho modu uygula
+            const lastPoint = polylinePointsRef.current[polylinePointsRef.current.length - 1];
+            
+            // Son nokta ile fare pozisyonu arasındaki delta değerlerini hesapla
+            const dx = Math.abs(currentPoint.x - lastPoint.x);
+            const dy = Math.abs(currentPoint.y - lastPoint.y);
+            
+            // Hangisi daha büyük - yatay veya dikey çizim
+            if (dx > dy) {
+              // Yatay çizgi (y değerini sabit tut)
+              currentPoint = {
+                x: currentPoint.x,
+                y: lastPoint.y
+              };
+            } else {
+              // Dikey çizgi (x değerini sabit tut)
+              currentPoint = {
+                x: lastPoint.x,
+                y: currentPoint.y
+              };
+            }
+          }
           
           // Tüm noktaları koruyarak son noktayı fare pozisyonuyla güncelle (çizim önizlemesi için)
           if (currentShapeRef.current) {
@@ -711,7 +760,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 : null;
               
               // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
-              const endPoint = snapPoint || worldPos;
+              let endPoint = snapPoint || worldPos;
+              
+              // Ortho modu açıksa, çizgiyi yatay veya dikey olarak zorla
+              if (orthoEnabled && !snapPoint) { // Snap noktası varsa, snap'e öncelik ver
+                // İlk nokta ile fare pozisyonu arasındaki delta değerlerini hesapla
+                const dx = Math.abs(endPoint.x - lineFirstPointRef.current.x);
+                const dy = Math.abs(endPoint.y - lineFirstPointRef.current.y);
+                
+                // Hangisi daha büyük - yatay veya dikey çizim
+                if (dx > dy) {
+                  // Yatay çizgi (y değerini sabit tut)
+                  endPoint = {
+                    x: endPoint.x,
+                    y: lineFirstPointRef.current.y
+                  };
+                } else {
+                  // Dikey çizgi (x değerini sabit tut)
+                  endPoint = {
+                    x: lineFirstPointRef.current.x, 
+                    y: endPoint.y
+                  };
+                }
+              }
               
               // Tamamlanmış çizgiyi shapesRef'e ekle
               const newLine = {
@@ -779,14 +850,41 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             };
           } else {
             // Polyline'a yeni nokta ekle
-            polylinePointsRef.current.push({ x: clickPoint.x, y: clickPoint.y });
+            // Son eklenen nokta ile konumu hesapla
+            let newPoint = { x: clickPoint.x, y: clickPoint.y };
+            
+            // Ortho modu açıksa ve en az bir nokta eklenmişse, yeni noktayı ortho modunda ekle
+            if (orthoEnabled && !snapPoint && polylinePointsRef.current.length > 0) {
+              const lastPoint = polylinePointsRef.current[polylinePointsRef.current.length - 1];
+              
+              // Son nokta ile fare pozisyonu arasındaki delta değerlerini hesapla
+              const dx = Math.abs(newPoint.x - lastPoint.x);
+              const dy = Math.abs(newPoint.y - lastPoint.y);
+              
+              // Hangisi daha büyük - yatay veya dikey çizim
+              if (dx > dy) {
+                // Yatay çizgi (y değerini sabit tut)
+                newPoint = {
+                  x: newPoint.x,
+                  y: lastPoint.y
+                };
+              } else {
+                // Dikey çizgi (x değerini sabit tut)
+                newPoint = {
+                  x: lastPoint.x,
+                  y: newPoint.y
+                };
+              }
+            }
+            
+            polylinePointsRef.current.push(newPoint);
             
             // Geçici gösterimi güncelle - noktalar ve mevcut fare konumu
             if (currentShapeRef.current) {
               currentShapeRef.current = {
                 ...currentShapeRef.current,
                 points: [...polylinePointsRef.current],
-                previewPoint: clickPoint // Mevcut tıklama noktasına önizleme güncelle
+                previewPoint: newPoint // Mevcut tıklama noktasına önizleme güncelle
               };
             }
           }

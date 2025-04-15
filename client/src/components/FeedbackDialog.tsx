@@ -10,6 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface FeedbackDialogProps {
   isOpen: boolean;
@@ -21,6 +23,8 @@ export default function FeedbackDialog({
   onClose,
 }: FeedbackDialogProps) {
   const [feedback, setFeedback] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { toast } = useToast();
 
   // Dialog açıldığında değeri sıfırla
   useEffect(() => {
@@ -43,14 +47,45 @@ export default function FeedbackDialog({
     };
   }, [isOpen, onClose]);
 
-  const handleSubmit = () => {
-    if (feedback.trim()) {
-      // Geribildirim gönderme işlemi (gerçek bir sistemde backend'e gönderilir)
-      console.log('Kullanıcı geribildirimi:', feedback);
-      alert('Geribildiriminiz için teşekkürler! En kısa sürede değerlendireceğiz.');
+  const handleSubmit = async () => {
+    if (!feedback.trim()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen geribildirim alanını doldurun.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Veritabanına geribildirim gönder
+      await apiRequest(
+        'POST',
+        '/api/feedbacks',
+        {
+          message: feedback,
+          // Gerçek bir uygulamada kullanıcı ID'si de eklenebilir
+          // userId: currentUser.id,
+        }
+      );
+      
+      toast({
+        title: "Başarılı",
+        description: "Geribildiriminiz için teşekkürler! En kısa sürede değerlendireceğiz.",
+      });
+      
       onClose();
-    } else {
-      alert('Lütfen geribildirim alanını doldurun.');
+    } catch (error) {
+      console.error('Geribildirim gönderirken hata oluştu:', error);
+      toast({
+        title: "Hata",
+        description: "Geribildirim gönderilirken bir sorun oluştu. Lütfen tekrar deneyin.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -86,11 +121,11 @@ export default function FeedbackDialog({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             İptal
           </Button>
-          <Button onClick={handleSubmit}>
-            Gönder
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
           </Button>
         </DialogFooter>
       </DialogContent>

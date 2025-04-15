@@ -378,8 +378,7 @@ export default function AnalysisPage() {
           </div>
           
           <div className="mt-8 text-center text-gray-500 text-sm">
-            <p>PDF, JPG veya PNG formatındaki İmar Durumu, İnşaat İstikamet Rölevesi veya 
-              Plan Notları belgelerinizi analiz edebilirsiniz.</p>
+            <p>İmar Durumu, İnşaat İstikamet Rölevesi veya Plan Notları belgelerinizi yapay zeka ile analiz edebilirsiniz.</p>
           </div>
         </div>
       </div>

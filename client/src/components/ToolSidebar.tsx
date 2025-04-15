@@ -23,7 +23,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
       <div className="flex flex-col items-center p-1 gap-3">
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'selection' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Selection Tool" 
+          title="Seçim Aracı" 
           onClick={() => onToolChange('selection')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         <div className="relative">
           <button 
             className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'point' ? 'bg-[#D0D0D0]' : ''}`}
-            title="Point Tool" 
+            title="Nokta Aracı" 
             onClick={() => onToolChange('point')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,7 +59,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'line' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Line Tool" 
+          title="Çizgi Aracı" 
           onClick={() => onToolChange('line')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,7 +69,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'polyline' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Polyline Tool" 
+          title="Çoklu Çizgi Aracı" 
           onClick={() => onToolChange('polyline')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +79,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         <button 
           className={`w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors ${activeTool === 'text' ? 'bg-[#D0D0D0]' : ''}`}
-          title="Text Tool" 
+          title="Metin Aracı" 
           onClick={() => onToolChange('text')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +91,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         <button 
           className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
-          title="Zoom In" 
+          title="Yakınlaştır" 
           onClick={onZoomIn}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,7 +104,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         <button 
           className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
-          title="Zoom Out" 
+          title="Uzaklaştır" 
           onClick={onZoomOut}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +117,7 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         {onFitView && (
           <button 
             className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
-            title="Fit View" 
+            title="Tam Ekran Göster" 
             onClick={onFitView}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

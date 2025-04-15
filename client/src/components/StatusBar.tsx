@@ -65,25 +65,37 @@ const StatusBar: React.FC<StatusBarProps> = ({
     <div className="h-8 bg-[#EEEEEE] border-t border-gray-300 flex items-center justify-between px-4 text-sm">
       <div className="flex items-center space-x-4">
         <div>
-          <span className="text-gray-500">Tool:</span>
-          <span id="active-tool" className="ml-1">{activeTool.charAt(0).toUpperCase() + activeTool.slice(1)}</span>
+          <span className="text-gray-500">Araç:</span>
+          <span id="active-tool" className="ml-1">
+            {(() => {
+              // Araç adlarını Türkçeleştir
+              switch(activeTool) {
+                case 'selection': return 'Seçim';
+                case 'point': return 'Nokta';
+                case 'line': return 'Çizgi';
+                case 'polyline': return 'Çoklu Çizgi';
+                case 'text': return 'Metin';
+                default: return activeTool.charAt(0).toUpperCase() + activeTool.slice(1);
+              }
+            })()}
+          </span>
         </div>
         <div>
-          <span className="text-gray-500">Grid:</span>
+          <span className="text-gray-500">Izgara:</span>
           <span id="grid-size" className="ml-1">{gridSize}</span>
         </div>
         <div>
-          <span className="text-gray-500">Zoom:</span>
+          <span className="text-gray-500">Yakınlaştırma:</span>
           <span id="zoom-level" className="ml-1">{Math.round(zoom * 100)}%</span>
         </div>
         <div>
-          <span className="text-gray-500">Visible:</span>
-          <span id="visible-bounds" className="ml-1 font-mono">X: {bounds.minX} to {bounds.maxX}, Y: {bounds.minY} to {bounds.maxY}</span>
+          <span className="text-gray-500">Görünür Alan:</span>
+          <span id="visible-bounds" className="ml-1 font-mono">X: {bounds.minX} - {bounds.maxX}, Y: {bounds.minY} - {bounds.maxY}</span>
         </div>
       </div>
       <div className="flex items-center space-x-4">
         <div>
-          <span className="text-gray-500 mr-2">Position:</span>
+          <span className="text-gray-500 mr-2">Pozisyon:</span>
           <span id="mouse-position" className="font-mono">({formattedX}, {formattedY})</span>
         </div>
         <button
@@ -94,7 +106,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
             : 'bg-gray-300 text-gray-700'
           }`}
         >
-          Snap: {snapEnabled ? 'ON' : 'OFF'}
+          Yapışma: {snapEnabled ? 'AÇIK' : 'KAPALI'}
         </button>
         
         {/* Ortho modu butonu */}
@@ -107,7 +119,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
               : 'bg-gray-300 text-gray-700'
             }`}
           >
-            Ortho: {orthoEnabled ? 'ON' : 'OFF'}
+            Ortho: {orthoEnabled ? 'AÇIK' : 'KAPALI'}
           </button>
         )}
       </div>

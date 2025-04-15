@@ -118,6 +118,49 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const excludedId = isDraggingEndpoint ? selectedId : undefined;
       const closestPoint = findNearestSnapPoint(currentMousePosRef.current, shapesRef.current, snapTolerance, excludedId);
       
+      // Bu bir extension snap point ise uzantı çizgisini görselleştir
+      if (closestPoint && closestPoint.isExtension && closestPoint.lineStart && closestPoint.lineEnd) {
+        // console.log("Extension noktası bulundu:", closestPoint);
+        
+        // Çizgi başlangıç ve bitiş noktalarını ekran koordinatlarına dönüştür
+        const lineStart = worldToScreen(closestPoint.lineStart.x, closestPoint.lineStart.y, canvasState);
+        const lineEnd = worldToScreen(closestPoint.lineEnd.x, closestPoint.lineEnd.y, canvasState);
+        
+        // Extension çizgisini çiz (kesik çizgilerle)
+        // Çizginin her iki yönde de uzantısını göster
+        // Çizgi vektörünü oluştur
+        const dx = lineEnd.x - lineStart.x;
+        const dy = lineEnd.y - lineStart.y;
+        
+        // Çizgiyi her iki yönde de uzat
+        const extensionLength = Math.max(canvasRef.current!.width, canvasRef.current!.height) * 2; // Tüm canvas boyunca uzat
+        
+        // Normalize et
+        const length = Math.sqrt(dx * dx + dy * dy);
+        if (length > 0) { // 0'a bölmeyi önle
+          const normalizedDx = dx / length;
+          const normalizedDy = dy / length;
+          
+          // Başlangıç noktasından geriye doğru uzat
+          const startExtensionX = lineStart.x - normalizedDx * extensionLength;
+          const startExtensionY = lineStart.y - normalizedDy * extensionLength;
+          
+          // Bitiş noktasından ileriye doğru uzat
+          const endExtensionX = lineEnd.x + normalizedDx * extensionLength;
+          const endExtensionY = lineEnd.y + normalizedDy * extensionLength;
+          
+          // Extension çizgisini çiz (kesik çizgilerle ve şeffaf)
+          ctx.beginPath();
+          ctx.moveTo(startExtensionX, startExtensionY);
+          ctx.lineTo(endExtensionX, endExtensionY);
+          ctx.strokeStyle = 'rgba(0, 200, 83, 0.3)'; // Açık yeşil ve şeffaf
+          ctx.lineWidth = 1;
+          ctx.setLineDash([5, 5]); // Kesik çizgi
+          ctx.stroke();
+          ctx.setLineDash([]); // Dash ayarını sıfırla
+        }
+      }
+      
       // En yakın yakalama noktası varsa görsel olarak göster
       if (closestPoint) {
         // Dünya koordinatlarını ekran koordinatlarına çevir

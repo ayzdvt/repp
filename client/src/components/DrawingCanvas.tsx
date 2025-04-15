@@ -1344,40 +1344,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
-      // Paralel çizgi önizlemelerini yönet - artık kullanılmıyor
-      const parallelPreviewHandler = ((e: any) => {
-        // Artık bu işlev kullanılmıyor, paralel çizgi doğrudan DrawingApp.tsx'te oluşturuluyor
-        console.log("Eski paralel önizleme işlevi çağrıldı, ancak artık kullanılmıyor");
-      }) as EventListener;
+      // Artık bu kodları tamamen kaldırıyoruz
       
-      // Paralel çizgi önizlemelerini temizle - artık kullanılmıyor
-      const clearParallelPreviewsHandler = (() => {
-        // Artık bu işlev kullanılmıyor, paralel çizgi doğrudan DrawingApp.tsx'te oluşturuluyor
-        console.log("Eski paralel önizleme temizleme işlevi çağrıldı, ancak artık kullanılmıyor");
-        // Önizleme çizgilerini temizle (yine de güvenlik için temizleyelim)
-        parallelPreviewsRef.current = [];
-      }) as EventListener;
-      
-      // Paralel çizgi yönü seçildiğinde - artık kullanılmıyor
-      const selectParallelLineHandler = ((e: any) => {
-        console.log("Eski paralel çizgi seçim işlevi çağrıldı, ancak artık kullanılmıyor");
-        // Bu fonksiyon artık hiçbir şey yapmıyor, yeni paralellik işlevi tamamen farklı çalışıyor
-      }) as EventListener;
-      
-      // Event listener'ları ekle
+      // Event listener'ları ekle - yalnızca hala kullanılanlar
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
-      containerElement.addEventListener('parallelPreview', parallelPreviewHandler);
-      containerElement.addEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
-      containerElement.addEventListener('selectParallelLine', selectParallelLineHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
-        containerElement.removeEventListener('parallelPreview', parallelPreviewHandler);
-        containerElement.removeEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
-        containerElement.removeEventListener('selectParallelLine', selectParallelLineHandler);
       };
     }
     

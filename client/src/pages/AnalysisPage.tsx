@@ -231,7 +231,10 @@ export default function AnalysisPage() {
           </div>
           
           <div className="bg-white shadow-md rounded-lg p-8">
-            <h1 className="text-2xl font-bold text-center mb-6">İmar Belgesi Analizi</h1>
+            <h1 className="text-2xl font-bold text-center mb-2">İmar Belgesi Analizi</h1>
+            <p className="text-center text-gray-600 mb-6">
+              İmar Durumu, İnşaat İstikamet Rölevesi veya Plan Notları belgelerinizi yapay zeka ile analiz edebilirsiniz.
+            </p>
             
             {error && (
               <Alert variant="destructive" className="mb-6">
@@ -377,9 +380,7 @@ export default function AnalysisPage() {
             </div>
           </div>
           
-          <div className="mt-8 text-center text-gray-500 text-sm">
-            <p>İmar Durumu, İnşaat İstikamet Rölevesi veya Plan Notları belgelerinizi yapay zeka ile analiz edebilirsiniz.</p>
-          </div>
+          {/* Açıklama metnini sayfanın başlığının altına taşıdık */}
         </div>
       </div>
     );

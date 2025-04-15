@@ -8,6 +8,8 @@ interface StatusBarProps {
   mousePosition: Point;
   snapEnabled: boolean;
   onToggleSnap: () => void;
+  orthoEnabled?: boolean;
+  onToggleOrtho?: () => void;
   canvasState: CanvasState; // Görülebilir koordinat aralığını hesaplamak için canvasState'i alıyoruz
 }
 
@@ -18,6 +20,8 @@ const StatusBar: React.FC<StatusBarProps> = ({
   mousePosition,
   snapEnabled,
   onToggleSnap,
+  orthoEnabled = false,
+  onToggleOrtho,
   canvasState
 }) => {
   // Format the mouse position to display exactly 2 decimal places
@@ -92,6 +96,20 @@ const StatusBar: React.FC<StatusBarProps> = ({
         >
           Snap: {snapEnabled ? 'ON' : 'OFF'}
         </button>
+        
+        {/* Ortho modu butonu */}
+        {onToggleOrtho && (
+          <button
+            onClick={onToggleOrtho}
+            className={`px-2 py-1 rounded text-xs ${
+              orthoEnabled 
+              ? 'bg-blue-500 text-white' 
+              : 'bg-gray-300 text-gray-700'
+            }`}
+          >
+            Ortho: {orthoEnabled ? 'ON' : 'OFF'}
+          </button>
+        )}
       </div>
     </div>
   );

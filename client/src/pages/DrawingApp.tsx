@@ -13,6 +13,7 @@ export default function DrawingApp() {
   const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
   const [gridSize, setGridSize] = useState<number>(10);
   const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
+  const [orthoEnabled, setOrthoEnabled] = useState<boolean>(false); // Ortho mod durumu
   const [canvasState, setCanvasState] = useState<CanvasState>({
     gridSize: 10,
     zoom: 1,
@@ -232,6 +233,11 @@ export default function DrawingApp() {
     setSnapEnabled(prevState => !prevState);
   };
   
+  // Ortho modu için toggle fonksiyonu
+  const toggleOrtho = () => {
+    setOrthoEnabled(prevState => !prevState);
+  };
+  
   const handleCanvasSizeChange = (width: number, height: number) => {
     setCanvasState(prev => ({
       ...prev, 
@@ -354,6 +360,7 @@ export default function DrawingApp() {
               onCanvasSizeChange={handleCanvasSizeChange}
               onToolChange={handleToolChange}
               snapEnabled={snapEnabled}
+              orthoEnabled={orthoEnabled}
             />
           </div>
         </div>
@@ -371,6 +378,8 @@ export default function DrawingApp() {
         mousePosition={mousePosition}
         snapEnabled={snapEnabled}
         onToggleSnap={toggleSnap}
+        orthoEnabled={orthoEnabled}
+        onToggleOrtho={toggleOrtho}
         canvasState={canvasState}
       />
       

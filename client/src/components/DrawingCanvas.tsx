@@ -98,13 +98,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
-      // Seçilen şekil ise farklı renkte çiz
-      drawShape(ctx, shape, canvasState, shape.id === selectedId);
+      // Seçilen şekil ise farklı renkte çiz, bunlar tamamlanmış şekiller olduğu için isPreview=false
+      drawShape(ctx, shape, canvasState, shape.id === selectedId, false);
     });
     
-    // Oluşturulmakta olan şekli çiz
+    // Oluşturulmakta olan şekli çiz - bu bir önizleme olduğu için isPreview=true
     if (currentShapeRef.current) {
-      drawShape(ctx, currentShapeRef.current, canvasState);
+      drawShape(ctx, currentShapeRef.current, canvasState, false, true);
     }
     
     // Eğer snap özelliği açıksa veya line uçları çekilirken yakalama noktalarını göster

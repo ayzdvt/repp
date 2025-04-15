@@ -734,50 +734,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    // Paralel çizgi önizlemesi varsa ve tıklanma yapıldıysa
-    if (e.button === 0 && parallelPreviewsRef.current.length === 2) {
-      // Orijinal çizgiyi bulalım (ilk çizginin kaynak çizgisi)
-      const originalLine = {
-        startX: (parallelPreviewsRef.current[0].startX + parallelPreviewsRef.current[1].startX) / 2,
-        startY: (parallelPreviewsRef.current[0].startY + parallelPreviewsRef.current[1].startY) / 2,
-        endX: (parallelPreviewsRef.current[0].endX + parallelPreviewsRef.current[1].endX) / 2,
-        endY: (parallelPreviewsRef.current[0].endY + parallelPreviewsRef.current[1].endY) / 2,
-      };
-      
-      // Orijinal çizginin vektörünü hesapla
-      const dx = originalLine.endX - originalLine.startX;
-      const dy = originalLine.endY - originalLine.startY;
-      
-      // Orijinal çizginin ortası
-      const midX = (originalLine.startX + originalLine.endX) / 2;
-      const midY = (originalLine.startY + originalLine.endY) / 2;
-      
-      // Fare ile orijinal çizginin ortası arasındaki vektör
-      const mouseVectorX = worldPos.x - midX;
-      const mouseVectorY = worldPos.y - midY;
-      
-      // Çizginin vektörü ile fare vektörünün çapraz çarpımı
-      // Bu çapraz çarpım bize fare pozisyonunun çizginin hangi tarafında olduğunu söyler
-      const crossProduct = dx * mouseVectorY - dy * mouseVectorX;
-      
-      // Çapraz çarpımın işareti, hangi paralel çizginin seçileceğini belirler
-      const direction = crossProduct > 0 ? 'positive' : 'negative';
-      
-      // Seçilen yöndeki paralel çizgiyi seç
-      if (containerRef.current) {
-        // Paralel çizgi yönü seçme olayını oluştur
-        const selectEvent = new CustomEvent('selectParallelLineDirection', {
-          detail: {
-            direction: direction
-          }
-        });
-        
-        // Olayı gönder
-        containerRef.current.dispatchEvent(selectEvent);
-        
-        // Tıklama işlemini burada sonlandır
-        return;
-      }
+    // Paralel çizgi önizlemesini devre dışı bırakıyoruz, artık handleApplyParallelDistance'tan yönetilecek
+    // Artık bu kısım kullanılmıyor, HandleApplyParallelDistance ile doğrudan çizgi ekleniyor
+    if (false && e.button === 0 && parallelPreviewsRef.current.length === 2) {
+      // NOT: Bu kısım artık kullanılmıyor, paralel çizgi ekleme işlemi DrawingApp.tsx'te yapılıyor
+      console.log("Paralel çizgi seçme devre dışı bırakıldı, doğrudan çizgi ekleniyor");
+      return;
     }
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
@@ -1382,17 +1344,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
-      // Paralel çizgi önizlemelerini yönet
+      // Paralel çizgi önizlemelerini yönet - artık kullanılmıyor
       const parallelPreviewHandler = ((e: any) => {
-        if (e.detail && e.detail.lines) {
-          // Önizleme çizgilerini ayarla
-          parallelPreviewsRef.current = e.detail.lines;
-        }
+        // Artık bu işlev kullanılmıyor, paralel çizgi doğrudan DrawingApp.tsx'te oluşturuluyor
+        console.log("Eski paralel önizleme işlevi çağrıldı, ancak artık kullanılmıyor");
       }) as EventListener;
       
-      // Paralel çizgi önizlemelerini temizle
+      // Paralel çizgi önizlemelerini temizle - artık kullanılmıyor
       const clearParallelPreviewsHandler = (() => {
-        // Önizleme çizgilerini temizle
+        // Artık bu işlev kullanılmıyor, paralel çizgi doğrudan DrawingApp.tsx'te oluşturuluyor
+        console.log("Eski paralel önizleme temizleme işlevi çağrıldı, ancak artık kullanılmıyor");
+        // Önizleme çizgilerini temizle (yine de güvenlik için temizleyelim)
         parallelPreviewsRef.current = [];
       }) as EventListener;
       

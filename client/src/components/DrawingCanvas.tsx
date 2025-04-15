@@ -1079,73 +1079,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   
   // İlk render için olan useEffect kaldırıldı çünkü artık activeTool değişim efekti bunu kapsıyor
   
-  // Özel event'ler için Ref'ler
-  const updateEventRef = useRef<(e: any) => void>();
-  const getAllShapesRef = useRef<(e: any) => void>();
+  // ESKİ EVENT SİSTEMİ TAMAMEN KALDIRILDI
+  // Bu eski useEffect'ler ve event handler'ları kaldırıldı çünkü yeni sistemde
+  // zaten aynı olayları dinleyen başka bir useEffect var ve bu iki dinleyicinin olması
+  // her olayın iki kez işlenmesine sebep oluyordu.
   
-  useEffect(() => {
-    // Şekil güncelleme veya ekleme
-    const handleShapeUpdate = (e: any) => {
-      const { detail } = e;
-      
-      // Şekil güncelleme
-      if (detail?.type === 'update' && detail?.shape) {
-        // Güncellenen şekli bul ve güncelle
-        const shapeIndex = shapesRef.current.findIndex(s => s.id === detail.shape.id);
-        if (shapeIndex !== -1) {
-          shapesRef.current[shapeIndex] = detail.shape;
-        }
-      }
-      // Şekil ekleme
-      else if (detail?.type === 'add' && detail?.shape) {
-        // Yeni şekli listeye ekle
-        shapesRef.current.push(detail.shape);
-        console.log("Şekil eklendi:", detail.shape);
-      }
-    };
-    
-    // Tüm şekilleri döndürme - Fit View için
-    const handleGetAllShapes = (e: any) => {
-      const { detail } = e;
-      if (detail?.callback && typeof detail.callback === 'function') {
-        // Mevcut tüm şekilleri döndür
-        detail.callback([...shapesRef.current]);
-      }
-    };
-    
-    // Referansları sakla
-    updateEventRef.current = handleShapeUpdate;
-    getAllShapesRef.current = handleGetAllShapes;
-  }, []);
+  // ESKİ KODUN TAMAMI ÇIKARILDI
   
-  // Container DOM düğümü bağlandığında olayları dinlemeye başla
-  useEffect(() => {
-    const containerElement = containerRef.current;
-    if (!containerElement) return;
-    
-    // Event fonksiyonlarını referanstan al
-    const updateHandler = (e: any) => {
-      if (updateEventRef.current) {
-        updateEventRef.current(e);
-      }
-    };
-    
-    const getAllShapesHandler = (e: any) => {
-      if (getAllShapesRef.current) {
-        getAllShapesRef.current(e);
-      }
-    };
-    
-    // Olay dinleyicileri container'a ekle
-    containerElement.addEventListener('shapeupdate', updateHandler);
-    containerElement.addEventListener('getAllShapes', getAllShapesHandler);
-    
-    // Cleanup
-    return () => {
-      containerElement.removeEventListener('shapeupdate', updateHandler);
-      containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
-    };
-  }, []);
+  // NOT: Bu eski kod, aşağıdaki useEffect ile çakışıyordu:
+  // `useEffect(() => { const containerElement = containerRef.current; ... })`
   
   // ESC tuşuna basıldığında seçimi iptal et ve seçim aracına geç
   // Escape tuşu işlemini memoize ediyoruz - performans için
@@ -1211,6 +1153,28 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Temizlenen tüm şekilleri geri getir
         if (lastAction.data && lastAction.data.oldShapes) {
           shapesRef.current = [...lastAction.data.oldShapes];
+        }
+        break;
+        
+      case 'batch_add_shapes':
+        // Toplu eklenen şekilleri geri al
+        if (lastAction.data && Array.isArray(lastAction.data.shapeIds)) {
+          // Silme işlemini her ID için yapalım
+          for (const shapeId of lastAction.data.shapeIds) {
+            const shapeIndex = shapesRef.current.findIndex(s => s.id === shapeId);
+            if (shapeIndex !== -1) {
+              // Şekli kaldır
+              shapesRef.current.splice(shapeIndex, 1);
+              
+              // Eğer silinen şekil seçiliyse, seçimi kaldır
+              if (selectedShapeId === shapeId) {
+                setSelectedShapeId(null);
+                if (onSelectObject) onSelectObject(null);
+              }
+            }
+          }
+          // Hepsi birlikte tek bir işlem olarak geri alındı, konsola log yazalım
+          console.log("Toplu şekil ekleme işlemi geri alındı, silinen şekil sayısı:", lastAction.data.shapeIds.length);
         }
         break;
         

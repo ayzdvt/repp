@@ -114,9 +114,49 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Paralel çizgi önizlemelerini çiz
     if (parallelPreviewsRef.current.length > 0) {
-      parallelPreviewsRef.current.forEach(line => {
-        drawShape(ctx, line, canvasState, false, true);
-      });
+      // Fare konumunu al
+      const mousePos = { x: currentMousePosRef.current.x, y: currentMousePosRef.current.y };
+      
+      // İki paralel çizgimiz varsa (bir orijinal çizginin iki tarafında)
+      if (parallelPreviewsRef.current.length === 2) {
+        // Orijinal çizgiyi bulalım (ilk çizginin kaynak çizgisi)
+        const originalLine = {
+          startX: (parallelPreviewsRef.current[0].startX + parallelPreviewsRef.current[1].startX) / 2,
+          startY: (parallelPreviewsRef.current[0].startY + parallelPreviewsRef.current[1].startY) / 2,
+          endX: (parallelPreviewsRef.current[0].endX + parallelPreviewsRef.current[1].endX) / 2,
+          endY: (parallelPreviewsRef.current[0].endY + parallelPreviewsRef.current[1].endY) / 2,
+        };
+        
+        // Orijinal çizginin vektörünü hesapla
+        const dx = originalLine.endX - originalLine.startX;
+        const dy = originalLine.endY - originalLine.startY;
+        
+        // Orijinal çizginin ortası
+        const midX = (originalLine.startX + originalLine.endX) / 2;
+        const midY = (originalLine.startY + originalLine.endY) / 2;
+        
+        // Dünya koordinatlarındaki fare konumu
+        const worldMouse = screenToWorld(mousePos.x, mousePos.y, canvasState);
+        
+        // Fare ile orijinal çizginin ortası arasındaki vektör
+        const mouseVectorX = worldMouse.x - midX;
+        const mouseVectorY = worldMouse.y - midY;
+        
+        // Çizginin vektörü ile fare vektörünün çapraz çarpımı
+        // Bu çapraz çarpım bize fare pozisyonunun çizginin hangi tarafında olduğunu söyler
+        const crossProduct = dx * mouseVectorY - dy * mouseVectorX;
+        
+        // Çapraz çarpımın işareti, hangi paralel çizginin çizileceğini belirler
+        const lineIndex = crossProduct > 0 ? 0 : 1; // Pozitif ise 0, negatif ise 1
+        
+        // Sadece seçilen taraftaki çizgiyi çiz
+        drawShape(ctx, parallelPreviewsRef.current[lineIndex], canvasState, false, true);
+      } else {
+        // Eğer iki çizgi yoksa, mevcut tüm çizgileri çiz
+        parallelPreviewsRef.current.forEach(line => {
+          drawShape(ctx, line, canvasState, false, true);
+        });
+      }
     }
     
     // Eğer snap özelliği açıksa veya line uçları çekilirken yakalama noktalarını göster
@@ -691,6 +731,52 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
+    
+    // Paralel çizgi önizlemesi varsa ve tıklanma yapıldıysa
+    if (e.button === 0 && parallelPreviewsRef.current.length === 2) {
+      // Orijinal çizgiyi bulalım (ilk çizginin kaynak çizgisi)
+      const originalLine = {
+        startX: (parallelPreviewsRef.current[0].startX + parallelPreviewsRef.current[1].startX) / 2,
+        startY: (parallelPreviewsRef.current[0].startY + parallelPreviewsRef.current[1].startY) / 2,
+        endX: (parallelPreviewsRef.current[0].endX + parallelPreviewsRef.current[1].endX) / 2,
+        endY: (parallelPreviewsRef.current[0].endY + parallelPreviewsRef.current[1].endY) / 2,
+      };
+      
+      // Orijinal çizginin vektörünü hesapla
+      const dx = originalLine.endX - originalLine.startX;
+      const dy = originalLine.endY - originalLine.startY;
+      
+      // Orijinal çizginin ortası
+      const midX = (originalLine.startX + originalLine.endX) / 2;
+      const midY = (originalLine.startY + originalLine.endY) / 2;
+      
+      // Fare ile orijinal çizginin ortası arasındaki vektör
+      const mouseVectorX = worldPos.x - midX;
+      const mouseVectorY = worldPos.y - midY;
+      
+      // Çizginin vektörü ile fare vektörünün çapraz çarpımı
+      // Bu çapraz çarpım bize fare pozisyonunun çizginin hangi tarafında olduğunu söyler
+      const crossProduct = dx * mouseVectorY - dy * mouseVectorX;
+      
+      // Çapraz çarpımın işareti, hangi paralel çizginin seçileceğini belirler
+      const direction = crossProduct > 0 ? 'positive' : 'negative';
+      
+      // Seçilen yöndeki paralel çizgiyi seç
+      if (containerRef.current) {
+        // Paralel çizgi yönü seçme olayını oluştur
+        const selectEvent = new CustomEvent('selectParallelLineDirection', {
+          detail: {
+            direction: direction
+          }
+        });
+        
+        // Olayı gönder
+        containerRef.current.dispatchEvent(selectEvent);
+        
+        // Tıklama işlemini burada sonlandır
+        return;
+      }
+    }
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
     if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)

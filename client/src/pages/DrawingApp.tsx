@@ -25,64 +25,7 @@ export default function DrawingApp() {
   // Canvas içindeki referans
   // Removed canvasRef
   
-  // LocalStorage'dan nokta bilgisini kontrol et
-  useEffect(() => {
-    // Sayfa yüklendiğinde localStorage'dan koordinat bilgisini kontrol et
-    const pointsString = localStorage.getItem('addPoints');
-    if (!pointsString) return;
-    
-    try {
-      const points = JSON.parse(pointsString);
-      
-      if (Array.isArray(points) && points.length > 0) {
-        // Canvas'a erişim
-        setTimeout(() => {
-          const canvasContainer = document.getElementById('drawing-container');
-          if (!canvasContainer) return;
-          
-          const canvasElement = canvasContainer.querySelector('div.absolute');
-          if (!canvasElement) return;
-          
-          // Her bir nokta için işlem yap
-          points.forEach((point, index) => {
-            if (point && typeof point.x === 'number' && typeof point.y === 'number') {
-              console.log(`Koordinat ${point.No || index + 1} ekleniyor:`, point);
-              
-              // Nokta oluştur
-              const newPoint = {
-                id: Date.now() + index, // Benzersiz ID
-                type: 'point',
-                x: point.x,
-                y: point.y,
-                style: 'default'
-              };
-              
-              // CustomEvent gönder
-              const addEvent = new CustomEvent('shapeupdate', {
-                detail: {
-                  type: 'add',
-                  shape: newPoint
-                }
-              });
-              
-              // Olayı gönder
-              canvasElement.dispatchEvent(addEvent);
-            }
-          });
-          
-          // Tüm noktalar eklendikten sonra görünümü sıfırla
-          setTimeout(() => {
-            handleResetView();
-          }, 100);
-          
-          // LocalStorage'ı temizle
-          localStorage.removeItem('addPoints');
-        }, 1000); // Canvas tamamen yüklendikten sonra işlem yapabilmek için 1 saniye bekle
-      }
-    } catch (error) {
-      console.error("Nokta bilgisi işlenirken hata:", error);
-    }
-  }, []);
+  // Artık LocalStorage'dan nokta bilgisi kontrolüne gerek yok
   
   const handleToolChange = (tool: Tool) => {
     setActiveTool(tool);
@@ -338,81 +281,7 @@ export default function DrawingApp() {
     }
   };
   
-  // Test noktaları eklemek için kullanılacak fonksiyon
-  const addTestPoint = () => {
-    console.log("Analiz koordinatları bulundu:", [
-      {
-        "No": 8,
-        "x": 4540345.97,
-        "y": 438538.46
-      },
-      {
-        "No": 9,
-        "x": 4540358.64,
-        "y": 438539.69
-      },
-      {
-        "No": 10,
-        "x": 4540362.61,
-        "y": 438544.59
-      },
-      {
-        "No": 11,
-        "x": 4540359.53,
-        "y": 438561.74
-      },
-      {
-        "No": 31,
-        "x": 4540343.54,
-        "y": 438560.07
-      }
-    ]);
-    
-    // Canvas element'ini bul
-    const canvasContainer = document.getElementById('drawing-container');
-    if (canvasContainer) {
-      const canvasElement = canvasContainer.querySelector('div.absolute');
-      if (canvasElement) {
-        // Tüm koordinatları birer nokta olarak ekle
-        const coordinates = [
-          { No: 8, x: 4540345.97, y: 438538.46 },
-          { No: 9, x: 4540358.64, y: 438539.69 },
-          { No: 10, x: 4540362.61, y: 438544.59 },
-          { No: 11, x: 4540359.53, y: 438561.74 },
-          { No: 31, x: 4540343.54, y: 438560.07 }
-        ];
-        
-        // Her bir koordinat için nokta oluştur ve ekle
-        coordinates.forEach((coord, index) => {
-          console.log(`Nokta ${coord.No} ekleniyor:`, coord);
-          
-          const point = {
-            id: Date.now() + index, // Benzersiz ID için her noktaya farklı bir değer
-            type: 'point',
-            x: coord.x,
-            y: coord.y,
-            style: 'default'
-          };
-          
-          // CustomEvent oluştur
-          const addEvent = new CustomEvent('shapeupdate', {
-            detail: {
-              type: 'add',
-              shape: point
-            }
-          });
-          
-          // Olayı gönder
-          canvasElement.dispatchEvent(addEvent);
-        });
-        
-        // Tüm noktalar eklendikten sonra görünümü sıfırla
-        setTimeout(() => {
-          handleResetView();
-        }, 100);
-      }
-    }
-  };
+  // Test noktaları ekleme fonksiyonu kaldırıldı
 
   // Koordinat giriş diyalogu açıldığında çağrılacak fonksiyon
   const handleOpenPointDialog = () => {
@@ -474,14 +343,6 @@ export default function DrawingApp() {
         />
         
         <div className="flex-1 relative overflow-hidden" id="drawing-container">
-          {/* Test Nokta Ekle Düğmesi */}
-          <button 
-            className="absolute top-4 right-4 z-10 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
-            onClick={addTestPoint}
-          >
-            Test Noktaları Ekle
-          </button>
-          
           <div id="drawing-canvas">
             <DrawingCanvas 
               canvasState={canvasState}

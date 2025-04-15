@@ -108,27 +108,6 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
       
       <div className="flex justify-center mt-6">
         <button 
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors mr-4"
-          onClick={() => {
-            // Çizim sayfasına yönlendir ve localStorage'a koordinat bilgisini ekle
-            if (data.parcel_coordinates && data.parcel_coordinates.length > 0) {
-              localStorage.setItem('addPoints', JSON.stringify(data.parcel_coordinates));
-            } else {
-              // Örnek koordinatlar (veri yoksa)
-              localStorage.setItem('addPoints', JSON.stringify([
-                { No: 8, x: 4540345.97, y: 438538.46 },
-                { No: 9, x: 4540358.64, y: 438539.69 },
-                { No: 10, x: 4540362.61, y: 438544.59 },
-                { No: 11, x: 4540359.53, y: 438561.74 },
-                { No: 31, x: 4540343.54, y: 438560.07 }
-              ]));
-            }
-            window.location.href = '/drawing';
-          }}
-        >
-          Çizime Başla
-        </button>
-        <button 
           className="border border-gray-300 px-6 py-2 rounded-md hover:bg-gray-100 transition-colors"
           onClick={() => window.print()}
         >

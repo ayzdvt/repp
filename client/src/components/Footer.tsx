@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">İletişim</h3>
             <ul className="space-y-2 text-gray-300 text-sm">
-              <li>Email: info@archifrost.com</li>
+              <li>Email: bilgi@archifrost.com</li>
               <li>İstanbul, Türkiye</li>
             </ul>
           </div>

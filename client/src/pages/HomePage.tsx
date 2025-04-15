@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ComparisonTable from '@/components/ComparisonTable';
 import FeatureCard from '@/components/FeatureCard';
 import Testimonial from '@/components/Testimonial';
 import heroImage1 from '../assets/img/1.jpg';
@@ -200,20 +199,6 @@ export default function HomePage() {
               />
             </motion.div>
           </div>
-        </div>
-      </section>
-      
-      {/* Comparison Section */}
-      <section id="comparison" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Neden ArchiFrost?</h2>
-            <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Rakip çözümlerle karşılaştırdığınızda, ArchiFrost'un farkını göreceksiniz.
-            </p>
-          </div>
-          
-          <ComparisonTable />
         </div>
       </section>
       

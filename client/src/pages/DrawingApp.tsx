@@ -249,16 +249,22 @@ export default function DrawingApp() {
   
   // Nesne seçimini ele alan fonksiyon
   const handleObjectSelection = (object: any) => {
-    // Paralel modunda ve seçilen obje bir çizgi ise
-    if (paralelModu && object && object.type === 'line') {
-      // Seçilen çizgiyi kaydet
-      setParallelLineSource(object);
-      
-      // Paralel mesafe girişi dialogunu aç
-      setIsParallelDialogOpen(true);
-      
-      // Paralel modunu kapat
-      setParalelModu(false);
+    // Paralel modunda ise
+    if (paralelModu) {
+      // Herhangi bir obje seçildiğinde ve obje bir çizgi ise
+      if (object && object.type === 'line') {
+        // Seçilen çizgiyi kaydet
+        setParallelLineSource(object);
+        
+        // Paralel mesafe girişi dialogunu aç
+        setIsParallelDialogOpen(true);
+        
+        // Paralel modunu kapat
+        setParalelModu(false);
+      } else if (object) {
+        // Çizgi olmayan bir obje seçildiğinde uyarı ver
+        alert('Paralel çizgi oluşturmak için sadece çizgiler seçilebilir.');
+      }
     } else {
       // Normal nesne seçimi
       setSelectedObject(object);
@@ -339,14 +345,11 @@ export default function DrawingApp() {
     // Paralel modunu aktifleştir
     setParalelModu(true);
     
-    // Seçim aracını aktifleştir - kullanıcıdan bir çizgi seçmesini isteyeceğiz
-    setActiveTool('selection');
-    
     // Mevcut seçimi sıfırla
     setSelectedObject(null);
     
     // Kullanıcıya bilgi ver
-    alert('Lütfen paralel çizgi oluşturmak için bir çizgi seçin');
+    alert('Paralel çizgi oluşturma modu aktif. Ekrandaki herhangi bir çizgiye tıklayın.');
   };
   
   // Paralel diyalogunu kapatan fonksiyon

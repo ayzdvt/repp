@@ -26,8 +26,13 @@ export default function ParallelDistanceDialog({
   const [selectedSide, setSelectedSide] = useState<'positive' | 'negative' | null>(null);
 
   const handleApply = () => {
-    // Mesafeyi uygula ve önizleme oluştur
-    onApplyDistance(distance);
+    // Mesafeyi sıfır veya negatif değilse uygula
+    if (distance > 0) {
+      // Mesafeyi uygula ve önizleme oluştur
+      onApplyDistance(distance);
+    } else {
+      alert('Lütfen pozitif bir değer girin.');
+    }
   };
 
   const handlePositiveSelect = () => {

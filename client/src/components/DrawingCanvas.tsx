@@ -135,7 +135,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const midX = (originalLine.startX + originalLine.endX) / 2;
         const midY = (originalLine.startY + originalLine.endY) / 2;
         
-        // Dünya koordinatlarındaki fare konumu
+        // Dünya koordinatlarındaki fare konumu - x ve y değerlerini ayrı ayrı gönder
         const worldMouse = screenToWorld(mousePos.x, mousePos.y, canvasState);
         
         // Fare ile orijinal çizginin ortası arasındaki vektör

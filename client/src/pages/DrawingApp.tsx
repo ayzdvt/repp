@@ -15,14 +15,7 @@ export default function DrawingApp() {
   const [gridSize, setGridSize] = useState<number>(10);
   const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
   const [orthoEnabled, setOrthoEnabled] = useState<boolean>(false); // Ortho mod durumu
-  // Paralel mod ekranı için state (string 'önizleme-seçimi' değerine izin vermek için any)
-  const [paralelModu, setParalelModu] = useState<any>(false);
-  
-  // Canvas container referansı
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Paralel önizleme çizgisi seçimini dinlemek için ref
-  const parallelPreviewListenerRef = useRef<((e: CustomEvent) => void) | null>(null);
+  const [paralelModu, setParalelModu] = useState<boolean>(false); // Paralel mod durumu
   const [canvasState, setCanvasState] = useState<CanvasState>({
     gridSize: 10,
     zoom: 1,
@@ -393,7 +386,7 @@ export default function DrawingApp() {
     setParallelLineSource(null);
   };
   
-  // Paralel mesafesi ayarlandığında çağrılan fonksiyon - artık sadece önizleme gösteriyor
+  // Paralel mesafesi ayarlandığında çağrılan fonksiyon
   const handleApplyParallelDistance = (distance: number) => {
     if (!parallelLineSource) return;
     
@@ -413,11 +406,11 @@ export default function DrawingApp() {
     const perpX = -unitY;
     const perpY = unitX;
     
-    // Her iki yöne ÖNİZLEME çizgileri oluştur (hem pozitif hem negatif)
+    // Her iki yöne çizgi oluştur (hem pozitif hem negatif)
     
-    // Pozitif yöndeki önizleme çizgisi (seçilen çizginin bir tarafı)
+    // Pozitif yöndeki çizgi (seçilen çizginin bir tarafı)
     const positiveLineId = Date.now();
-    const positivePreviewLine = {
+    const positiveLine = {
       id: positiveLineId,
       type: 'line',
       startX: startX + perpX * distance,
@@ -425,15 +418,12 @@ export default function DrawingApp() {
       endX: endX + perpX * distance,
       endY: endY + perpY * distance,
       thickness: parallelLineSource.thickness,
-      isPreview: true, // Önizleme olarak işaretle
-      isDashed: true, // Kesikli çizgi olarak göster
-      direction: 'positive',
-      distance: distance  // Mesafeyi hatırla
+      isPreview: false
     };
     
-    // Negatif yöndeki önizleme çizgisi (seçilen çizginin diğer tarafı)
+    // Negatif yöndeki çizgi (seçilen çizginin diğer tarafı)
     const negativeLineId = positiveLineId + 1;
-    const negativePreviewLine = {
+    const negativeLine = {
       id: negativeLineId,
       type: 'line',
       startX: startX - perpX * distance,
@@ -441,82 +431,53 @@ export default function DrawingApp() {
       endX: endX - perpX * distance,
       endY: endY - perpY * distance,
       thickness: parallelLineSource.thickness,
-      isPreview: true, // Önizleme olarak işaretle
-      isDashed: true, // Kesikli çizgi olarak göster
-      direction: 'negative',
-      distance: distance // Mesafeyi hatırla
+      isPreview: false
     };
     
-    // Dialog'u kapat
-    setIsParallelDialogOpen(false);
-    
-    // Önizleme çizgilerini state'e kaydet
-    setParallelPreviewLines([positivePreviewLine, negativePreviewLine]);
-    
-    console.log("Paralel önizleme çizgileri oluşturuldu. Seçmek için çizgi üzerine tıklayın.");
-    
-    // Aktif aracı selection olarak değiştir, böylece kullanıcı önizleme çizgisine tıklayabilir
-    setActiveTool('selection');
-    
-    // Seçilecek önizleme çizgilerini göster
-    // Normalde aktif araç selection olmadığında paralel modu kapalı olacak, ancak
-    // burada özel olarak aktif ediyoruz
-    setParalelModu('önizleme-seçimi');
-  };
-  
-  // Önizleme çizgisi seçildiğinde çağrılacak fonksiyon
-  const selectParallelPreviewLine = (selectedPreviewLine: any) => {
-    // Şu anki önizleme çizgisini, kalıcı çizgiye dönüştür
-    const finalLine = {
-      id: Date.now(),
-      type: 'line',
-      startX: selectedPreviewLine.startX,
-      startY: selectedPreviewLine.startY,
-      endX: selectedPreviewLine.endX,
-      endY: selectedPreviewLine.endY,
-      thickness: selectedPreviewLine.thickness,
-      isPreview: false,
-      isDashed: false
-    };
-    
-    // Canvas'a gerçek çizgiyi ekle
+    // Canvas'a çizgileri ekle
     const canvasContainer = document.getElementById('drawing-container');
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
       if (canvasElement) {
-        // Önizleme çizgilerini temizle (her iki taraftaki de temizlenecek)
-        const clearPreviewsEvent = new CustomEvent('clearParallelPreviews', {});
-        canvasElement.dispatchEvent(clearPreviewsEvent);
+        // Diyalogu kapat ve paralel modu hariç state'leri temizle
+        setIsParallelDialogOpen(false);
+        setParallelPreviewLines([]);
+        setParallelLineSource(null);
         
-        // Tek bir çizgi ekleme olayı gönder
-        const addLineEvent = new CustomEvent('shapeupdate', {
+        // Seçili nesneyi temizle
+        setSelectedObject(null);
+        
+        // Test: Önce bir konsol log ekleyelim ve her şeyi temizleyelim
+        console.log("TEST PARALEL: Dialog kapatıldı, çizgiler oluşturuluyor");
+        
+        // Pozitif ve negatif çizgileri birleştirip tek bir event olarak göndereceğiz
+        // Tek seferde işlem yapmak için 'batch' tipinde yeni bir event oluşturuyoruz
+        const parallelLinesEvent = new CustomEvent('shapeupdate', {
           detail: {
-            type: 'add',
-            shape: finalLine
+            type: 'batch', // Yeni tip: 'batch'
+            shapes: [positiveLine, negativeLine] // Her iki çizgiyi de tek bir işlemde ekleyelim
           }
         });
         
-        // Event'i gönder
-        canvasElement.dispatchEvent(addLineEvent);
+        console.log("TEST PARALEL: Çizgiler event'e eklendi:", positiveLine, negativeLine);
         
-        console.log("Seçilen paralel çizgi eklendi:", finalLine);
+        // Event'i sadece bir kez gönderelim
+        canvasElement.dispatchEvent(parallelLinesEvent);
         
-        // Önizleme çizgilerini temizle
-        setParallelPreviewLines([]);
-        
-        // Paralel çizgi kaynağını temizle
-        setParallelLineSource(null);
-        
-        // Paralel modunu kapat
-        setParalelModu(false);
-        
-        // Aktif aracı line olarak değiştir (varsayılan davranış)
-        setActiveTool('line');
+        // ÖNEMLİ: Paralel modunu açık tut
+        // setParalelModu(false); - Bu satırı kaldırdık
+        // setActiveTool('line'); - Bu satırı kaldırdık
       }
     }
   };
   
-
+  // Paralel çizgi seçildiğinde çağrılan fonksiyon - Artık bu fonksiyon kullanılmıyor
+  // Bu fonksiyon tamamen kaldırıldı ve yerine yeni sistem kullanılıyor.
+  // Event listener'ları da tamamen kaldırıldı, bu fonksiyon artık kullanılmıyor.
+  const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
+    console.log("Eski paralel önizleme temizleme işlevi çağrıldı, ancak artık kullanılmıyor");
+    return; // Hiçbir işlem yapmadan çık
+  };
   
   // Koordinat girişinden nokta eklemek için fonksiyon
   const handleAddPointFromCoordinates = (x: number, y: number) => {
@@ -555,43 +516,6 @@ export default function DrawingApp() {
   
   // NOT: Eski paralel çizgi yöntemi kaldırıldı ve kullanım dışı bırakıldı
   // Bu event listener'ları artık kullanılmıyor, kaldırıldı.
-  
-  // Paralel önizleme çizgisi seçimini dinlemek için useEffect
-  useEffect(() => {
-    const canvasContainer = document.getElementById('drawing-container');
-    if (!canvasContainer) return;
-    
-    const canvasElement = canvasContainer.querySelector('div.absolute');
-    if (!canvasElement) return;
-    
-    // Önizleme çizgi seçimini dinleyen fonksiyon
-    const handleSelectParallelPreview = (e: Event) => {
-      // Event'i CustomEvent olarak cast et, tip güvenli için CustomEvent<any> kullan
-      const customEvent = e as unknown as CustomEvent<{selectedPreviewLine: any}>;
-      if (customEvent.detail && customEvent.detail.selectedPreviewLine) {
-        console.log("DrawingApp: Önizleme çizgisi seçildi:", customEvent.detail.selectedPreviewLine);
-        
-        // Seçilen önizleme çizgisini kalıcı hale getir
-        selectParallelPreviewLine(customEvent.detail.selectedPreviewLine);
-      }
-    };
-    
-    // Event listener olarak fonksiyonu ekle
-    // TypeScript uyumlu hale getirmek için EventListener tipine dönüştür
-    const castListener = handleSelectParallelPreview as EventListener;
-    canvasElement.addEventListener('selectParallelPreview', castListener);
-    
-    // Fonksiyonu ref'e sakla (cleanup için)
-    parallelPreviewListenerRef.current = castListener;
-    
-    // Cleanup
-    return () => {
-      if (parallelPreviewListenerRef.current) {
-        canvasElement.removeEventListener('selectParallelPreview', parallelPreviewListenerRef.current);
-        parallelPreviewListenerRef.current = null;
-      }
-    };
-  }, []); // Sadece bir kez çalıştır
 
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">

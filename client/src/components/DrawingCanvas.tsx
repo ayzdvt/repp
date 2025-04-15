@@ -170,10 +170,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       const closestPoint = findNearestSnapPoint(currentMousePosRef.current, shapesRef.current, snapTolerance, excludedId);
       
       // Bu bir extension snap point ise uzantı çizgisini görselleştir
-      if (closestPoint && closestPoint.isExtension && closestPoint.lineStart && closestPoint.lineEnd && canvasRef.current) {
+      if (closestPoint && closestPoint.isExtension && closestPoint.lineStart && closestPoint.lineEnd && ctx) {
         // console.log("Extension noktası bulundu:", closestPoint);
-        const ctx = canvasRef.current.getContext('2d');
-        if (!ctx) return;
         
         // Çizgi başlangıç ve bitiş noktalarını ekran koordinatlarına dönüştür
         const lineStart = worldToScreen(closestPoint.lineStart.x, closestPoint.lineStart.y, canvasState);
@@ -215,11 +213,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       }
       
       // En yakın yakalama noktası varsa görsel olarak göster
-      if (closestPoint && canvasRef.current) {
-        // Canvas context'ini al
-        const ctx = canvasRef.current.getContext('2d');
-        if (!ctx) return;
-        
+      if (closestPoint) {
         // Dünya koordinatlarını ekran koordinatlarına çevir
         const screenPos = worldToScreen(closestPoint.x, closestPoint.y, canvasState);
         
@@ -740,29 +734,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    // Paralel önizleme çizgilerine tıklama kontrolü
-    if (e.button === 0 && parallelPreviewsRef.current.length > 0) {
-      // Her bir önizleme çizgisi için kontrol et
-      for (let i = 0; i < parallelPreviewsRef.current.length; i++) {
-        const previewLine = parallelPreviewsRef.current[i];
-        
-        // Çizgiye tıklanıp tıklanmadığını kontrol et
-        if (pointNearLine(worldPos, previewLine, 5 / canvasState.zoom)) {
-          console.log("Paralel önizleme çizgisine tıklandı:", i);
-          
-          // CustomEvent ile seçilen çizgiyi bildir
-          if (containerRef.current) {
-            const event = new CustomEvent('selectParallelPreview', { 
-              detail: { selectedIndex: i }
-            });
-            containerRef.current.dispatchEvent(event);
-          }
-          
-          // İşlemi tamamla
-          return;
-        }
-      }
-    }
+    // Paralel çizgi kodu tamamen kaldırıldı
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
     if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)
@@ -784,26 +756,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const selectedShape = findShapeAtPoint(worldPos);
         
         if (selectedShape && onSelectObject) {
-          // Öncelikle, seçilen şekil bir paralel önizleme çizgisi mi kontrol et
-          if (selectedShape.isPreview && selectedShape.type === 'line') {
-            console.log("Paralel önizleme çizgisi seçildi:", selectedShape);
-            
-            // Üst bileşene önizleme çizgisi seçildiğini bildir
-            // Bu, DrawingApp'te selectParallelPreviewLine fonksiyonunu çağıracak
-            const selectPreviewEvent = new CustomEvent('selectParallelPreview', {
-              detail: { selectedPreviewLine: selectedShape }
-            });
-            
-            // null kontrolü ekle
-            if (containerRef.current) {
-              containerRef.current.dispatchEvent(selectPreviewEvent);
-            }
-            
-            // Önizleme çizgisi seçimi işlendi, normal nesne seçimi yapmaya gerek yok
-            return;
-          }
-          
-          // Normal nesne seçimi (önizleme değilse)
           // Seçili şeklin indeksini bul
           const shapeIndex = shapesRef.current.findIndex(s => s.id === selectedShape.id);
           
@@ -1308,72 +1260,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
-      // Paralel önizleme çizgilerini temizleme olayını dinle
-      const clearParallelPreviewsHandler = ((e: any) => {
-        // Paralellik önizleme çizgilerini temizle
-        console.log("Paralel önizleme çizgileri temizleniyor");
-        parallelPreviewsRef.current = [];
-        
-        // Yeniden çizim tetikle
-        if (requestRef.current) {
-          cancelAnimationFrame(requestRef.current);
-        }
-        renderCanvas();
-      }) as EventListener;
-      
-      // Paralel önizleme çizgilerini eklemek için olayı dinle
-      const addParallelPreviewsHandler = ((e: any) => {
-        if (e.detail && Array.isArray(e.detail.previewLines)) {
-          console.log("Paralel önizleme çizgileri ekleniyor:", e.detail.previewLines);
-          
-          // Önizleme çizgilerini ref'e ekle
-          parallelPreviewsRef.current = e.detail.previewLines;
-          
-          // Yeniden çizim tetikle
-          if (requestRef.current) {
-            cancelAnimationFrame(requestRef.current);
-          }
-          renderCanvas();
-        }
-      }) as EventListener;
-      
-      // Paralel önizleme çizgilerinden birini seçme olayını dinle
-      const selectParallelPreviewHandler = ((e: any) => {
-        if (e.detail && e.detail.selectedIndex !== undefined) {
-          console.log("Paralel önizleme çizgisi seçildi, index:", e.detail.selectedIndex);
-          
-          // Seçilen çizgiyi al
-          const selectedLine = parallelPreviewsRef.current[e.detail.selectedIndex];
-          
-          if (selectedLine) {
-            // Yeni çizgiyi oluştur (ID ekleyerek)
-            const newLine = {
-              ...selectedLine,
-              id: nextIdRef.current++,
-            };
-            
-            // Tüm önizleme çizgilerini temizle
-            parallelPreviewsRef.current = [];
-            
-            // Gerçek şekil olarak ekle
-            // Önce shapesRef'e ekle
-            shapesRef.current.push(newLine);
-            
-            // Sonra işlem geçmişine ekle
-            actionsHistoryRef.current.push({
-              action: 'add_shape',
-              data: { shapeId: newLine.id }
-            });
-            
-            // Yeniden çizim tetikle
-            if (requestRef.current) {
-              cancelAnimationFrame(requestRef.current);
-            }
-            renderCanvas();
-          }
-        }
-      }) as EventListener;
-      
       // Şekil güncelleme ve ekleme olayını dinle
       const shapeUpdateHandler = ((e: any) => {
         if (e.detail) {
@@ -1445,17 +1331,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Event listener'ları ekle - yalnızca hala kullanılanlar
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
-      containerElement.addEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
-      containerElement.addEventListener('addParallelPreviews', addParallelPreviewsHandler);
-      containerElement.addEventListener('selectParallelPreview', selectParallelPreviewHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
-        containerElement.removeEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
-        containerElement.removeEventListener('addParallelPreviews', addParallelPreviewsHandler);
-        containerElement.removeEventListener('selectParallelPreview', selectParallelPreviewHandler);
       };
     }
     

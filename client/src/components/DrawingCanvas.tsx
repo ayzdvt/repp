@@ -112,6 +112,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       drawShape(ctx, currentShapeRef.current, canvasState, false, true);
     }
     
+    // Paralel çizgi önizlemelerini çiz
+    if (parallelPreviewsRef.current.length > 0) {
+      parallelPreviewsRef.current.forEach(line => {
+        drawShape(ctx, line, canvasState, false, true);
+      });
+    }
+    
     // Eğer snap özelliği açıksa veya line uçları çekilirken yakalama noktalarını göster
     if ((snapEnabled && currentMousePosRef.current) && (activeTool !== 'selection' || isDraggingEndpoint)) {
       // En yakın yakalama noktasını bul
@@ -1287,14 +1294,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         }
       }) as EventListener;
       
+      // Paralel çizgi önizlemelerini yönet
+      const parallelPreviewHandler = ((e: any) => {
+        if (e.detail && e.detail.lines) {
+          // Önizleme çizgilerini ayarla
+          parallelPreviewsRef.current = e.detail.lines;
+        }
+      }) as EventListener;
+      
+      // Paralel çizgi önizlemelerini temizle
+      const clearParallelPreviewsHandler = (() => {
+        // Önizleme çizgilerini temizle
+        parallelPreviewsRef.current = [];
+      }) as EventListener;
+      
       // Event listener'ları ekle
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
+      containerElement.addEventListener('parallelPreview', parallelPreviewHandler);
+      containerElement.addEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
       
       // Cleanup function
       return () => {
         containerElement.removeEventListener('getAllShapes', getAllShapesHandler);
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
+        containerElement.removeEventListener('parallelPreview', parallelPreviewHandler);
+        containerElement.removeEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
       };
     }
     

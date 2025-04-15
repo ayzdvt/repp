@@ -738,6 +738,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           // Eğer yakalama noktası varsa onu kullan, yoksa normal fare pozisyonunu kullan
           const pointPosition = snapPoint || worldPos;
           
+          // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+          shapesHistoryRef.current.push([...shapesRef.current]);
+          
           // Create a point and add it directly to shapes
           const newPoint = {
             id: nextIdRef.current++,
@@ -746,6 +749,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             y: pointPosition.y,
             style: 'default'
           };
+          
+          // Şekli ekle
           shapesRef.current.push(newPoint);
           // Otomatik seçim özelliğini kaldırdık
         } else if (activeTool === 'line') {
@@ -808,6 +813,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                   };
                 }
               }
+              
+              // Değişiklik öncesi mevcut durumu tarihçeye kaydet
+              shapesHistoryRef.current.push([...shapesRef.current]);
               
               // Tamamlanmış çizgiyi shapesRef'e ekle
               const newLine = {

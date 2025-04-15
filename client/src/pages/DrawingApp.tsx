@@ -481,6 +481,10 @@ export default function DrawingApp() {
     if (canvasContainer) {
       const canvasElement = canvasContainer.querySelector('div.absolute');
       if (canvasElement) {
+        // Önizleme çizgilerini temizle (her iki taraftaki de temizlenecek)
+        const clearPreviewsEvent = new CustomEvent('clearParallelPreviews', {});
+        canvasElement.dispatchEvent(clearPreviewsEvent);
+        
         // Tek bir çizgi ekleme olayı gönder
         const addLineEvent = new CustomEvent('shapeupdate', {
           detail: {

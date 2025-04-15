@@ -18,6 +18,9 @@ export default function DrawingApp() {
   // Paralel mod ekranı için state (string 'önizleme-seçimi' değerine izin vermek için any)
   const [paralelModu, setParalelModu] = useState<any>(false);
   
+  // Canvas container referansı
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  
   // Paralel önizleme çizgisi seçimini dinlemek için ref
   const parallelPreviewListenerRef = useRef<((e: CustomEvent) => void) | null>(null);
   const [canvasState, setCanvasState] = useState<CanvasState>({
@@ -513,13 +516,7 @@ export default function DrawingApp() {
     }
   };
   
-  // Paralel çizgi seçildiğinde çağrılan fonksiyon - Artık bu fonksiyon kullanılmıyor
-  // Bu fonksiyon tamamen kaldırıldı ve yerine yeni sistem kullanılıyor.
-  // Event listener'ları da tamamen kaldırıldı, bu fonksiyon artık kullanılmıyor.
-  const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
-    console.log("Eski paralel önizleme temizleme işlevi çağrıldı, ancak artık kullanılmıyor");
-    return; // Hiçbir işlem yapmadan çık
-  };
+
   
   // Koordinat girişinden nokta eklemek için fonksiyon
   const handleAddPointFromCoordinates = (x: number, y: number) => {

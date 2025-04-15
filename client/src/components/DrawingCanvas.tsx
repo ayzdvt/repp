@@ -734,7 +734,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Convert to world coordinates
     const worldPos = screenToWorld(x, y, canvasState);
     
-    // Paralel çizgi kodu tamamen kaldırıldı
+    // Paralel önizleme çizgilerine tıklama kontrolü
+    if (e.button === 0 && parallelPreviewsRef.current.length > 0) {
+      // Her bir önizleme çizgisi için kontrol et
+      for (let i = 0; i < parallelPreviewsRef.current.length; i++) {
+        const previewLine = parallelPreviewsRef.current[i];
+        
+        // Çizgiye tıklanıp tıklanmadığını kontrol et
+        if (pointNearLine(worldPos, previewLine, 5 / canvasState.zoom)) {
+          console.log("Paralel önizleme çizgisine tıklandı:", i);
+          
+          // CustomEvent ile seçilen çizgiyi bildir
+          if (containerRef.current) {
+            const event = new CustomEvent('selectParallelPreview', { 
+              detail: { selectedIndex: i }
+            });
+            containerRef.current.dispatchEvent(event);
+          }
+          
+          // İşlemi tamamla
+          return;
+        }
+      }
+    }
     
     // Orta fare tuşu için kaydırma (pan) işlemini başlat
     if (e.button === 1) { // 1 = orta fare tuşu (tekerlek)

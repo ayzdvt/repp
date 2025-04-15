@@ -481,6 +481,32 @@ export default function DrawingApp() {
       }
     }
   };
+  
+  // Paralel çizgi yönü seçildiğinde çağrılan event'i dinle
+  useEffect(() => {
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        // Paralel çizgi yönü seçimini dinleyen fonksiyon
+        const handleSelectParallelDirection = (event: Event) => {
+          const customEvent = event as CustomEvent;
+          if (customEvent.detail && customEvent.detail.direction) {
+            handleSelectParallelLine(customEvent.detail.direction);
+          }
+        };
+        
+        // Event listener'ı ekle
+        canvasElement.addEventListener('selectParallelLineDirection', handleSelectParallelDirection);
+        
+        // Cleanup
+        return () => {
+          canvasElement.removeEventListener('selectParallelLineDirection', handleSelectParallelDirection);
+        };
+      }
+    }
+    return undefined;
+  }, [parallelLineSource, parallelPreviewLines]); // Bu bağımlılıklar değiştiğinde event listener'ı güncelle
 
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">

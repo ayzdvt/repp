@@ -1308,11 +1308,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         parallelPreviewsRef.current = [];
       }) as EventListener;
       
+      // Paralel çizgi yönü seçildiğinde
+      const selectParallelLineHandler = ((e: any) => {
+        if (e.detail && e.detail.direction) {
+          // DrawingApp'deki handleSelectParallelLine'ı çağıracak özel bir event oluştur
+          const selectEvent = new CustomEvent('selectParallelLineDirection', {
+            detail: { direction: e.detail.direction }
+          });
+          
+          // Bu eventi doğrudan container'a gönder - DrawingApp bu olayı yakalayacak
+          containerElement.dispatchEvent(selectEvent);
+        }
+      }) as EventListener;
+      
       // Event listener'ları ekle
       containerElement.addEventListener('getAllShapes', getAllShapesHandler);
       containerElement.addEventListener('shapeupdate', shapeUpdateHandler);
       containerElement.addEventListener('parallelPreview', parallelPreviewHandler);
       containerElement.addEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
+      containerElement.addEventListener('selectParallelLine', selectParallelLineHandler);
       
       // Cleanup function
       return () => {
@@ -1320,6 +1334,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         containerElement.removeEventListener('shapeupdate', shapeUpdateHandler);
         containerElement.removeEventListener('parallelPreview', parallelPreviewHandler);
         containerElement.removeEventListener('clearParallelPreviews', clearParallelPreviewsHandler);
+        containerElement.removeEventListener('selectParallelLine', selectParallelLineHandler);
       };
     }
     

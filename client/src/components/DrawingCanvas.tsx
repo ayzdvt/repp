@@ -1262,52 +1262,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       
       // Şekil güncelleme ve ekleme olayını dinle
       const shapeUpdateHandler = ((e: any) => {
-        if (e.detail && e.detail.shape) {
-          // Güncelleme işlemi
-          if (e.detail.type === 'update') {
-            // Güncellenecek şekli bul
-            const shapeIndex = shapesRef.current.findIndex(
-              (s: any) => s.id === e.detail.shape.id
-            );
-            
-            if (shapeIndex !== -1) {
-              // Orijinal şekli kaydet (geri almak için)
-              const originalShape = { ...shapesRef.current[shapeIndex] };
-              
-              // İşlem tarihçesine ekle
-              actionsHistoryRef.current.push({
-                action: 'update_shape',
-                data: { originalShape }
-              });
-              
-              // Şekli güncelle
-              shapesRef.current[shapeIndex] = { ...e.detail.shape };
-            }
-          } 
-          // Ekleme işlemi
-          else if (e.detail.type === 'add') {
-            // Yeni şekli ekle
-            const newShape = { ...e.detail.shape };
-            
-            // İşlem tarihçesine ekle
-            actionsHistoryRef.current.push({
-              action: 'add_shape',
-              data: { shapeId: newShape.id }
-            });
-            
-            // Şekli ekle
-            shapesRef.current.push(newShape);
-            console.log("Şekil eklendi:", newShape);
-          }
-          // Toplu ekleme işlemi (batch) - bu yeni bir işlem türü
-          else if (e.detail.type === 'batch' && Array.isArray(e.detail.shapes)) {
+        if (e.detail) {
+          // BATCH işlemi (toplu ekleme) - en üstte kontrol ediyoruz
+          if (e.detail.type === 'batch' && Array.isArray(e.detail.shapes)) {
             console.log("TEST PARALEL: Batch şekil ekleme işlemi başladı");
             
             // İşlem tarihçesine tek bir toplu işlem olarak ekle
-            const shapeIds = [];
+            const shapeIds: number[] = [];
             
             // Her şekli ekle
-            e.detail.shapes.forEach(shape => {
+            e.detail.shapes.forEach((shape: any) => {
               const newShape = { ...shape };
               shapesRef.current.push(newShape);
               shapeIds.push(newShape.id);
@@ -1319,6 +1283,45 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               action: 'batch_add_shapes',
               data: { shapeIds }
             });
+          }
+          // TEKİL İŞLEMLER - tek bir şekil için
+          else if (e.detail.shape) {
+            // Güncelleme işlemi
+            if (e.detail.type === 'update') {
+              // Güncellenecek şekli bul
+              const shapeIndex = shapesRef.current.findIndex(
+                (s: any) => s.id === e.detail.shape.id
+              );
+              
+              if (shapeIndex !== -1) {
+                // Orijinal şekli kaydet (geri almak için)
+                const originalShape = { ...shapesRef.current[shapeIndex] };
+                
+                // İşlem tarihçesine ekle
+                actionsHistoryRef.current.push({
+                  action: 'update_shape',
+                  data: { originalShape }
+                });
+                
+                // Şekli güncelle
+                shapesRef.current[shapeIndex] = { ...e.detail.shape };
+              }
+            } 
+            // Ekleme işlemi
+            else if (e.detail.type === 'add') {
+              // Yeni şekli ekle
+              const newShape = { ...e.detail.shape };
+              
+              // İşlem tarihçesine ekle
+              actionsHistoryRef.current.push({
+                action: 'add_shape',
+                data: { shapeId: newShape.id }
+              });
+              
+              // Şekli ekle
+              shapesRef.current.push(newShape);
+              console.log("Şekil eklendi:", newShape);
+            }
           }
         }
       }) as EventListener;

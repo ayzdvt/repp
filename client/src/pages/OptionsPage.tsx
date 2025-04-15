@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'wouter';
-import FileUploadDialog from '@/components/FileUploadDialog';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export default function OptionsPage() {
-  const [isCADDialogOpen, setIsCADDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
   
   // Dosya yükleme diyaloğu yerine doğrudan analiz sayfasına yönlendir
@@ -13,29 +11,15 @@ export default function OptionsPage() {
     setLocation('/analysis');
   };
   
-  const handleCADFileUpload = (file: File) => {
-    console.log('CAD File uploaded:', file);
-    // Burada yüklenen CAD dosyasını işleyebilirsiniz
-    setIsCADDialogOpen(false);
-    // İşlemden sonra drawing sayfasına yönlendirme
-    setLocation('/drawing');
+  // CAD sayfasına yönlendir
+  const handleCADOption = () => {
+    setLocation('/cad');
   };
   
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header - options variant for no "try free" button */}
       <Header variant="options" />
-      
-      {/* AutoCAD dosya yükleme dialog'u */}
-      <FileUploadDialog
-        isOpen={isCADDialogOpen}
-        onClose={() => setIsCADDialogOpen(false)}
-        onFileUpload={handleCADFileUpload}
-        title="AutoCAD Çizimi Yükleme"
-        description="Düzenlemek istediğiniz AutoCAD çizim dosyasını yükleyin."
-        acceptedFileTypes=".dwg,.dxf"
-        fileTypeDescription="DWG veya DXF dosyaları (maks. 20MB)"
-      />
       
       <div className="flex-grow bg-gradient-to-b from-blue-900 to-blue-800 py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         {/* Background pattern */}
@@ -102,7 +86,7 @@ export default function OptionsPage() {
                 </div>
                 <div className="mt-auto">
                   <button 
-                    onClick={() => setIsCADDialogOpen(true)}
+                    onClick={handleCADOption}
                     className="block text-center w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
                   >
                     Seç

@@ -7,6 +7,7 @@ import DrawingApp from "@/pages/DrawingApp";
 import HomePage from "@/pages/HomePage";
 import OptionsPage from "@/pages/OptionsPage";
 import AnalysisPage from "@/pages/AnalysisPage";
+import CADPage from "@/pages/CADPage";
 
 function Router() {
   return (
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/options" component={OptionsPage} />
       <Route path="/drawing" component={DrawingApp} />
       <Route path="/analysis" component={AnalysisPage} />
+      <Route path="/cad" component={CADPage} />
       <Route component={NotFound} />
     </Switch>
   );

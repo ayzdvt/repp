@@ -21,8 +21,21 @@ const Header: React.FC<HeaderProps> = ({ variant = 'app' }) => {
               <Link href="/">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Ana Sayfa</div>
               </Link>
-              <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium">Özellikler</a>
-              <a href="#comparison" className="text-gray-700 hover:text-blue-600 font-medium">Karşılaştırma</a>
+              {variant === 'landing' ? (
+                <>
+                  <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium">Özellikler</a>
+                  <a href="#comparison" className="text-gray-700 hover:text-blue-600 font-medium">Karşılaştırma</a>
+                </>
+              ) : (
+                <>
+                  <Link href="/#features">
+                    <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Özellikler</div>
+                  </Link>
+                  <Link href="/#comparison">
+                    <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Karşılaştırma</div>
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
           <div className="flex items-center">

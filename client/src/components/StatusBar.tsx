@@ -106,7 +106,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
             : 'bg-gray-300 text-gray-700'
           }`}
         >
-          Yapışma: {snapEnabled ? 'AÇIK' : 'KAPALI'}
+          Yakalama: {snapEnabled ? 'AÇIK' : 'KAPALI'}
         </button>
         
         {/* Ortho modu butonu */}

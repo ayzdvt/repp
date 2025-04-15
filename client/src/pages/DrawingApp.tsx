@@ -5,6 +5,7 @@ import PropertiesSidebar from "@/components/PropertiesSidebar";
 import StatusBar from "@/components/StatusBar";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import PointCoordinateDialog from "@/components/PointCoordinateDialog";
+import ParallelDistanceDialog from "@/components/ParallelDistanceDialog";
 import { CanvasState, Tool, Point } from "@/types";
 
 export default function DrawingApp() {
@@ -299,6 +300,11 @@ export default function DrawingApp() {
   
   // Test noktaları ekleme fonksiyonu kaldırıldı
 
+  // Paralel oluşturma için state'ler
+  const [isParallelDialogOpen, setIsParallelDialogOpen] = useState<boolean>(false);
+  const [parallelLineSource, setParallelLineSource] = useState<any>(null);
+  const [parallelPreviewLines, setParallelPreviewLines] = useState<any[]>([]);
+  
   // Koordinat giriş diyalogu açıldığında çağrılacak fonksiyon
   const handleOpenPointDialog = () => {
     setIsPointDialogOpen(true);
@@ -307,6 +313,138 @@ export default function DrawingApp() {
   // Koordinat giriş diyalogu kapatıldığında çağrılacak fonksiyon
   const handleClosePointDialog = () => {
     setIsPointDialogOpen(false);
+  };
+  
+  // Paralel oluşturma işlemini başlatan fonksiyon
+  const handleStartParallel = () => {
+    // Seçili nesne yoksa veya çizgi değilse işlemi başlatma
+    if (!selectedObject || selectedObject.type !== 'line') {
+      alert('Lütfen önce bir çizgi seçin');
+      return;
+    }
+    
+    // Paralel oluşturma moduna geç
+    setParallelLineSource(selectedObject);
+    setIsParallelDialogOpen(true);
+  };
+  
+  // Paralel diyalogunu kapatan fonksiyon
+  const handleCloseParallelDialog = () => {
+    setIsParallelDialogOpen(false);
+    // Önizleme çizgilerini temizle
+    setParallelPreviewLines([]);
+    setParallelLineSource(null);
+  };
+  
+  // Paralel mesafesi ayarlandığında çağrılan fonksiyon
+  const handleApplyParallelDistance = (distance: number) => {
+    if (!parallelLineSource) return;
+    
+    // İlk çizginin noktaları
+    const { startX, startY, endX, endY } = parallelLineSource;
+    
+    // Çizginin vektör bilgilerini hesapla
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    
+    // Birim vektörü
+    const unitX = dx / length;
+    const unitY = dy / length;
+    
+    // Dik birim vektör (90 derece saat yönünün tersine)
+    const perpX = -unitY;
+    const perpY = unitX;
+    
+    // Her iki yönde de paralel çizgi oluştur
+    // Pozitif yönde paralel
+    const pos = {
+      id: Date.now() + 1,
+      type: 'line',
+      startX: startX + perpX * distance,
+      startY: startY + perpY * distance,
+      endX: endX + perpX * distance,
+      endY: endY + perpY * distance,
+      thickness: parallelLineSource.thickness,
+      isPreview: true,
+      direction: 'positive'
+    };
+    
+    // Negatif yönde paralel
+    const neg = {
+      id: Date.now() + 2,
+      type: 'line',
+      startX: startX - perpX * distance,
+      startY: startY - perpY * distance,
+      endX: endX - perpX * distance,
+      endY: endY - perpY * distance,
+      thickness: parallelLineSource.thickness,
+      isPreview: true,
+      direction: 'negative'
+    };
+    
+    // Paralel çizgi önizlemelerini ayarla
+    setParallelPreviewLines([pos, neg]);
+    
+    // Canvas'a önizlemeleri göster
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        // Paralel önizleme olayını oluştur
+        const previewEvent = new CustomEvent('parallelPreview', {
+          detail: {
+            lines: [pos, neg]
+          }
+        });
+        
+        // Olayı gönder
+        canvasElement.dispatchEvent(previewEvent);
+      }
+    }
+  };
+  
+  // Paralel çizgi seçildiğinde çağrılan fonksiyon
+  const handleSelectParallelLine = (direction: 'positive' | 'negative') => {
+    if (!parallelLineSource || parallelPreviewLines.length !== 2) return;
+    
+    // Canvas element'ini bul
+    const canvasContainer = document.getElementById('drawing-container');
+    if (canvasContainer) {
+      const canvasElement = canvasContainer.querySelector('div.absolute');
+      if (canvasElement) {
+        // Seçilen yöndeki paralel çizgiyi bul
+        const selectedLine = parallelPreviewLines.find(line => line.direction === direction);
+        if (!selectedLine) return;
+        
+        // Önizleme özelliğini kaldır ve kalıcı bir çizgi oluştur
+        const newLine = {
+          ...selectedLine,
+          isPreview: false,
+          id: Date.now()
+        };
+        
+        // Kalıcı çizgiyi ekle
+        const addEvent = new CustomEvent('shapeupdate', {
+          detail: {
+            type: 'add',
+            shape: newLine
+          }
+        });
+        
+        // Önizleme çizgilerini temizle
+        const clearEvent = new CustomEvent('clearParallelPreviews', {});
+        
+        // Olayları sırayla gönder
+        canvasElement.dispatchEvent(clearEvent);
+        canvasElement.dispatchEvent(addEvent);
+        
+        // Diyalogu kapat ve state'i temizle
+        setIsParallelDialogOpen(false);
+        setParallelPreviewLines([]);
+        setParallelLineSource(null);
+      }
+    }
   };
   
   // Koordinat girişinden nokta eklemek için fonksiyon

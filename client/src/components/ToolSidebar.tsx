@@ -8,6 +8,7 @@ interface ToolSidebarProps {
   onZoomOut: () => void;
   onFitView?: () => void; // Fit View butonu için
   onOpenPointDialog?: () => void; // Koordinat girişi dialog'u için
+  onStartParallel?: () => void; // Paralel çizgi oluşturma fonksiyonu
 }
 
 const ToolSidebar: React.FC<ToolSidebarProps> = ({ 
@@ -16,7 +17,8 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
   onZoomIn,
   onZoomOut,
   onFitView,
-  onOpenPointDialog
+  onOpenPointDialog,
+  onStartParallel
 }) => {
   return (
     <div className="bg-[#ECECEC] w-12 flex-shrink-0 border-r border-gray-300 flex flex-col">
@@ -123,6 +125,19 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2" />
               <path d="M9 3v18M3 9h18" strokeWidth="2" />
+            </svg>
+          </button>
+        )}
+        
+        {onStartParallel && (
+          <button 
+            className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
+            title="Paralel Çizgi Oluştur" 
+            onClick={onStartParallel}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <line x1="5" y1="8" x2="19" y2="8" strokeWidth="2" />
+              <line x1="5" y1="16" x2="19" y2="16" strokeWidth="2" />
             </svg>
           </button>
         )}

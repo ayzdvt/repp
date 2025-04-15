@@ -15,7 +15,11 @@ export default function DrawingApp() {
   const [gridSize, setGridSize] = useState<number>(10);
   const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
   const [orthoEnabled, setOrthoEnabled] = useState<boolean>(false); // Ortho mod durumu
-  const [paralelModu, setParalelModu] = useState<boolean | string>(false); // Paralel mod durumu - string değeri önizleme modları için
+  // Paralel mod ekranı için state (string 'önizleme-seçimi' değerine izin vermek için any)
+  const [paralelModu, setParalelModu] = useState<any>(false);
+  
+  // Paralel önizleme çizgisi seçimini dinlemek için ref
+  const parallelPreviewListenerRef = useRef<((e: CustomEvent) => void) | null>(null);
   const [canvasState, setCanvasState] = useState<CanvasState>({
     gridSize: 10,
     zoom: 1,
@@ -550,6 +554,41 @@ export default function DrawingApp() {
   
   // NOT: Eski paralel çizgi yöntemi kaldırıldı ve kullanım dışı bırakıldı
   // Bu event listener'ları artık kullanılmıyor, kaldırıldı.
+  
+  // Paralel önizleme çizgisi seçimini dinlemek için useEffect
+  useEffect(() => {
+    const canvasContainer = document.getElementById('drawing-container');
+    if (!canvasContainer) return;
+    
+    const canvasElement = canvasContainer.querySelector('div.absolute');
+    if (!canvasElement) return;
+    
+    // Önizleme çizgi seçimini dinleyen fonksiyon
+    const handleSelectParallelPreview = (e: CustomEvent) => {
+      if (e.detail && e.detail.selectedPreviewLine) {
+        console.log("DrawingApp: Önizleme çizgisi seçildi:", e.detail.selectedPreviewLine);
+        
+        // Seçilen önizleme çizgisini kalıcı hale getir
+        selectParallelPreviewLine(e.detail.selectedPreviewLine);
+      }
+    };
+    
+    // Event listener olarak fonksiyonu ekle
+    // TypeScript uyumlu hale getirmek için EventListener tipine dönüştür
+    const castListener = handleSelectParallelPreview as EventListener;
+    canvasElement.addEventListener('selectParallelPreview', castListener);
+    
+    // Fonksiyonu ref'e sakla (cleanup için)
+    parallelPreviewListenerRef.current = castListener;
+    
+    // Cleanup
+    return () => {
+      if (parallelPreviewListenerRef.current) {
+        canvasElement.removeEventListener('selectParallelPreview', parallelPreviewListenerRef.current);
+        parallelPreviewListenerRef.current = null;
+      }
+    };
+  }, []); // Sadece bir kez çalıştır
 
   return (
     <div className="bg-[#F5F5F5] font-sans text-gray-800 flex flex-col h-screen">

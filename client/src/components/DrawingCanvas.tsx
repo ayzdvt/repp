@@ -756,6 +756,26 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const selectedShape = findShapeAtPoint(worldPos);
         
         if (selectedShape && onSelectObject) {
+          // Öncelikle, seçilen şekil bir paralel önizleme çizgisi mi kontrol et
+          if (selectedShape.isPreview && selectedShape.type === 'line') {
+            console.log("Paralel önizleme çizgisi seçildi:", selectedShape);
+            
+            // Üst bileşene önizleme çizgisi seçildiğini bildir
+            // Bu, DrawingApp'te selectParallelPreviewLine fonksiyonunu çağıracak
+            const selectPreviewEvent = new CustomEvent('selectParallelPreview', {
+              detail: { selectedPreviewLine: selectedShape }
+            });
+            
+            // null kontrolü ekle
+            if (containerRef.current) {
+              containerRef.current.dispatchEvent(selectPreviewEvent);
+            }
+            
+            // Önizleme çizgisi seçimi işlendi, normal nesne seçimi yapmaya gerek yok
+            return;
+          }
+          
+          // Normal nesne seçimi (önizleme değilse)
           // Seçili şeklin indeksini bul
           const shapeIndex = shapesRef.current.findIndex(s => s.id === selectedShape.id);
           

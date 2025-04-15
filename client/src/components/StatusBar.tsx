@@ -11,6 +11,7 @@ interface StatusBarProps {
   orthoEnabled?: boolean;
   onToggleOrtho?: () => void;
   canvasState: CanvasState; // Görülebilir koordinat aralığını hesaplamak için canvasState'i alıyoruz
+  parallelMode?: boolean; // Paralel mod durumu için opsiyonel prop
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({ 
@@ -22,7 +23,8 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onToggleSnap,
   orthoEnabled = false,
   onToggleOrtho,
-  canvasState
+  canvasState,
+  parallelMode = false
 }) => {
   // Format the mouse position to display exactly 2 decimal places
   const formattedX = mousePosition.x.toFixed(2);
@@ -121,6 +123,13 @@ const StatusBar: React.FC<StatusBarProps> = ({
           >
             Ortho: {orthoEnabled ? 'AÇIK' : 'KAPALI'}
           </button>
+        )}
+        
+        {/* Paralel mod göstergesi */}
+        {parallelMode && (
+          <div className="px-2 py-1 rounded text-xs bg-orange-500 text-white">
+            Paralel Mod Aktif
+          </div>
         )}
       </div>
     </div>

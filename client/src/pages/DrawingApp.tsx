@@ -373,20 +373,9 @@ export default function DrawingApp() {
     // Mevcut seçimi sıfırla
     setSelectedObject(null);
     
-    // Önemli: Paralel modunda olduğumuzda selection aracını aktif et
-    // ama activeTool state'ini değiştirme - bu şekilde görsel olarak selection
-    // aracı aktif görünmeyecek ancak içeride obje seçimine izin verilecek
-    const canvasContainer = document.getElementById('drawing-container');
-    if (canvasContainer) {
-      const canvasElement = canvasContainer.querySelector('div.absolute');
-      if (canvasElement) {
-        // Özel bir olay gönder
-        const tempSelectEvent = new CustomEvent('temporarySelectionMode', {
-          detail: { enabled: true }
-        });
-        canvasElement.dispatchEvent(tempSelectEvent);
-      }
-    }
+    // Görsel olarak selection aracını seçili hale getir
+    // böylece kullanıcı paralel modu ile selection aracının birlikte çalıştığını görecek
+    setActiveTool('selection');
   };
   
   // Paralel diyalogunu kapatan fonksiyon
@@ -617,6 +606,7 @@ export default function DrawingApp() {
         orthoEnabled={orthoEnabled}
         onToggleOrtho={toggleOrtho}
         canvasState={canvasState}
+        parallelMode={paralelModu}
       />
       
       {/* Koordinat Girişi Dialog'u */}

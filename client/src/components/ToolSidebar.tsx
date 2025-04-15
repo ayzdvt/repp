@@ -131,14 +131,15 @@ const ToolSidebar: React.FC<ToolSidebarProps> = ({
         
         {onStartParallel && (
           <button 
-            className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors"
-            title="Paralel Çizgi Oluştur" 
+            className="w-10 h-10 flex items-center justify-center rounded hover:bg-[#E0E0E0] active:bg-[#D0D0D0] transition-colors relative"
+            title="Paralel Çizgi Oluştur - Önce buna, sonra bir çizgiye tıklayın" 
             onClick={onStartParallel}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <line x1="5" y1="8" x2="19" y2="8" strokeWidth="2" />
               <line x1="5" y1="16" x2="19" y2="16" strokeWidth="2" />
             </svg>
+            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">P</span>
           </button>
         )}
       </div>

@@ -6,7 +6,8 @@ import Footer from '@/components/Footer';
 import ComparisonTable from '@/components/ComparisonTable';
 import FeatureCard from '@/components/FeatureCard';
 import Testimonial from '@/components/Testimonial';
-import heroImage from '@/assets/hero-image.svg';
+import heroImage1 from '../assets/img/1.jpg';
+import heroImage2 from '../assets/img/2.jpg';
 
 export default function HomePage() {
   return (
@@ -15,32 +16,38 @@ export default function HomePage() {
       <Header variant="landing" />
       
       {/* Hero Section */}
-      <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img src={heroImage2} alt="Background" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-900/70"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block text-gray-800">Mimari Çizimleriniz</span>
-                <span className="block text-blue-600 mt-2">Dakikalar İçinde Hazır</span>
+            <div className="text-white py-16">
+              <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
+                <span className="block text-white">Mimari Çizimleriniz</span>
+                <span className="block text-blue-300 mt-2">Dakikalar İçinde Hazır</span>
               </h1>
-              <p className="mt-6 text-xl text-gray-600 max-w-2xl">
+              <p className="mt-6 text-xl text-blue-100 max-w-2xl">
                 ArchiFrost, yapay zekâ destekli otomasyon sayesinde, manuel çizim ve revizyon sürecini dakikalara indirir.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                 <Link href="/options">
-                  <Button size="lg" className="px-8 py-6 text-lg bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl">
+                  <Button size="lg" className="px-8 py-6 text-lg bg-blue-500 hover:bg-blue-400 text-white shadow-lg hover:shadow-xl">
                     Hemen Başla
                   </Button>
                 </Link>
                 <Link href="/options">
-                  <Button size="lg" variant="outline" className="px-8 py-6 text-lg text-blue-600 border-blue-600 hover:bg-blue-50">
+                  <Button size="lg" variant="outline" className="px-8 py-6 text-lg text-white border-white hover:bg-blue-800/30">
                     Demo İzle
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="hidden lg:block">
-              <img src={heroImage} alt="ArchiFrost Çizim Örneği" className="w-full h-auto shadow-xl rounded-lg" />
+            <div className="hidden lg:block p-4 bg-gradient-to-br from-blue-800/50 to-blue-900/50 backdrop-blur-sm rounded-xl shadow-2xl">
+              <img src={heroImage1} alt="ArchiFrost Çizim Örneği" className="w-full h-auto rounded-lg" />
             </div>
           </div>
         </div>

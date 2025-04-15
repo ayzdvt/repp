@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <img src={logoTransparent} alt="ArchiFrost Logo" className="h-14 mb-4" />
+            <img src={logoTransparent} alt="ArchiFrost Logo" className="h-16 w-auto mb-4" />
             <p className="text-gray-300 text-sm">
               Yapay zekâ destekli, otomatik mimari çizim ve revizyon çözümleri ile profesyonellere zaman kazandırıyoruz.
             </p>

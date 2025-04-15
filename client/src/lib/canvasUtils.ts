@@ -187,7 +187,8 @@ export function drawSnapIndicators(
   currentMousePos: Point | null,
   state: CanvasState,
   snapTolerance: number,
-  snapEnabled: boolean = true
+  snapEnabled: boolean = true,
+  excludedShapeId?: number
 ): void {
   // Snap özelliği kapalıysa çıkış yap
   if (!snapEnabled) return;
@@ -195,40 +196,11 @@ export function drawSnapIndicators(
   // Fare pozisyonu geçerli değilse çıkış yap
   if (!currentMousePos) return;
   
-  // Yakalama noktalarını topla
-  const snapPoints: Array<{x: number, y: number}> = [];
-  
-  // Mevcut tüm şekillerden yakalama noktaları topla
-  shapes.forEach(shape => {
-    if (shape.type === 'point') {
-      snapPoints.push({ x: shape.x, y: shape.y });
-    } else if (shape.type === 'line') {
-      // Başlangıç noktası
-      snapPoints.push({ x: shape.startX, y: shape.startY });
-      // Bitiş noktası
-      snapPoints.push({ x: shape.endX, y: shape.endY });
-      // Orta nokta
-      snapPoints.push({ 
-        x: (shape.startX + shape.endX) / 2, 
-        y: (shape.startY + shape.endY) / 2
-      });
-    }
-  });
+  // drawingPrimitives içindeki findNearestSnapPoint fonksiyonunu kullan
+  // Bu import en üstte dışarıda yapılmalı, iç kısımda olmaz
   
   // En yakın yakalama noktasını bul
-  let minDistance = snapTolerance;
-  let nearestPoint: {x: number, y: number} | null = null;
-  
-  for (const point of snapPoints) {
-    const dx = point.x - currentMousePos.x;
-    const dy = point.y - currentMousePos.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestPoint = point;
-    }
-  }
+  const nearestPoint = findNearestSnapPoint(currentMousePos, shapes, snapTolerance, excludedShapeId);
   
   // En yakın yakalama noktası varsa göster
   if (nearestPoint) {

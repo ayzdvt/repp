@@ -195,6 +195,44 @@ export function calculatePolylineLength(polyline: PolylineShape): number {
   return totalLength;
 }
 
+// Bir doğrunun uzantısında belirli bir noktanın olup olmadığını kontrol eder
+export function isPointOnLineExtension(
+  point: Point, 
+  lineStart: Point, 
+  lineEnd: Point, 
+  tolerance: number
+): Point | null {
+  // Doğru üzerindeki en yakın noktayı bul
+  const dx = lineEnd.x - lineStart.x;
+  const dy = lineEnd.y - lineStart.y;
+  
+  // Doğrunun uzunluğunun karesi
+  const lenSq = dx * dx + dy * dy;
+  
+  // Doğru bir noktaysa (başlangıç ve bitiş aynı)
+  if (lenSq < 0.0001) return null;
+  
+  // Noktadan doğruya bir projeksiyon yapalım
+  const u = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / lenSq;
+  
+  // Projeksiyonu doğru üzerindeki bir nokta olarak hesapla
+  const projectionPoint = {
+    x: lineStart.x + u * dx,
+    y: lineStart.y + u * dy,
+  };
+  
+  // Projeksiyonun başlangıç veya bitiş noktasına uzaklığını kontrol et
+  const distToPoint = distance(point, projectionPoint);
+  
+  // Noktadan projeksiyon noktasına olan mesafe tolerans içindeyse
+  // VE projeksiyon doğru segmenti dışında olmalı (extensions için)
+  if (distToPoint <= tolerance && (u < 0 || u > 1)) {
+    return projectionPoint;
+  }
+  
+  return null;
+}
+
 // Bir nokta çizginin başlangıç, orta veya bitiş noktasına yakın mı kontrol eder
 export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 10): Point | null {
   // Başlangıç noktasını kontrol et
@@ -213,6 +251,18 @@ export function getSnapPoint(point: Point, line: LineShape, tolerance: number = 
     return midpoint;
   }
   
+  // Çizgi uzantısı kontrolü
+  const extensionPoint = isPointOnLineExtension(
+    point,
+    { x: line.startX, y: line.startY },
+    { x: line.endX, y: line.endY },
+    tolerance
+  );
+  
+  if (extensionPoint) {
+    return extensionPoint;
+  }
+  
   return null;
 }
 
@@ -223,59 +273,189 @@ export function findNearestSnapPoint(
   tolerance: number = 10,
   excludeShapeId?: number // Dışlanacak şeklin ID'si (kendisine snap yapmaması için)
 ): Point | null {
-  let nearestSnapPoint: Point | null = null;
-  let minDistance = tolerance;
+  // Yakalama noktalarını topla
+  const snapPoints: Array<{x: number, y: number, priority: number, dist: number}> = [];
   
+  // Tüm şekillerden yakalama noktalarını topla
   for (const shape of shapes) {
     // Eğer bu şekil dışlanacaksa, atla
     if (excludeShapeId !== undefined && shape.id === excludeShapeId) {
       continue;
     }
     
-    let snapPoint: Point | null = null;
-    
     if (shape.type === 'point') {
       // Nokta şekli
-      if (distance(point, { x: shape.x, y: shape.y }) <= tolerance) {
-        snapPoint = { x: shape.x, y: shape.y };
+      const dist = distance(point, { x: shape.x, y: shape.y });
+      if (dist <= tolerance) {
+        snapPoints.push({ 
+          x: shape.x, 
+          y: shape.y, 
+          priority: 3, // Noktalara en yüksek öncelik
+          dist: dist 
+        });
       }
     } else if (shape.type === 'line') {
-      // Çizgi şekli - başlangıç, orta ve bitiş noktalarını kontrol et
-      snapPoint = getSnapPoint(point, shape, tolerance);
-    } else if (shape.type === 'polyline') {
+      // Çizgi şekli - başlangıç ve bitiş noktaları (yüksek öncelik)
+      const startDist = distance(point, { x: shape.startX, y: shape.startY });
+      if (startDist <= tolerance) {
+        snapPoints.push({ 
+          x: shape.startX, 
+          y: shape.startY, 
+          priority: 3, // Başlangıç/bitiş noktalara yüksek öncelik
+          dist: startDist 
+        });
+      }
+      
+      const endDist = distance(point, { x: shape.endX, y: shape.endY });
+      if (endDist <= tolerance) {
+        snapPoints.push({ 
+          x: shape.endX, 
+          y: shape.endY, 
+          priority: 3, // Başlangıç/bitiş noktalara yüksek öncelik
+          dist: endDist 
+        });
+      }
+      
+      // Orta nokta (orta öncelik)
+      const midpoint = getLineMidpoint(shape);
+      const midDist = distance(point, midpoint);
+      if (midDist <= tolerance) {
+        snapPoints.push({ 
+          x: midpoint.x, 
+          y: midpoint.y, 
+          priority: 2, // Orta noktalara orta öncelik
+          dist: midDist 
+        });
+      }
+      
+      // Çizgi uzantısı kontrolü (düşük öncelik)
+      const extensionPoint = isPointOnLineExtension(
+        point,
+        { x: shape.startX, y: shape.startY },
+        { x: shape.endX, y: shape.endY },
+        tolerance
+      );
+      
+      if (extensionPoint) {
+        const extDist = distance(point, extensionPoint);
+        snapPoints.push({ 
+          x: extensionPoint.x, 
+          y: extensionPoint.y, 
+          priority: 1, // Uzantılara düşük öncelik
+          dist: extDist 
+        });
+      }
+    } else if (shape.type === 'polyline' && Array.isArray(shape.points)) {
       // Polyline için tüm noktaları kontrol et
       for (let i = 0; i < shape.points.length; i++) {
         const polyPoint = shape.points[i];
-        if (distance(point, polyPoint) <= tolerance) {
-          snapPoint = { x: polyPoint.x, y: polyPoint.y };
-          break;
+        const ptDist = distance(point, polyPoint);
+        if (ptDist <= tolerance) {
+          snapPoints.push({ 
+            x: polyPoint.x, 
+            y: polyPoint.y, 
+            priority: 3, // Köşe noktalara yüksek öncelik
+            dist: ptDist 
+          });
         }
         
-        // Ardışık noktalar arasındaki orta nokta da yakalanabilir
+        // Segment uzantıları ve orta noktalar
         if (i < shape.points.length - 1) {
           const nextPoint = shape.points[i + 1];
+          
+          // Ardışık noktalar arasındaki orta nokta da yakalanabilir
           const midpoint = {
             x: (polyPoint.x + nextPoint.x) / 2,
             y: (polyPoint.y + nextPoint.y) / 2
           };
           
-          if (distance(point, midpoint) <= tolerance) {
-            snapPoint = midpoint;
-            break;
+          const midDist = distance(point, midpoint);
+          if (midDist <= tolerance) {
+            snapPoints.push({ 
+              x: midpoint.x, 
+              y: midpoint.y, 
+              priority: 2, // Orta noktalara orta öncelik
+              dist: midDist 
+            });
+          }
+          
+          // Segment uzantısı
+          const extensionPoint = isPointOnLineExtension(
+            point,
+            polyPoint,
+            nextPoint,
+            tolerance
+          );
+          
+          if (extensionPoint) {
+            const extDist = distance(point, extensionPoint);
+            snapPoints.push({ 
+              x: extensionPoint.x, 
+              y: extensionPoint.y, 
+              priority: 1, // Uzantılara düşük öncelik
+              dist: extDist 
+            });
           }
         }
       }
-    }
-    
-    // En yakın yakalama noktasını güncelle
-    if (snapPoint) {
-      const dist = distance(point, snapPoint);
-      if (dist < minDistance) {
-        minDistance = dist;
-        nearestSnapPoint = snapPoint;
+      
+      // Eğer kapalı polyline ise, son nokta ile ilk nokta arasındaki segment de kontrol edilir
+      if (shape.closed && shape.points.length > 2) {
+        const firstPoint = shape.points[0];
+        const lastPoint = shape.points[shape.points.length - 1];
+        
+        // Orta nokta
+        const midpoint = {
+          x: (firstPoint.x + lastPoint.x) / 2,
+          y: (firstPoint.y + lastPoint.y) / 2
+        };
+        
+        const midDist = distance(point, midpoint);
+        if (midDist <= tolerance) {
+          snapPoints.push({ 
+            x: midpoint.x, 
+            y: midpoint.y, 
+            priority: 2, // Orta noktalara orta öncelik
+            dist: midDist 
+          });
+        }
+        
+        // Uzantı
+        const extensionPoint = isPointOnLineExtension(
+          point,
+          lastPoint,
+          firstPoint,
+          tolerance
+        );
+        
+        if (extensionPoint) {
+          const extDist = distance(point, extensionPoint);
+          snapPoints.push({ 
+            x: extensionPoint.x, 
+            y: extensionPoint.y, 
+            priority: 1, // Uzantılara düşük öncelik
+            dist: extDist 
+          });
+        }
       }
     }
   }
   
-  return nearestSnapPoint;
+  // Eğer hiç snap noktası yoksa null döndür
+  if (snapPoints.length === 0) {
+    return null;
+  }
+  
+  // Önceliğe göre sırala (yüksek öncelik önce)
+  snapPoints.sort((a, b) => {
+    // Önce önceliğe göre (büyük öncelik önce)
+    if (b.priority !== a.priority) {
+      return b.priority - a.priority;
+    }
+    // Aynı öncelikte olanlar arasında, mesafeye göre (küçük mesafe önce)
+    return a.dist - b.dist;
+  });
+  
+  // En yüksek öncelikli ve en yakın noktayı döndür
+  return { x: snapPoints[0].x, y: snapPoints[0].y };
 }

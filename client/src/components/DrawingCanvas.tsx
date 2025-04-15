@@ -111,74 +111,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     
     // Eğer snap özelliği açıksa veya line uçları çekilirken yakalama noktalarını göster
     if ((snapEnabled && currentMousePosRef.current) && (activeTool !== 'selection' || isDraggingEndpoint)) {
-      // Yakalama noktaları için şekilleri tara
-      const snapPoints: Array<{x: number, y: number}> = [];
-      
-      // Tüm şekillerden yakalama noktalarını topla
-      shapesRef.current.forEach(shape => {
-        // Çizgi uçlarını sürüklerken, sürüklenen çizginin snap noktalarını gösterme
-        if (isDraggingEndpoint && shape.id === selectedId) {
-          return; // Bu çizgiyi atla
-        }
-        
-        if (shape.type === 'point') {
-          // Nokta şekilleri için kendisi bir yakalama noktasıdır
-          snapPoints.push({ x: shape.x, y: shape.y });
-        } else if (shape.type === 'line') {
-          // Çizgiler için başlangıç ve bitiş noktaları yakalanabilir
-          snapPoints.push({ x: shape.startX, y: shape.startY }); // Başlangıç
-          snapPoints.push({ x: shape.endX, y: shape.endY });     // Bitiş
-          
-          // Orta nokta
-          snapPoints.push({
-            x: (shape.startX + shape.endX) / 2,
-            y: (shape.startY + shape.endY) / 2
-          });
-        } else if (shape.type === 'polyline') {
-          // Polyline için tüm noktalar yakalanabilir
-          for (const point of shape.points) {
-            snapPoints.push({ x: point.x, y: point.y });
-          }
-          
-          // Segment orta noktaları da ekleyelim
-          if (shape.points.length >= 2) {
-            for (let i = 0; i < shape.points.length - 1; i++) {
-              const p1 = shape.points[i];
-              const p2 = shape.points[i + 1];
-              snapPoints.push({
-                x: (p1.x + p2.x) / 2,
-                y: (p1.y + p2.y) / 2
-              });
-            }
-            
-            // Eğer kapalı polyline ise, son nokta ile ilk nokta arasındaki orta nokta
-            if (shape.closed && shape.points.length > 2) {
-              const p1 = shape.points[shape.points.length - 1];
-              const p2 = shape.points[0];
-              snapPoints.push({
-                x: (p1.x + p2.x) / 2,
-                y: (p1.y + p2.y) / 2
-              });
-            }
-          }
-        }
-      });
-      
       // En yakın yakalama noktasını bul
       const snapTolerance = 10 / canvasState.zoom;
-      let closestPoint = null;
-      let minDistance = snapTolerance;
       
-      for (const point of snapPoints) {
-        const dx = point.x - currentMousePosRef.current.x;
-        const dy = point.y - currentMousePosRef.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestPoint = point;
-        }
-      }
+      // Seçili şeklin ID'sini dışlayarak en yakın yakalama noktasını bul
+      const excludedId = isDraggingEndpoint ? selectedId : undefined;
+      const closestPoint = findNearestSnapPoint(currentMousePosRef.current, shapesRef.current, snapTolerance, excludedId);
       
       // En yakın yakalama noktası varsa görsel olarak göster
       if (closestPoint) {

@@ -15,6 +15,7 @@ export default function DrawingApp() {
   const [gridSize, setGridSize] = useState<number>(10);
   const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
   const [orthoEnabled, setOrthoEnabled] = useState<boolean>(false); // Ortho mod durumu
+  const [paralelModu, setParalelModu] = useState<boolean>(false); // Paralel mod durumu
   const [canvasState, setCanvasState] = useState<CanvasState>({
     gridSize: 10,
     zoom: 1,
@@ -246,6 +247,24 @@ export default function DrawingApp() {
     }));
   };
   
+  // Nesne seçimini ele alan fonksiyon
+  const handleObjectSelection = (object: any) => {
+    // Paralel modunda ve seçilen obje bir çizgi ise
+    if (paralelModu && object && object.type === 'line') {
+      // Seçilen çizgiyi kaydet
+      setParallelLineSource(object);
+      
+      // Paralel mesafe girişi dialogunu aç
+      setIsParallelDialogOpen(true);
+      
+      // Paralel modunu kapat
+      setParalelModu(false);
+    } else {
+      // Normal nesne seçimi
+      setSelectedObject(object);
+    }
+  };
+  
   // Nesne özelliklerinde değişiklik yapıldığında bu fonksiyon çağrılacak
   const handlePropertyChange = (
     property: string, 
@@ -317,15 +336,17 @@ export default function DrawingApp() {
   
   // Paralel oluşturma işlemini başlatan fonksiyon
   const handleStartParallel = () => {
-    // Seçili nesne yoksa veya çizgi değilse işlemi başlatma
-    if (!selectedObject || selectedObject.type !== 'line') {
-      alert('Lütfen önce bir çizgi seçin');
-      return;
-    }
+    // Paralel modunu aktifleştir
+    setParalelModu(true);
     
-    // Paralel oluşturma moduna geç
-    setParallelLineSource(selectedObject);
-    setIsParallelDialogOpen(true);
+    // Seçim aracını aktifleştir - kullanıcıdan bir çizgi seçmesini isteyeceğiz
+    setActiveTool('selection');
+    
+    // Mevcut seçimi sıfırla
+    setSelectedObject(null);
+    
+    // Kullanıcıya bilgi ver
+    alert('Lütfen paralel çizgi oluşturmak için bir çizgi seçin');
   };
   
   // Paralel diyalogunu kapatan fonksiyon
@@ -531,7 +552,7 @@ export default function DrawingApp() {
               onMousePositionChange={handleMousePositionChange}
               onPanChange={handlePanChange}
               onZoomChange={handleZoomChange}
-              onSelectObject={setSelectedObject}
+              onSelectObject={handleObjectSelection}
               onCanvasSizeChange={handleCanvasSizeChange}
               onToolChange={handleToolChange}
               snapEnabled={snapEnabled}

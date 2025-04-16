@@ -631,7 +631,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Eğer bir uç nokta veya vertex noktası bulundu ve seçim modu aktifse
     if (result.endpoint && activeTool === 'selection') {
       // Uç nokta veya vertex sürükleme modunu ayarla
-      draggingLineEndpointRef.current = result.endpoint as 'start' | 'end' | 'vertex';
+      // Endpoint'i doğru tipe dönüştür
+      if (result.endpoint === 'start' || result.endpoint === 'end' || result.endpoint === 'vertex') {
+        draggingLineEndpointRef.current = result.endpoint;
+      }
       originalLineRef.current = { 
         ...result.shape, 
         vertexIndex: result.vertexIndex // Polyline için vertex indeksini sakla

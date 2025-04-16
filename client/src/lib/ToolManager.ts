@@ -58,21 +58,11 @@ export function getPolylineVertexAtPoint(polyline: any, point: Point, tolerance:
 export function findShapeAtPoint(
   point: Point, 
   shapes: any[], 
-  canvasState: CanvasState, 
+  tolerance: number,
   selectedShapeId: number | null,
   activeTool: Tool
 ): { shape: any, endpoint: string | null, vertexIndex: number | null } | null {
-  // Zoom seviyesine göre seçim toleransını hesapla
-  // Zoom büyükse tolerans düşük, zoom küçükse tolerans yüksek olmalı
-  const baseTolerance = 20; // Baz tolerans değeri artırıldı - daha kolay seçim için
-  const zoomAdjustedTolerance = baseTolerance / canvasState.zoom;
-  
-  // En düşük ve en yüksek tolerans sınırları
-  const minTolerance = 5;  // Min değer artırıldı - düşük zoomlarda bile seçilebilir
-  const maxTolerance = 25; // Max değer artırıldı - yüksek zoomlarda bile seçilebilir
-  
-  // Toleransı sınırlar içinde tut
-  const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
+  // Tolerans parametresi dışarıdan alınacak, böylece canvasState'e bağımlılık azalacak
   
   // Eğer zaten bir şekil seçiliyse, özel durumları kontrol et
   if (selectedShapeId !== null && activeTool === 'selection') {
@@ -322,10 +312,17 @@ export function updateCursorStyle(
       canvasRef.current.style.cursor = 'move';
     } else {
       // Fare bir şeklin üzerinde mi kontrol et
+      // Tolerans hesapla
+      const baseTolerance = 20; 
+      const zoomAdjustedTolerance = baseTolerance / canvasState.zoom;
+      const minTolerance = 5;
+      const maxTolerance = 25;
+      const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
+      
       const shapeResult = findShapeAtPoint(
         mouseWorldPos, 
         shapesRef.current, 
-        canvasState, 
+        tolerance, 
         selectedShapeId, 
         activeTool
       );

@@ -1,7 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { CanvasState, Tool, Point } from '@/types';
-import { screenToWorld, worldToScreen, drawGrid, drawShape, drawSnapIndicators } from '@/lib/canvasUtils';
+import { CanvasState, Tool, Point, Shape, HistoryAction } from '@/types/canvas';
+import { screenToWorld, worldToScreen, drawGrid, drawSnapIndicators } from '@/lib/canvasUtils';
 import { pointNearLine, pointNearPolyline, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
+import * as CanvasRenderer from '@/lib/CanvasRenderer';
+import * as EventHandlers from '@/lib/EventHandlers';
+import * as ToolManager from '@/lib/ToolManager';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;

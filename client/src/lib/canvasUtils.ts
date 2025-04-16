@@ -1,5 +1,8 @@
-import { CanvasState, Point } from '@/types';
+import { CanvasState, Point } from '../types/canvas';
 import { findNearestSnapPoint } from './drawingPrimitives';
+
+// Re-export findNearestSnapPoint for ModuleManager and EventHandlers
+export { findNearestSnapPoint };
 
 // Transform screen coordinates to world coordinates
 // X ekseni dikey, Y ekseni yatay olacak şekilde düzenlendi

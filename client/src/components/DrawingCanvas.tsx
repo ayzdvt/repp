@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { CanvasState, Tool, Point, Shape, HistoryAction } from '@/types/canvas';
-import { screenToWorld, worldToScreen, drawGrid, drawSnapIndicators } from '@/lib/canvasUtils';
-import { pointNearLine, pointNearPolyline, distance, findNearestSnapPoint } from '@/lib/drawingPrimitives';
-import * as CanvasRenderer from '@/lib/CanvasRenderer';
-import * as EventHandlers from '@/lib/EventHandlers';
-import * as ToolManager from '@/lib/ToolManager';
+import { CanvasState, Tool, Point, Shape, HistoryAction } from '../types/canvas';
+import { screenToWorld, worldToScreen, drawGrid, drawSnapIndicators, findNearestSnapPoint } from '../lib/canvasUtils';
+import { pointNearLine, pointNearPolyline, distance } from '../lib/drawingPrimitives';
+import * as CanvasRenderer from '../lib/CanvasRenderer';
+import * as EventHandlers from '../lib/EventHandlers';
+import * as ToolManager from '../lib/ToolManager';
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -108,12 +108,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Tüm şekilleri çiz
     shapesRef.current.forEach(shape => {
       // Seçilen şekil ise farklı renkte çiz, bunlar tamamlanmış şekiller olduğu için isPreview=false
-      drawShape(ctx, shape, canvasState, shape.id === selectedId, false);
+      CanvasRenderer.drawShape(ctx, shape, canvasState, shape.id === selectedId, false);
     });
     
     // Oluşturulmakta olan şekli çiz - bu bir önizleme olduğu için isPreview=true
     if (currentShapeRef.current) {
-      drawShape(ctx, currentShapeRef.current, canvasState, false, true);
+      CanvasRenderer.drawShape(ctx, currentShapeRef.current, canvasState, false, true);
     }
     
     // Paralel çizgi önizlemelerini çiz

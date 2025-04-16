@@ -1,4 +1,4 @@
-import { Point } from '../types/canvas';
+import { Point } from '@/types';
 
 // Point primitive
 export interface PointShape {

@@ -5,6 +5,8 @@ import { pointNearLine, pointNearPolyline, distance } from '../lib/drawingPrimit
 import * as CanvasRenderer from '../lib/CanvasRenderer';
 import * as EventHandlers from '../lib/EventHandlers';
 import * as ToolManager from '../lib/ToolManager';
+// ToolManager'daki import edilmiş fonksiyonlar için kısaltma oluşturuyoruz
+const { findShapeAtPoint, isNearLineStart, isNearLineEnd, getLineEndpoint, getPolylineVertexAtPoint } = ToolManager;
 
 interface DrawingCanvasProps {
   canvasState: CanvasState;
@@ -50,6 +52,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const currentMousePosRef = useRef<Point>({ x: 0, y: 0 }); // Mevcut fare pozisyonu
   const polylinePointsRef = useRef<Point[]>([]); // Polyline'ın noktaları
   const parallelPreviewsRef = useRef<any[]>([]); // Paralel çizgi önizlemeleri
+  const parallelSelectedLineRef = useRef<any | null>(null); // Paralel çizgi oluşturmak için seçilen çizgi
+  const parallelDistanceRef = useRef<number>(10); // Paralel çizgi mesafesi
   const [temporarySelection, setTemporarySelection] = useState<boolean>(false); // Geçici seçim modu (paralel modunda)
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
@@ -313,7 +317,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       parallelDistanceRef.current = result.distance;
       return;
     }
-    onMousePositionChange(worldPos);
     
     // Polyline çizimi sırasında önizleme çizgisini göster
     if (activeTool === 'polyline' && drawingPolyline && polylinePointsRef.current.length > 0) {
@@ -600,162 +603,44 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     }
   };
   
-  // Çizginin başlangıç noktasında mı tıklandı kontrolü
-  const isNearLineStart = (line: any, point: Point, tolerance: number): boolean => {
-    return distance(point, { x: line.startX, y: line.startY }) <= tolerance;
-  };
-  
-  // Çizginin bitiş noktasında mı tıklandı kontrolü
-  const isNearLineEnd = (line: any, point: Point, tolerance: number): boolean => {
-    return distance(point, { x: line.endX, y: line.endY }) <= tolerance;
-  };
-  
-  // Çizgi uç noktalarından birinde mi tıklandı kontrolü
-  const getLineEndpoint = (line: any, point: Point, tolerance: number): 'start' | 'end' | null => {
-    // Bitiş noktası (daha önce çizileni kolay seçmek için)
-    if (isNearLineEnd(line, point, tolerance)) {
-      return 'end';
-    }
-    // Başlangıç noktası
-    if (isNearLineStart(line, point, tolerance)) {
-      return 'start';
-    }
-    return null;
-  };
-  
-  // Helper function to find the shape under a given point
-  // Polyline noktalarını kontrol edip taşınabilecek noktayı bulur
-  const getPolylineVertexAtPoint = (polyline: any, point: Point, tolerance: number): number | null => {
-    if (!polyline.points || !Array.isArray(polyline.points)) return null;
-    
-    // Tüm noktaları kontrol et
-    for (let i = 0; i < polyline.points.length; i++) {
-      const vertex = polyline.points[i];
-      
-      // Nokta ile vertex arasındaki mesafeyi hesapla
-      const dist = distance(point, vertex);
-      
-      // Eğer mesafe toleransın içindeyse, bu noktanın indeksini döndür
-      if (dist <= tolerance) {
-        return i; // Taşınacak noktanın indeksi
-      }
-    }
-    
-    return null; // Hiçbir nokta tolerans içinde değil
-  };
+  // Not: Bu yardımcı fonksiyonlar artık ToolManager.ts'ye taşındı
+  // Buradan kaldırıldı ve import edilmiş fonksiyonlar kullanılacak
 
-  const findShapeAtPoint = (point: Point): any | null => {
-    // Zoom seviyesine göre seçim toleransını hesapla
-    // Zoom büyükse tolerans düşük, zoom küçükse tolerans yüksek olmalı
-    const baseTolerance = 20; // Baz tolerans değeri artırıldı - daha kolay seçim için
+  // Artık ToolManager'dan import ettiğimiz findShapeAtPoint fonksiyonunu kullanıyoruz 
+  // Bu fonksiyon, dünya koordinatlarında bir noktadaki şekli bulur
+  const findObjectAtPoint = (point: Point): any | null => {
+    // Tolerans hesapla
+    const baseTolerance = 20; // Baz tolerans değeri
     const zoomAdjustedTolerance = baseTolerance / canvasState.zoom;
-    
-    // En düşük ve en yüksek tolerans sınırları
-    const minTolerance = 5;  // Min değer artırıldı - düşük zoomlarda bile seçilebilir
-    const maxTolerance = 25; // Max değer artırıldı - yüksek zoomlarda bile seçilebilir
-    
-    // Toleransı sınırlar içinde tut
+    const minTolerance = 5;  // Min değer
+    const maxTolerance = 25; // Max değer
     const tolerance = Math.min(Math.max(zoomAdjustedTolerance, minTolerance), maxTolerance);
     
-    // Eğer zaten bir şekil seçiliyse, özel durumları kontrol et
-    if (selectedShapeId !== null && activeTool === 'selection') {
-      const selectedShape = shapesRef.current.find(s => s.id === selectedShapeId);
-      
-      // Çizgi seçiliyse uç noktalarına tıklandığını kontrol et
-      if (selectedShape && selectedShape.type === 'line') {
-        // Eğer çizginin uç noktalarından birine tıklandıysa
-        const endpoint = getLineEndpoint(selectedShape, point, tolerance * 1.5); // Biraz daha geniş tolerans
-        
-        if (endpoint) {
-          // Uç noktası sürükleme modu için çizgiyi ve hangi ucunu seçtiğimizi kaydet
-          draggingLineEndpointRef.current = endpoint;
-          originalLineRef.current = { ...selectedShape };
-          setIsDraggingEndpoint(true);
-          
-          // Aynı çizgiyi döndür - zaten seçiliydi
-          return selectedShape;
-        }
-      } 
-      // Polyline seçiliyse noktalarına tıklandığını kontrol et
-      else if (selectedShape && selectedShape.type === 'polyline') {
-        // Polyline noktalarından birine tıklandı mı?
-        const vertexIndex = getPolylineVertexAtPoint(selectedShape, point, tolerance * 1.5);
-        
-        if (vertexIndex !== null) {
-          // Polyline vertex düzenleme modu
-          draggingLineEndpointRef.current = 'vertex';  // İmleç durumunu değiştirmek için
-          originalLineRef.current = { 
-            ...selectedShape,
-            vertexIndex: vertexIndex // Düzenlenen vertex'in indeksini sakla
-          };
-          setIsDraggingEndpoint(true);
-          
-          // Aynı polyline'ı döndür - zaten seçiliydi
-          return selectedShape;
-        }
-      }
+    // ToolManager'daki findShapeAtPoint fonksiyonunu kullanarak şekli bul
+    const result = ToolManager.findShapeAtPoint(
+      point, 
+      shapesRef.current, 
+      tolerance,
+      selectedShapeId, 
+      activeTool
+    );
+    
+    // Sonuç yoksa null döndür
+    if (!result) return null;
+    
+    // Eğer bir uç nokta veya vertex noktası bulundu ve seçim modu aktifse
+    if (result.endpoint && activeTool === 'selection') {
+      // Uç nokta veya vertex sürükleme modunu ayarla
+      draggingLineEndpointRef.current = result.endpoint as 'start' | 'end' | 'vertex';
+      originalLineRef.current = { 
+        ...result.shape, 
+        vertexIndex: result.vertexIndex // Polyline için vertex indeksini sakla
+      };
+      setIsDraggingEndpoint(true);
     }
     
-    // Normal şekil arama devam ediyor
-    // Check shapes in reverse order (last drawn on top)
-    const shapes = shapesRef.current;
-    for (let i = shapes.length - 1; i >= 0; i--) {
-      const shape = shapes[i];
-      
-      switch (shape.type) {
-        case 'point':
-          // For a point, check if the click is within a small radius
-          if (distance(point, { x: shape.x, y: shape.y }) <= tolerance) {
-            return shape;
-          }
-          break;
-          
-        case 'line':
-          // For a line, check if the click is near the line
-          if (pointNearLine(point, shape, tolerance)) {
-            return shape;
-          }
-          break;
-          
-        case 'polyline':
-          // For a polyline, check if the click is near any segment
-          if (pointNearPolyline(point, shape, tolerance)) {
-            return shape;
-          }
-          break;
-          
-        // Rectangle ve circle case'leri kaldırıldı
-          
-        case 'text':
-          // For text, simplified check using a rectangular area
-          // Would need more sophisticated checking for actual text bounds
-          // Create a bounding box for the text
-          const textBounds = {
-            x: shape.x,
-            y: shape.y - shape.fontSize,
-            width: shape.text.length * shape.fontSize * 0.6, // Rough estimate
-            height: shape.fontSize * 1.2
-          };
-          
-          // Text için de biraz tolerans ekle
-          const expandedTextBounds = {
-            x: textBounds.x - tolerance,
-            y: textBounds.y - tolerance,
-            width: textBounds.width + 2 * tolerance,
-            height: textBounds.height + 2 * tolerance
-          };
-          
-          if (point.x >= expandedTextBounds.x && 
-              point.x <= expandedTextBounds.x + expandedTextBounds.width && 
-              point.y >= expandedTextBounds.y && 
-              point.y <= expandedTextBounds.y + expandedTextBounds.height) {
-            return shape;
-          }
-          break;
-      }
-    }
-    
-    return null;
+    // Bulunan şekli döndür
+    return result.shape;
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -787,7 +672,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (e.button === 0) { // 0 = sol fare tuşu
       if (activeTool === 'selection') {
         // Selection tool için nesne seçme
-        const selectedShape = findShapeAtPoint(worldPos);
+        const selectedShape = findObjectAtPoint(worldPos);
         
         if (selectedShape && onSelectObject) {
           // Seçili şeklin indeksini bul

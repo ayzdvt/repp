@@ -282,11 +282,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
+    // EventHandlers modülündeki handleMouseMove fonksiyonundan önce
+    // Fare pozisyonunu hesaplayıp üst bileşene bildirelim
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    // Dünya koordinatlarına dönüştür
     const worldPos = screenToWorld(x, y, canvasState);
     
     // Yakalama özelliği için fare pozisyonunu güncelle
@@ -295,17 +295,50 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Üst bileşene fare pozisyonunu bildir
     onMousePositionChange(worldPos);
     
-    // Cursor stilini güncelle
-    ToolManager.updateCursorStyle(
-      e, 
-      canvasRef, 
-      canvasState, 
-      activeTool, 
-      isDraggingEndpoint, 
-      shapesRef, 
-      selectedShapeId, 
-      parallelSelectedLineRef
-    );
+    // EventHandlers modülündeki handleMouseMove fonksiyonunu çağırıyoruz
+    EventHandlers.handleMouseMove(e, {
+      canvasState,
+      shapesRef,
+      canvasRef,
+      activeTool,
+      drawingLine,
+      drawingPolyline,
+      isDraggingEndpoint,
+      selectedShapeId,
+      lineFirstPointRef,
+      currentShapeRef,
+      polylinePointsRef,
+      nextIdRef,
+      draggingLineEndpointRef,
+      originalLineRef,
+      actionsHistoryRef,
+      isPanningRef,
+      lastPanPositionRef,
+      currentMousePosRef,
+      setDrawingLine,
+      setDrawingPolyline,
+      setIsDraggingEndpoint,
+      setSelectedShapeId,
+      onPanChange,
+      onZoomChange,
+      onSelectObject,
+      onToolChange,
+      snapEnabled,
+      orthoEnabled,
+      // Cursor güncelleme fonksiyonu
+      updateCursorStyle: () => {
+        ToolManager.updateCursorStyle(
+          e, 
+          canvasRef, 
+          canvasState, 
+          activeTool, 
+          isDraggingEndpoint, 
+          shapesRef, 
+          selectedShapeId,
+          parallelSelectedLineRef
+        );
+      }
+    });
     
     // Paralel çizgi aracı için özel işlemler
     if (activeTool === 'parallel' && parallelSelectedLineRef.current) {

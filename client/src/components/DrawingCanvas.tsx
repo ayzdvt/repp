@@ -274,6 +274,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, []); // Bileşen takıldığında bir kez çalışsın, renderCanvas değişse bile yeniden çalışmasın
   
   // Mouse event handlers
+  // Fare hareket olayı yönetimi - modüler bir yapıya bölünmüş hali
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
@@ -281,13 +282,37 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Convert screen coordinates to world coordinates
+    // Dünya koordinatlarına dönüştür
     const worldPos = screenToWorld(x, y, canvasState);
     
     // Yakalama özelliği için fare pozisyonunu güncelle
     currentMousePosRef.current = worldPos;
     
-    // Update mouse position in parent component
+    // Üst bileşene fare pozisyonunu bildir
+    onMousePositionChange(worldPos);
+    
+    // Cursor stilini güncelle
+    ToolManager.updateCursorStyle(
+      e, 
+      canvasRef, 
+      canvasState, 
+      activeTool, 
+      isDraggingEndpoint, 
+      shapesRef, 
+      selectedShapeId, 
+      parallelSelectedLineRef
+    );
+    
+    // Paralel çizgi aracı için özel işlemler
+    if (activeTool === 'parallel' && parallelSelectedLineRef.current) {
+      const result = ToolManager.createParallelLinePreview(
+        parallelSelectedLineRef.current, 
+        worldPos
+      );
+      parallelPreviewsRef.current = result.previewLines;
+      parallelDistanceRef.current = result.distance;
+      return;
+    }
     onMousePositionChange(worldPos);
     
     // Polyline çizimi sırasında önizleme çizgisini göster

@@ -31,6 +31,12 @@ export interface EventHandlerParams {
   actionsHistoryRef: React.MutableRefObject<any[]>;
   isPanningRef: React.MutableRefObject<boolean>;
   lastPanPositionRef: React.MutableRefObject<Point | null>;
+  currentMousePosRef?: React.MutableRefObject<Point | null>; // Fare konumunu takip eden ref
+  
+  // Paralel çizgi işlemleri için
+  parallelSelectedLineRef?: React.MutableRefObject<any | null>;
+  parallelPreviewsRef?: React.MutableRefObject<any[]>;
+  parallelDistanceRef?: React.MutableRefObject<number>;
   
   // State güncelleyicileri
   setDrawingLine: React.Dispatch<React.SetStateAction<boolean>>;
@@ -47,6 +53,12 @@ export interface EventHandlerParams {
   // Ayarlar
   snapEnabled: boolean;
   orthoEnabled: boolean;
+  
+  // Özel fonksiyonlar
+  findShapeAtPoint?: (point: Point) => any | null;
+  handleShapeAdd?: (shape: any) => void;
+  handleShapeUpdate?: (shape: any) => void;
+  updateCursorStyle?: (e: React.MouseEvent<HTMLCanvasElement>, activeTool: Tool, isDragging: boolean) => void;
 }
 
 /**

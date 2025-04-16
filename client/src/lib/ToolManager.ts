@@ -2,8 +2,8 @@
 // Çizim araçlarını yöneten sınıf ve fonksiyonlar
 
 import { CanvasState, Point, Tool } from '../types/canvas';
-import { screenToWorld, worldToScreen, findNearestSnapPoint } from './canvasUtils';
-import { distance, pointNearLine, pointNearPolyline } from './drawingPrimitives';
+import { screenToWorld, worldToScreen } from './canvasUtils';
+import { distance, pointNearLine, pointNearPolyline, findNearestSnapPoint } from './drawingPrimitives';
 
 /**
  * Seçim fonksiyonları
@@ -225,4 +225,153 @@ export function createParallelLine(
   };
   
   return { positiveLine, negativeLine };
+}
+
+/**
+ * Paralel çizgi önizleme oluşturma fonksiyonu
+ * Bu fonksiyon fare pozisyonuna göre dinamik olarak paralel çizgi mesafesini hesaplar
+ */
+export function createParallelLinePreview(
+  sourceLine: any,
+  mousePos: Point
+): { previewLines: any[], distance: number } {
+  // Çizginin vektör bilgilerini hesapla
+  const { startX, startY, endX, endY, thickness } = sourceLine;
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const lineLength = Math.sqrt(dx * dx + dy * dy);
+  
+  // Çizginin orta noktası
+  const midX = (startX + endX) / 2;
+  const midY = (startY + endY) / 2;
+  
+  // Fare pozisyonu ile çizginin orta noktası arasındaki vektör
+  const mouseVectorX = mousePos.x - midX;
+  const mouseVectorY = mousePos.y - midY;
+  
+  // Dik birim vektör (seçilen çizgiye dik)
+  const perpX = -dy / lineLength;  // Y ekseni ters çevrilmiş
+  const perpY = dx / lineLength;   // X ekseni normal
+  
+  // Fare vektörünün dik vektöre izdüşümü (nokta çarpımı) = mesafe
+  const dotProduct = mouseVectorX * perpX + mouseVectorY * perpY;
+  const distance = Math.abs(dotProduct);  // Her zaman pozitif mesafe
+  
+  // İşaret (pozitif veya negatif taraf)
+  const sign = dotProduct >= 0 ? 1 : -1;
+  
+  // Paralel çizgileri oluştur
+  const previewLines = [];
+  
+  // Fare tarafındaki çizgi (mesafeyi fare belirliyor)
+  const previewLine1 = {
+    id: -1,
+    type: 'line',
+    startX: startX + perpX * distance * sign,
+    startY: startY + perpY * distance * sign,
+    endX: endX + perpX * distance * sign,
+    endY: endY + perpY * distance * sign,
+    thickness: thickness,
+    isDashed: true,
+    isPreview: true
+  };
+  previewLines.push(previewLine1);
+  
+  // Diğer taraftaki çizgi (aynı mesafede simetrik)
+  const previewLine2 = {
+    id: -2,
+    type: 'line',
+    startX: startX - perpX * distance * sign,
+    startY: startY - perpY * distance * sign,
+    endX: endX - perpX * distance * sign,
+    endY: endY - perpY * distance * sign,
+    thickness: thickness,
+    isDashed: true,
+    isPreview: true
+  };
+  previewLines.push(previewLine2);
+  
+  return { previewLines, distance };
+}
+
+/**
+ * İmleç stilini güncelleyen fonksiyon
+ */
+export function updateCursorStyle(
+  e: React.MouseEvent<HTMLCanvasElement>,
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  canvasState: CanvasState,
+  activeTool: Tool,
+  isDraggingEndpoint: boolean,
+  shapesRef: React.MutableRefObject<any[]>,
+  selectedShapeId: number | null,
+  parallelSelectedLineRef?: React.MutableRefObject<any | null>
+) {
+  if (!canvasRef.current) return;
+  
+  const rect = canvasRef.current.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  // Dünya koordinatlarına dönüştür
+  const mouseWorldPos = screenToWorld(x, y, canvasState);
+  
+  // Seçim aracı ve diğer modlar için cursor style ayarla
+  if (activeTool === 'selection') {
+    if (isDraggingEndpoint) {
+      canvasRef.current.style.cursor = 'move';
+    } else {
+      // Fare bir şeklin üzerinde mi kontrol et
+      const shapeResult = findShapeAtPoint(
+        mouseWorldPos, 
+        shapesRef.current, 
+        canvasState, 
+        selectedShapeId, 
+        activeTool
+      );
+      
+      if (shapeResult) {
+        const { shape, endpoint } = shapeResult;
+        
+        // Çizgi üzerinde veya köşesinde mi kontrol et
+        if (shape.type === 'line') {
+          // Çizgi başlangıç veya bitiş noktasında mı
+          if (endpoint === 'start' || endpoint === 'end') {
+            canvasRef.current.style.cursor = endpoint === 'start' ? 'nesresize' : 'nwsresize';
+          }
+          // Çizgi üzerinde mi
+          else if (pointNearLine(mouseWorldPos, shape, 10 / canvasState.zoom)) {
+            canvasRef.current.style.cursor = 'move';
+          } else {
+            canvasRef.current.style.cursor = 'default';
+          }
+        }
+        // Polyline köşelerinden birinde mi
+        else if (shape.type === 'polyline') {
+          if (endpoint === 'vertex') {
+            canvasRef.current.style.cursor = 'move';
+          } else if (pointNearPolyline(mouseWorldPos, shape, 10 / canvasState.zoom)) {
+            canvasRef.current.style.cursor = 'move';
+          } else {
+            canvasRef.current.style.cursor = 'default';
+          }
+        }
+        else {
+          canvasRef.current.style.cursor = 'pointer';
+        }
+      } else {
+        canvasRef.current.style.cursor = 'default';
+      }
+    }
+  } else if (activeTool === 'line' || activeTool === 'point' || activeTool === 'polyline') {
+    // Çizim araçları için cursor
+    canvasRef.current.style.cursor = 'crosshair';
+  } else if (activeTool === 'parallel') {
+    // Paralel araç için cursor
+    if (parallelSelectedLineRef && parallelSelectedLineRef.current) {
+      canvasRef.current.style.cursor = 'move'; // Seçilmiş çizgi varsa
+    } else {
+      canvasRef.current.style.cursor = 'pointer'; // Seçim yapılacak
+    }
+  }
 }

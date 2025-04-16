@@ -5,6 +5,9 @@
 export interface Point {
   x: number;
   y: number;
+  isExtension?: boolean;
+  lineStart?: Point;
+  lineEnd?: Point;
 }
 
 // Canvas durumu

@@ -154,11 +154,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const lineIndex = crossProduct > 0 ? 0 : 1; // Pozitif ise 0, negatif ise 1
         
         // Sadece seçilen taraftaki çizgiyi çiz
-        drawShape(ctx, parallelPreviewsRef.current[lineIndex], canvasState, false, true);
+        CanvasRenderer.drawShape(ctx, parallelPreviewsRef.current[lineIndex], canvasState, false, true);
       } else {
         // Eğer iki çizgi yoksa, mevcut tüm çizgileri çiz
         parallelPreviewsRef.current.forEach(line => {
-          drawShape(ctx, line, canvasState, false, true);
+          CanvasRenderer.drawShape(ctx, line, canvasState, false, true);
         });
       }
     }
@@ -311,11 +311,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       // Extension doğrultularını göstermek için - extension kontrolü
       if (snapPoint && snapPoint.isExtension && snapPoint.lineStart && snapPoint.lineEnd && canvasRef.current) {
         const tempCtx = canvasRef.current.getContext('2d');
+        if (!tempCtx) return;
+        
         const lineStart = worldToScreen(snapPoint.lineStart.x, snapPoint.lineStart.y, canvasState);
         const lineEnd = worldToScreen(snapPoint.lineEnd.x, snapPoint.lineEnd.y, canvasState);
         
         // Extension çizgisini çiz (kesik çizgilerle)
-        ctx.current.beginPath();
+        tempCtx.beginPath();
         
         // Çizginin her iki yönde de uzantısını göster
         // Çizgi vektörünü oluştur
@@ -323,7 +325,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const dy = lineEnd.y - lineStart.y;
         
         // Çizgiyi her iki yönde de uzat
-        const extensionLength = Math.max(ctx.current.canvas.width, ctx.current.canvas.height); // Tüm canvas boyunca uzat
+        const extensionLength = Math.max(canvasRef.current.width, canvasRef.current.height); // Tüm canvas boyunca uzat
         
         // Normalize et
         const length = Math.sqrt(dx * dx + dy * dy);
@@ -340,14 +342,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           const endExtensionY = lineEnd.y + normalizedDy * extensionLength;
           
           // Extension çizgisini çiz (kesik çizgilerle ve şeffaf)
-          ctx.current.beginPath();
-          ctx.current.moveTo(startExtensionX, startExtensionY);
-          ctx.current.lineTo(endExtensionX, endExtensionY);
-          ctx.current.strokeStyle = 'rgba(0, 200, 83, 0.3)'; // Açık yeşil ve şeffaf
-          ctx.current.lineWidth = 1;
-          ctx.current.setLineDash([5, 5]); // Kesik çizgi
-          ctx.current.stroke();
-          ctx.current.setLineDash([]); // Dash ayarını sıfırla
+          tempCtx.beginPath();
+          tempCtx.moveTo(startExtensionX, startExtensionY);
+          tempCtx.lineTo(endExtensionX, endExtensionY);
+          tempCtx.strokeStyle = 'rgba(0, 200, 83, 0.3)'; // Açık yeşil ve şeffaf
+          tempCtx.lineWidth = 1;
+          tempCtx.setLineDash([5, 5]); // Kesik çizgi
+          tempCtx.stroke();
+          tempCtx.setLineDash([]); // Dash ayarını sıfırla
         }
       }
       

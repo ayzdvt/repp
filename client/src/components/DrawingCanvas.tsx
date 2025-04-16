@@ -54,6 +54,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const parallelPreviewsRef = useRef<any[]>([]); // Paralel çizgi önizlemeleri
   const parallelSelectedLineRef = useRef<any | null>(null); // Paralel çizgi oluşturmak için seçilen çizgi
   const parallelDistanceRef = useRef<number>(10); // Paralel çizgi mesafesi
+  const isPanningRef = useRef<boolean>(false); // Pan durumu - orta tuş ile kaydırma
+  const lastPanPositionRef = useRef<Point | null>(null); // Son pan konumu
   const [temporarySelection, setTemporarySelection] = useState<boolean>(false); // Geçici seçim modu (paralel modunda)
   
   // UI State (Cursor değişimi vb. için state kullanıyoruz)
@@ -278,11 +280,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, []); // Bileşen takıldığında bir kez çalışsın, renderCanvas değişse bile yeniden çalışmasın
   
   // Mouse event handlers
-  // Fare hareket olayı yönetimi - modüler bir yapıya bölünmüş hali
+  // Fare hareket olayı yönetimi - EventHandlers modülünden faydalanarak
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
-    // EventHandlers modülündeki handleMouseMove fonksiyonundan önce
     // Fare pozisyonunu hesaplayıp üst bileşene bildirelim
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -295,7 +296,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     // Üst bileşene fare pozisyonunu bildir
     onMousePositionChange(worldPos);
     
-    // EventHandlers modülündeki handleMouseMove fonksiyonunu çağırıyoruz
+    // EventHandlers modülündeki handleMouseMove fonksiyonunu çağır
     EventHandlers.handleMouseMove(e, {
       canvasState,
       shapesRef,
@@ -315,6 +316,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       isPanningRef,
       lastPanPositionRef,
       currentMousePosRef,
+      parallelSelectedLineRef,
+      parallelPreviewsRef,
+      parallelDistanceRef,
       setDrawingLine,
       setDrawingPolyline,
       setIsDraggingEndpoint,
@@ -325,8 +329,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       onToolChange,
       snapEnabled,
       orthoEnabled,
-      // Cursor güncelleme fonksiyonu
-      updateCursorStyle: () => {
+      findShapeAtPoint: (point: Point) => findObjectAtPoint(point),
+      handleShapeAdd: (shape: any) => {
+        // Şekli ekle
+        shapesRef.current.push(shape);
+        // İşlem tarihçesine ekle
+        actionsHistoryRef.current.push({
+          action: 'add_shape',
+          data: { shapeId: shape.id }
+        });
+      },
+      handleShapeUpdate: (shape: any) => {
+        // Şekli güncelle
+        const index = shapesRef.current.findIndex(s => s.id === shape.id);
+        if (index !== -1) {
+          shapesRef.current[index] = shape;
+        }
+      },
+      updateCursorStyle: (e: React.MouseEvent<HTMLCanvasElement>, activeTool: Tool, isDragging: boolean) => {
         ToolManager.updateCursorStyle(
           e, 
           canvasRef, 
